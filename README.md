@@ -3,7 +3,7 @@ Lightweight native JavaScript and ECMAScript 6 library (package of small stand-a
 
 Designed in mind for best compatability with Laravel 5 and Bootstrap 4, however can be used anywhere.
 
-Syntax if very simple and some API is identical with Laravel API.
+Syntax is very simple and some API is identical with Laravel API.
 
 Rollup.js with babel and npm plugins is recommended for transpiling and bundling.
 
