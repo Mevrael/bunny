@@ -25,3 +25,5 @@ Route.get('/users/{id}', UsersController.showUser);
 ```
 
 &copy; Mev-Rael
+
+GPL 3.0
