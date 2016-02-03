@@ -1,0 +1,37 @@
+{
+  "name": "bunnyjs",
+  "version": "0.2.0",
+  "description": "Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, ajax and datatables) and next generation front-end framework.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mevrael/bunny.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "ECMAScript",
+    "6",
+    "JS",
+    "ES5",
+    "ES6",
+    "frontend",
+    "framework",
+    "library",
+    "package",
+    "standalone",
+    "routing",
+    "template",
+    "engine",
+    "ajax",
+    "datatables"
+  ],
+  "author": "Mev-Rael (mevrael@gmail.com)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Mevrael/bunny/issues"
+  },
+  "homepage": "https://github.com/Mevrael/bunny#readme"
+}
