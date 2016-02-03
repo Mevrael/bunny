@@ -5,4 +5,6 @@ Designed in mind for best compatability for Laravel 5 and Bootstrap 4, however c
 
 Rollup.js with babel plugin is recommended for transpiling and bundling.
 
+Install via `npm install bunnyjs --save`
+
 &copy; Mev-Rael
