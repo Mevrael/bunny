@@ -3,8 +3,23 @@ Lightweight native JavaScript and ECMAScript 6 library (package of small stand-a
 
 Designed in mind for best compatability for Laravel 5 and Bootstrap 4, however can be used anywhere.
 
-Rollup.js with babel plugin is recommended for transpiling and bundling.
+Rollup.js with babel and npm plugins is recommended for transpiling and bundling.
 
 Install via `npm install bunnyjs --save`
+
+Example usage:
+
+```javascript
+import { Route } from 'bunnyjs/src/bunny.route';
+
+Route.get('/', function() {
+    console.log('You are on main page!');
+});
+
+// or create your own functions/closures/controllers, import them and pass to route
+import { UsersController } from './Controllers/UsersController';
+Route.get('/users', UsersController.index);
+Route.get('/users/{id}', UsersController.showUser);
+```
 
 &copy; Mev-Rael
