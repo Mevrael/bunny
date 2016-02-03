@@ -24,6 +24,10 @@ Route.get('/users', UsersController.index);
 Route.get('/users/{id}', UsersController.showUser);
 ```
 
+For documentation go to Wiki.
+
+Currently only [Template documentation](https://github.com/Mevrael/bunny/wiki/Template) available.
+
 &copy; Mev-Rael
 
 GPL 3.0
