@@ -2,6 +2,11 @@
 import { Ajax } from './bunny.ajax';
 import { Template } from './bunny.template';
 import { Paginator } from './bunny.paginator';
+import { Container } from './bunny.container';
+
+Container.bind('bunny.ajax', Ajax);
+Container.bind('bunny.template', Template);
+Container.bind('bunny.paginator', Paginator);
 
 export var DataTable = {
 
@@ -33,7 +38,7 @@ export var DataTable = {
 
         var s = document.getElementById(stats_id); // can be null
 
-        Template.define(row_tpl_id, row_handlers, row_events);
+        Container.get('bunny.template').define(row_tpl_id, row_handlers, row_events);
 
         this._tables[table_id] = {
             table: e,
@@ -64,7 +69,7 @@ export var DataTable = {
         var table = this._tables[table_id].table;
         var self = this;
 
-        Ajax.get(url, function($data) {
+        Container.get('bunny.ajax').get(url, function($data) {
             var data = JSON.parse($data);
 
             // delete current rows
@@ -74,7 +79,7 @@ export var DataTable = {
             }
 
             // insert new rows
-            Template.insertAll(row_tpl_id, data.data, table);
+            Container.get('bunny.template').insertAll(row_tpl_id, data.data, table);
 
             // update footer stats
 
@@ -91,7 +96,7 @@ export var DataTable = {
     },
 
     updatePagination: function(table_id, data) {
-        var p = Paginator.create(table_id, data, this._paginationLimit);
+        var p = Container.get('bunny.paginator').create(table_id, data, this._paginationLimit);
         p.redraw();
         p.updateStats();
         this.addBtnListeners(table_id);
