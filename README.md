@@ -1,5 +1,5 @@
-# Bunny JS v 0.2
-Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, ajax and datatables) and next generation front-end framework.
+# Bunny JS v 0.3
+Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like [IoC](http://www.wikiwand.com/en/Inversion_of_control), routing, templating, ajax and datatables) and next generation front-end framework.
 
 Designed in mind for best compatability with Laravel 5 and Bootstrap 4, however can be used anywhere.
 
@@ -27,6 +27,8 @@ Route.get('/users/{id}', UsersController.showUser);
 For documentation go to Wiki.
 
 Currently only [Template documentation](https://github.com/Mevrael/bunny/wiki/Template) available.
+
+There is also [example](https://github.com/Mevrael/bunny/blob/master/examples/container/index.js) for IOC Container.
 
 &copy; Mev-Rael
 
