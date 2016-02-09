@@ -1,14 +1,23 @@
-'use strict'
 
 export var Validate = {
-    error_class: 'form-error-msg',
-    formGroupSelector: '.form-group',
-    formLabelSelector: 'span',
-    lang: {
+    errorClass: 'has-danger', // class to be applied on form-group
+    formGroupSelector: '.form-group', // main container selector which includes label, input, help text etc.
+    formLabelSelector: '.form-control-label', // label to pick innerHTML from to insert field name into error message
+    containerTag: 'small', // tag name of error message container
+    containerClass: 'text-help', // class to add when creating error message container
+    lang: { // error messages, keys must be same as validator names
         required: "Field '%s' ir required!",
+        tel: "Field '%s' is not a valid telephone number!"
     },
-    appendCallback: function(form_group, msg_container) {
-        return form_group.parentNode.insertBefore(msg_container, form_group.nextSibling);
+    appendCallback: function(form_group, msg_container) { // where to insert error message
+        return form_group.appendChild(msg_container);
+    },
+    toggleErrorClass: function(form_group) { // where to add/remove error class
+        if (form_group.classList.contains(this.errorClass)) {
+            form_group.classList.remove(this.errorClass);
+        } else {
+            form_group.classList.add(this.errorClass);
+        }
     },
     validators: {
         tel: function(input){
@@ -31,7 +40,7 @@ export var Validate = {
             return true;
         }
     },
-    validate: function(form_el, submit_handler) {
+    validate: function(form_el, events = {}, submit_handler) {
 
         var form = form_el;
         var self = this;
@@ -43,23 +52,27 @@ export var Validate = {
         form.addEventListener("submit", function(e){
             e.preventDefault();
             var is_valid = true;
-            var error_class = self.error_class;
             var label_selector = self.formLabelSelector;
             var is_focused = false;
+            var container_tag = self.containerTag;
+            var container_class = self.containerClass;
             form.querySelectorAll(self.formGroupSelector).forEach(function(form_group){
                 var form_input = form_group.querySelector('[name]');
                 var input_name = form_input.getAttribute('name');
                 var input_valid = true;
+                var label = form_group.querySelector(label_selector);
                 for (var validator in self.validators) {
                     var valid = self.validators[validator](form_input);
                     if (!valid) {
                         // form_input is NOT valid
-                        var msg = self.lang[validator].replace('%s', form_group.querySelector(label_selector).innerHTML);
+
+                        var msg = self.lang[validator].replace('%s', label.innerHTML);
                         // check if container for error msg exists when pressing submit button again
                         if (msg_containers[input_name] === undefined) {
                             // container for error msg doesn't exists, create new
-                            var el = document.createElement('div');
-                            el.setAttribute('class', error_class);
+                            var el = document.createElement(container_tag);
+                            el.setAttribute('class', container_class);
+                            self.toggleErrorClass(form_group);
                             el.innerHTML = msg;
                             msg_containers[input_name] = self.appendCallback(form_group, el)
                         } else {
@@ -68,7 +81,11 @@ export var Validate = {
                         }
 
                         if (!is_focused) {
-                            form_input.focus();
+                            if (events['on_focus'] !== undefined) {
+                                events['on_focus'](form_input, form_group);
+                            } else {
+                                form_input.focus();
+                            }
                             is_focused = true;
                         }
 
@@ -80,6 +97,7 @@ export var Validate = {
                 if (input_valid && msg_containers[input_name] !== undefined) {
                     msg_containers[input_name].parentNode.removeChild(msg_containers[input_name]);
                     msg_containers[input_name] = undefined;
+                    self.toggleErrorClass(form_group);
                 }
             });
 
