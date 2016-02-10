@@ -7,7 +7,11 @@ export var Validate = {
     containerClass: 'text-help', // class to add when creating error message container
     lang: { // error messages, keys must be same as validator names
         required: "Field '%s' ir required!",
-        tel: "Field '%s' is not a valid telephone number!"
+        tel: "Field '%s' is not a valid telephone number!",
+        email: "Field '%s' should be a valid e-mail address!",
+        image: "Uploaded file '%s' should be an image (jpeg, png, bmp, gif, or svg)",
+        maxlength: "Input '%s' length is too long, must be < '%maxlength'",
+        minlength: "Input '%s' length is too short, must be > '%minlength'"
     },
     appendCallback: function(form_group, msg_container) { // where to insert error message
         return form_group.appendChild(msg_container);
@@ -20,6 +24,45 @@ export var Validate = {
         }
     },
     validators: {
+        maxlength: function(input) {
+            if (input.getAttribute('maxlength') !== null && input.value.length > input.getAttribute('maxlength')) {
+                return {maxlength: input.getAttribute('maxlength')};
+            }
+            return true;
+        },
+        minlength: function(input) {
+            if (input.getAttribute('minlength') !== null && input.value.length < input.getAttribute('minlength')) {
+                return {minlength: input.getAttribute('minlength')};
+            }
+            return true;
+        },
+        image: function(input) {
+            if (input.getAttribute('type') === 'file' && input.getAttribute('accept') === 'image/*') {
+                if (input.files.length !== 0) {
+                    var mime_types = [
+                        'image/jpeg',
+                        'image/png',
+                        'image/bmp',
+                        'image/gif',
+                        'image/svg+xml'
+                    ];
+                    if (mime_types.indexOf(input.files[0].type) > -1) {
+                        return true;
+                    }
+                    return false;
+                }
+                return true;
+            }
+            return true;
+        },
+        email: function(input) {
+            if (input.getAttribute('type') === 'email') {
+                // input is tel, parse string to match tel regexp
+                var Regex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+                return Regex.test(input.value);
+            }
+            return true;
+        },
         tel: function(input){
             if (input.getAttribute('type') === 'tel') {
                 // input is tel, parse string to match tel regexp
@@ -62,11 +105,24 @@ export var Validate = {
                 var input_valid = true;
                 var label = form_group.querySelector(label_selector);
                 for (var validator in self.validators) {
-                    var valid = self.validators[validator](form_input);
+                    var validator_result = self.validators[validator](form_input);
+                    var valid = false;
+                    var validator_data = {};
+                    if (typeof validator_result !== 'boolean') {
+                        for (var k in validator_result) {
+                            valid = false;
+                            validator_data[k] = validator_result[k];
+                        }
+                    } else {
+                        valid = validator_result;
+                    }
                     if (!valid) {
                         // form_input is NOT valid
 
                         var msg = self.lang[validator].replace('%s', label.innerHTML);
+                        for (var d in validator_data) {
+                            msg = msg.replace('%'+d, validator_data[d]);
+                        }
                         // check if container for error msg exists when pressing submit button again
                         if (msg_containers[input_name] === undefined) {
                             // container for error msg doesn't exists, create new
