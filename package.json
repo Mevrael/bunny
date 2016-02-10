@@ -1,6 +1,6 @@
 {
   "name": "bunnyjs",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, ajax and datatables) and next generation front-end framework.",
   "main": "index.js",
   "scripts": {
