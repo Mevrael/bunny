@@ -483,7 +483,9 @@ export var Calendar = {
         this._calendars[calendar_id].selectedDay = day;
         CalendarDecorator.setCurrentDay(this._calendars[calendar_id].tableBody.tdCollection, day);
         for (var i = 0; i < this._calendars[calendar_id].onPickHandlers.length; i++) {
-            var month = month_index + 1;
+            var month = parseInt(month_index) + 1;
+            var year = parseInt(year);
+            var day = parseInt(day);
             this._calendars[calendar_id].onPickHandlers[i](year, month, day);
         }
     },
