@@ -11,8 +11,8 @@ export var Element = {
         }
     },
 
-    scrollTo: function(el) {
-        window.scrollTo(0, this.getPosition(el));
+    scrollTo: function(el, navbar_height = 0) {
+        window.scrollTo(0, this.getPosition(el) - navbar_height);
     }
 
 };

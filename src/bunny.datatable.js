@@ -15,6 +15,14 @@ export var DataTable = {
 
     define: function(table_id, row_tpl_id, row_handlers = {}, row_events = {}) {
 
+        /*
+         If table has no pages, row template should not be rendered
+         And in this case return 0 and do nothing
+         */
+        if (document.getElementById(row_tpl_id) === null) {
+            return 0;
+        }
+
         var e = document.getElementById(table_id);
 
         if (e === null) {
