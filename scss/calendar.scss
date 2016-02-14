@@ -1,0 +1,131 @@
+
+$bny-cal-color: #408080;
+
+@mixin bny-cal-cell {
+  box-sizing: border-box;
+  display: inline-block;
+  height: 1.5rem;
+  width: 1.5rem;
+  line-height: 1.45rem;
+  text-align: center;
+  border: 2px solid transparent;
+  margin: 0.2rem;
+  vertical-align: top;
+}
+
+@mixin bny-cal-circle-border {
+  border-radius: 50%;
+  border: 2px solid $bny-cal-color;
+  color: $bny-cal-color;
+}
+
+@mixin bny-cal-circle-filled {
+  border-radius: 50%;
+  background-color: $bny-cal-color;
+  color: #FFF;
+}
+
+.bny-cal {
+  padding: 2rem;
+  background-color: #EEE;
+  color: #777;
+  border-radius: 0.25rem;
+  display: inline-block;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.bny-cal.hidden {
+  display: none;
+}
+
+.bny-cal-header {
+  display: block;
+  text-align: center;
+}
+
+.bny-cal-prev,
+.bny-cal-next {
+  @include bny-cal-cell;
+  @include bny-cal-circle-border;
+  font-size: 1.5rem;
+  line-height: 1.1rem;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.bny-cal-prev:hover,
+.bny-cal-next:hover {
+  @include bny-cal-cell;
+  @include bny-cal-circle-filled;
+  font-size: 1.5rem;
+  line-height: 1.1rem;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.bny-cal-month,
+.bny-cal-year {
+  border: 0;
+  outline: 0;
+  margin: 0 0.4rem;
+  padding: 0.2rem;
+  background-color: transparent;
+}
+
+.bny-cal-month:hover,
+.bny-cal-year:hover {
+  color: $bny-cal-color;
+}
+
+.bny-cal-month option[selected],
+.bny-cal-year option[selected] {
+  font-weight: bold;
+  color: $bny-cal-color;
+}
+
+.bny-cal-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.bny-cal-head {
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid $bny-cal-color;
+  font-size: 0.6rem;
+}
+
+.bny-cal-body {
+  margin-top: 0.5rem;
+}
+
+.bny-cal-row {
+  display: block;
+}
+
+.bny-cal-day {
+  display: inline-block;
+}
+
+.bny-cal-day-of-week {
+  @include bny-cal-cell;
+  text-transform: uppercase;
+}
+
+.bny-cal-day {
+  @include bny-cal-cell;
+}
+
+.bny-cal-day:hover:not(.bny-cal-day-current) {
+  @include bny-cal-circle-border;
+  cursor: pointer;
+}
+
+.bny-cal-day-inactive {
+  @include bny-cal-cell;
+}
+
+.bny-cal-day-current {
+  @include bny-cal-circle-filled;
+  cursor: default;
+}
