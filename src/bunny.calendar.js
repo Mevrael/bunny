@@ -510,7 +510,3 @@ export var Calendar = {
         return this._calendars[calendar_id].calendar.classList.contains('hidden');
     }
 };
-
-export var DatePicker = {
-
-};
