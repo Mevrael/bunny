@@ -43,7 +43,9 @@ export var DatePicker = {
             Calendar.create(calendar_id, options.minYear, options.maxYear);
         }
 
-        input.value = this.getEuropeanDateFromISODate(input.value);
+        if (input.value != '') {
+            input.value = this.getEuropeanDateFromISODate(input.value);
+        }
 
         Calendar.hide(calendar_id);
 
