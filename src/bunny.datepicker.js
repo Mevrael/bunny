@@ -6,7 +6,8 @@ export var DatePicker = {
     _pickers: {},
     _options: {
         minYear: 1950,
-        maxYear: 2050
+        maxYear: 2050,
+        onlyAsNativeFallback: true
         //displayFormat: 'd.m.Y',
         //storeFormat: 'Y-m-d'
     },
@@ -21,6 +22,10 @@ export var DatePicker = {
         for (var k in this._options) {
             if (options[k] === undefined)
                 options[k] = this._options[k];
+        }
+
+        if (options.onlyAsNativeFallback && this.isNativeDatePickerSupported()) {
+            return 2;
         }
 
         var self = this;
@@ -67,7 +72,9 @@ export var DatePicker = {
 
         this._pickers[input_id] = {
             input: input
-        }
+        };
+
+        return 1;
     },
 
     twoDigits(num) {
@@ -114,5 +121,13 @@ export var DatePicker = {
         var _month = this.twoDigits(month);
         var _day = this.twoDigits(day);
         return _day + '.' + _month + '.' + year;
+    },
+
+    isNativeDatePickerSupported() {
+        var input = document.createElement('input');
+        input.setAttribute('type','date');
+        var notADateValue = 'not-a-date';
+        input.setAttribute('value', notADateValue);
+        return (input.value !== notADateValue);
     }
 };
