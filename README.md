@@ -46,6 +46,15 @@ Valdiator is only 150 lines and adds JS validation above native HTML5 valdiation
 ``` 
 will be required and only images will be accepted. Error message is displayed after input.
 
+
+DatePicker by default used as a fallback for browsers not supporting <input type="date"> and initiated using `DatePicker.create(input_id)` .
+
+DatePicker as any BunnyJS component is easily **extendable**. Basicly DatePicker is a calendar builder/framework. You can build your own calendar and datepicker very fast.
+
+Default theme of DatePicker:
+
+![bunnyjs-calendar-default](https://cloud.githubusercontent.com/assets/7879528/13051623/ef4e1a62-d402-11e5-8d9c-aae0fd5494c3.png)
+
 &copy; Mev-Rael
 
 GPL 3.0
