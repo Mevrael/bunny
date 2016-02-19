@@ -1,6 +1,6 @@
 {
   "name": "bunnyjs",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "description": "Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, ajax and datatables) and next generation front-end framework.",
   "main": "index.js",
   "scripts": {
@@ -20,6 +20,9 @@
     "JS",
     "ES5",
     "ES6",
+    "lightweight",
+    "native",
+    "vanilla",
     "frontend",
     "framework",
     "library",
@@ -29,7 +32,13 @@
     "template",
     "engine",
     "ajax",
-    "datatables"
+    "datatables",
+    "calendar",
+    "datepicker",
+    "pagination",
+    "url",
+    "validation",
+    "autocomplete"
   ],
   "author": "Mev-Rael (mevrael@gmail.com)",
   "license": "GPL-3.0",

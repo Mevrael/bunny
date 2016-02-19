@@ -1,14 +1,15 @@
-# BunnyJS v 0.5.4
+# BunnyJS v 0.6.0
 Lightweight native JavaScript and ECMAScript 6 library and next generation front-end framework. BunnyJS is package of small stand-alone components without dependencies:
 
-1. [IoC](http://www.wikiwand.com/en/Inversion_of_control)
-2. Routing
-3. Native HTML5 validation
-4. Template engine
-5. Ajax
-6. DataTable
-7. Calendar
-8. DatePicker
+1. Native lightweight javascript [Inversion_of_control](http://www.wikiwand.com/en/Inversion_of_control)
+2. Native lightweight javascript Routing
+3. Native lightweight javascript HTML5 validation
+4. Native lightweight javascript Template engine
+5. Native lightweight javascript Ajax
+6. Native lightweight javascript DataTable
+7. Native lightweight javascript Calendar
+8. Native lightweight javascript DatePicker
+9. Native lightweight javascript Autocomplete
 
 Designed in mind for best compatability with Laravel 5 and Bootstrap 4, however can be used anywhere.
 
