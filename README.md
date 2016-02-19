@@ -1,7 +1,7 @@
 # BunnyJS v 0.6.0
 Lightweight native JavaScript and ECMAScript 6 library and next generation front-end framework. BunnyJS is package of small stand-alone components without dependencies:
 
-1. Native lightweight javascript [Inversion_of_control](http://www.wikiwand.com/en/Inversion_of_control)
+1. Native lightweight javascript [Inversion of control](http://www.wikiwand.com/en/Inversion_of_control)
 2. Native lightweight javascript Routing
 3. Native lightweight javascript HTML5 validation
 4. Native lightweight javascript Template engine
