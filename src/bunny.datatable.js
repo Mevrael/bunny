@@ -57,6 +57,8 @@ export var DataTable = {
         };
 
         this.addBtnListeners(table_id);
+
+        return true;
     },
 
     addBtnListeners: function(table_id) {
