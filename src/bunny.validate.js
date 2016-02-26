@@ -1,5 +1,5 @@
 
-var Validate = {
+export var Validate = {
 
     /* public properties */
 
