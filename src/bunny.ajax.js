@@ -63,7 +63,7 @@ export var Ajax = {
         this.request.open(this.method, this.url);
 
         for (var header in this.headers) {
-            this.request.setRequestHeader(header, headers[header]);
+            this.request.setRequestHeader(header, this.headers[header]);
         }
 
         var str_data = '';
