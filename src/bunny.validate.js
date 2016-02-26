@@ -158,7 +158,6 @@ export var Validate = {
 
         var form = form_el;
         var self = this;
-        var msg_containers = [];
 
         form.setAttribute('novalidate', '');
 
@@ -166,66 +165,30 @@ export var Validate = {
         form.addEventListener("submit", function(e){
             e.preventDefault();
             var is_valid = true;
-            var label_selector = '.' + self.formLabelClass;
             var is_focused = false;
-            var container_tag = self.containerTag;
-            var container_class = self.containerClass;
             form.querySelectorAll('.' + self.formGroupClass).forEach(function(form_group){
-                var form_input = form_group.querySelector('[name]');
-                var input_name = form_input.getAttribute('name');
-                var input_valid = true;
-                var label = form_group.querySelector(label_selector);
-                for (var validator in self.validators) {
-                    var validator_result = self.validators[validator](form_input);
-                    var valid = false;
-                    var validator_data = {};
-                    if (typeof validator_result !== 'boolean') {
-                        for (var k in validator_result) {
-                            valid = false;
-                            validator_data[k] = validator_result[k];
-                        }
-                    } else {
-                        valid = validator_result;
-                    }
-                    if (!valid) {
-                        // form_input is NOT valid
 
-                        var msg = self.lang[validator].replace('%s', label.innerHTML);
-                        for (var d in validator_data) {
-                            msg = msg.replace('%'+d, validator_data[d]);
-                        }
-                        // check if container for error msg exists when pressing submit button again
-                        if (msg_containers[input_name] === undefined) {
-                            // container for error msg doesn't exists, create new
-                            var el = document.createElement(container_tag);
-                            el.setAttribute('class', container_class);
-                            self.toggleErrorClass(form_group);
-                            el.innerHTML = msg;
-                            msg_containers[input_name] = self.appendCallback(form_group, el)
-                        } else {
-                            // container exists, update msg
-                            msg_containers[input_name].innerHTML = msg;
-                        }
+                if (self.isFormGroupForInput(form_group)) {
+                    var res = self.checkInput(form_group);
+
+                    if (res.valid === false) {
+                        is_valid = false;
+                        self.setErrorMessage(form_group, res.msg);
 
                         if (!is_focused) {
                             if (events['on_focus'] !== undefined) {
-                                events['on_focus'](form_input, form_group);
+                                events['on_focus'](res.inputElements.input, form_group);
                             } else {
-                                form_input.focus();
+                                self.focus(res.inputElements.input);
                             }
                             is_focused = true;
                         }
 
-                        is_valid = false;
-                        input_valid = false;
+                    } else {
+                        self.removeErrorContainer(form_group);
                     }
                 }
-                // if input passed all validators, check if it still has msg container to remove it
-                if (input_valid && msg_containers[input_name] !== undefined) {
-                    msg_containers[input_name].parentNode.removeChild(msg_containers[input_name]);
-                    msg_containers[input_name] = undefined;
-                    self.toggleErrorClass(form_group);
-                }
+
             });
 
             if (is_valid) {
