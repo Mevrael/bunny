@@ -12,7 +12,7 @@ export var AutocompleteController = {
         })();
     },
 
-    attachInputTypeEvent(container_id) {
+    attachInputTypeEvent(container_id, data_handler = JSON.parse, ajax_headers = {}) {
         var ac = Autocomplete.get(container_id);
         var timer = 0;
         ac._picked = false;
@@ -23,25 +23,36 @@ export var AutocompleteController = {
                 timer = setTimeout(function() {
                     var ajax_url = ac.ajaxUrl.replace('{search}', encodeURI(input.value));
                     Ajax.get(ajax_url, function(data) {
-                        var $data = JSON.parse(data);
+                        var $data = data_handler(data);
                         if ($data.length !== 0) {
                             Autocomplete.setItems(container_id, $data);
                             Autocomplete.show(container_id);
                         } else {
                             Autocomplete.hide(container_id);
                         }
-                    }, function() {
-                        console.error('Autocomplete AJAX error');
-                    });
+                    }, function(response_text, status_code) {
+                        if (ac.options.ajaxErrorHandler !== null) {
+                            ac.options.ajaxErrorHandler(response_text, status_code);
+                        }
+                        Autocomplete.hide(container_id);
+                    }, ajax_headers);
                 }, ac.options.inputDelay);
             }
 
         });
     },
 
+    attachInputFocusEvent(container_id) {
+        var ac = Autocomplete.get(container_id);
+        ac.input.addEventListener('focus', function(e) {
+            ac._valueOnFocus = this.value;
+        });
+    },
+
     attachInputOutEvent(container_id) {
         var ac = Autocomplete.get(container_id);
         ac.input.addEventListener('blur', function(e) {
+            var input = this;
             setTimeout(function(){
                 if (!ac._picked) {
                     // if item was not picked from list
@@ -53,8 +64,10 @@ export var AutocompleteController = {
                         }
                     } else {
                         // custom input not allowed, restore default
-                        Autocomplete.restoreDefaultValue(container_id);
-
+                        if (ac._valueOnFocus !== input.value) {
+                            // restore default only if value changed
+                            Autocomplete.restoreDefaultValue(container_id);
+                        }
                     }
                 }
                 ac._picked = false;

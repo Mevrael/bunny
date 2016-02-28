@@ -1,4 +1,4 @@
-# BunnyJS v 0.6.4
+# BunnyJS v 0.6.5
 Lightweight native JavaScript and ECMAScript 6 library and next generation front-end framework. BunnyJS is package of small stand-alone components without dependencies:
 
 1. Native lightweight javascript [Inversion of control](http://www.wikiwand.com/en/Inversion_of_control)
@@ -39,6 +39,9 @@ For documentation go to Wiki.
 Currently only [Template documentation](https://github.com/Mevrael/bunny/wiki/Template) available.
 
 There is also [example](https://github.com/Mevrael/bunny/blob/master/examples/container/index.js) for IOC Container.
+
+[Autocomplete example](htmlpreview.github.io/?https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.html)
+
 
 Valdiator is only 150 lines and adds JS validation above native HTML5 valdiation attributes. For example,
 ```html

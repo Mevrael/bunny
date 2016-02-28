@@ -11,7 +11,9 @@ export var Autocomplete = {
         minCharLimit: 2,
         inputDelay: 300,
         allowCustomInput: false,
-        defaultCustomHiddenInputValue: ''
+        defaultCustomHiddenInputValue: '',
+        ajaxHeaders: {},
+        ajaxErrorHandler: null
     },
 
     /**
@@ -21,7 +23,7 @@ export var Autocomplete = {
      * @param {string} ajax_url
      * @param {object} options
      */
-    create(input_id, hidden_input_id, ajax_url, options = {}) {
+    create(input_id, hidden_input_id, ajax_url, data_handler = JSON.parse, options = {}) {
 
         for(var i in this._options) {
             if (options[i] === undefined) {
@@ -29,9 +31,20 @@ export var Autocomplete = {
             }
         }
 
+        if (ajax_url.indexOf('{search}') === -1) {
+            console.error('BunnyJS Autocomplete.create() error: ajax_url must contain a {search}');
+            return false;
+        }
+
         var container_id = input_id + '_autocomplete';
 
         var container = document.getElementById(container_id);
+
+        if (container === null) {
+            console.error('BunnyJS Autocomplete.create() error: container for input with ID "' + input_id + '_autocomplete" not found.' +
+                'Input must be inside a container.');
+            return false;
+        }
 
         var input = document.getElementById(input_id);
 
@@ -57,13 +70,16 @@ export var Autocomplete = {
             itemSelectHandlers: [],
             defaultValue: default_value,
             defaultHiddenValue: default_hidden_value,
+            dataHandler: data_handler,
             _picked: false, // is picked from list, used in blur (focus out) event
+            _onFocusValue: default_value, // value on focus
             options: options
         };
 
         container.appendChild(dropdown);
 
-        AutocompleteController.attachInputTypeEvent(container_id);
+        AutocompleteController.attachInputTypeEvent(container_id, data_handler, options.ajaxHeaders);
+        AutocompleteController.attachInputFocusEvent(container_id);
         AutocompleteController.attachInputOutEvent(container_id);
 
     },
