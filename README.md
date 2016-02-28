@@ -40,7 +40,7 @@ Currently only [Template documentation](https://github.com/Mevrael/bunny/wiki/Te
 
 There is also [example](https://github.com/Mevrael/bunny/blob/master/examples/container/index.js) for IOC Container.
 
-[Autocomplete example](htmlpreview.github.io/?https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.html)
+[Autocomplete example](http://htmlpreview.github.io/?https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.html)
 
 
 Valdiator is only 150 lines and adds JS validation above native HTML5 valdiation attributes. For example,
