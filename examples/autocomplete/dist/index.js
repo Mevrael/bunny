@@ -4,25 +4,36 @@ var AutocompleteMarkup = {
         return dropdown;
     },
     createDropdownItem: function createDropdownItem(value, content) {
-        var item = document.createElement('div');
+        var item = document.createElement('button');
+        item.setAttribute('type', 'button');
         item.setAttribute('value', value);
-        item.innerHTML = content;
+        item.textContent = content;
         return item;
     },
     createDropdownItemsFromData: function createDropdownItemsFromData(data) {
         var callback = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
+        var fragment = document.createDocumentFragment();
         for (var key in data) {
             var item = this.createDropdownItem(key, data[key]);
             if (callback !== null) {
                 callback(item, key, data[key]);
             }
+            fragment.appendChild(item);
+        }
+        return fragment;
+    },
+    removeDropdown: function removeDropdown(dropdown) {
+        /*while (dropdown.firstChild) {
+            dropdown.removeChild(dropdown.firstChild);
+        }*/
+        if (dropdown.parentNode !== null) {
+            dropdown.parentNode.removeChild(dropdown);
         }
     },
-    removeDropdownItems: function removeDropdownItems(dropdown) {
-        while (dropdown.firstChild) {
-            dropdown.removeChild(dropdown.firstChild);
-        }
+    insertDropdown: function insertDropdown(container, dropdown) {
+        var el = container.querySelector('[name]');
+        el.parentNode.insertBefore(dropdown, el.nextSibling);
     }
 };
 
@@ -111,6 +122,7 @@ var Ajax = {
         var headers = arguments.length <= 5 || arguments[5] === undefined ? {} : arguments[5];
         var do_send = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
 
+
         var t = Object.create(this);
         t.method = method;
         t.url = url;
@@ -140,6 +152,7 @@ var Ajax = {
         return t;
     },
 
+
     /**
      * Should be called on instance created with factory Ajax.create() method
      * Opens request, applies headers, builds data URL encoded string and sends request
@@ -158,6 +171,7 @@ var Ajax = {
         }
         this.request.send(str_data);
     },
+
 
     /**
      * Sends a form via ajax POST with header Content-Type: application/x-www-form-urlencoded
@@ -179,6 +193,7 @@ var Ajax = {
         this.create('POST', form_el.getAttribute('action'), data, on_success, on_error, headers, true);
     },
 
+
     /**
      * Sends a form via ajax POST with header Content-Type: multipart/form-data which is required for file uploading
      * Data is automatically taken form all form input values
@@ -194,6 +209,7 @@ var Ajax = {
 
         this.sendForm(form_el, on_success, on_error, headers);
     },
+
 
     /**
      * Sends a simple GET request. By default adds header X-Requested-With: XMLHttpRequest
@@ -283,28 +299,84 @@ var AutocompleteController = {
                 }
                 ac._picked = false;
                 Autocomplete.hide(container_id);
-            }, 100);
+            }, 150);
         });
     },
     attachItemSelectEvent: function attachItemSelectEvent(container_id) {
         var ac = Autocomplete.get(container_id);
+        var self = this;
         for (var k = 0; k < ac.dropdownItems.length; k++) {
             ac.dropdownItems[k].addEventListener('click', function () {
-                var attr_val = this.getAttribute('value');
-                if (attr_val === null) {
-                    attr_val = this.innerHTML;
-                }
-                ac._picked = true;
-                Autocomplete.hide(container_id);
-                ac.input.value = this.innerHTML;
-                if (ac.hiddenInput !== null) {
-                    ac.hiddenInput.value = attr_val;
-                }
-                for (var i = 0; i < ac.itemSelectHandlers.length; i++) {
-                    ac.itemSelectHandlers[i](attr_val, this.innerHTML);
-                }
+                self.selectItem(container_id, this);
             });
         }
+    },
+    selectItem: function selectItem(container_id, item_el) {
+        var ac = Autocomplete.get(container_id);
+        var attr_val = item_el.getAttribute('value');
+        if (attr_val === null) {
+            attr_val = item_el.innerHTML;
+        }
+        ac._picked = true;
+        Autocomplete.hide(container_id);
+        ac.input.value = item_el.innerHTML;
+        if (ac.hiddenInput !== null) {
+            ac.hiddenInput.value = attr_val;
+        }
+        for (var i = 0; i < ac.itemSelectHandlers.length; i++) {
+            ac.itemSelectHandlers[i](attr_val, item_el.innerHTML);
+        }
+
+        document.activeElement.blur();
+    },
+    attachInputKeydownEvent: function attachInputKeydownEvent(container_id) {
+        var ac = Autocomplete.get(container_id);
+        var self = this;
+        ac.input.addEventListener('keydown', function (e) {
+            var c = e.keyCode;
+
+            // If the dropdown `ul` is in view, then act on keydown for the following keys:
+            // Enter / Esc / Up / Down
+            if (Autocomplete.isOpened(container_id)) {
+                if (c === 9) {
+                    // tab
+                    if (ac._currentItemIndex === null) {
+                        self.selectItem(container_id, ac.dropdownItems[0]);
+                    } else {
+                        self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
+                    }
+                } else if (c === 13) {
+                    // Enter
+                    if (ac._currentItemIndex !== null) {
+                        self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
+                    }
+                } else if (c === 27) {
+                    // Esc
+                    document.activeElement.blur();
+                } else if (c === 38) {
+                    // up
+                    if (ac._currentItemIndex !== null && ac._currentItemIndex > 0) {
+                        ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                        ac._currentItemIndex -= 1;
+                        ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                        ac.dropdownItems[ac._currentItemIndex].scrollIntoView(false);
+                    }
+                } else if (c === 40) {
+                    // down
+                    if (ac._currentItemIndex === null) {
+                        ac._currentItemIndex = 0;
+                        ac.dropdownItems[0].classList.toggle('active');
+                    } else {
+                        if (ac._currentItemIndex + 1 < ac.dropdownItems.length) {
+                            ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                            ac._currentItemIndex += 1;
+                            ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                            ac.dropdownItems[ac._currentItemIndex].scrollIntoView(false);
+                        }
+                    }
+                }
+            }
+        });
     }
 };
 
@@ -314,7 +386,7 @@ var Autocomplete = {
     _options: {
         theme: 'bs4',
         minCharLimit: 2,
-        inputDelay: 300,
+        inputDelay: 200,
         allowCustomInput: false,
         defaultCustomHiddenInputValue: '',
         ajaxHeaders: {},
@@ -331,6 +403,7 @@ var Autocomplete = {
     create: function create(input_id, hidden_input_id, ajax_url) {
         var data_handler = arguments.length <= 3 || arguments[3] === undefined ? JSON.parse : arguments[3];
         var options = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
+
 
         for (var i in this._options) {
             if (options[i] === undefined) {
@@ -363,8 +436,10 @@ var Autocomplete = {
             default_hidden_value = hidden_input.value;
         }
 
-        var dropdown = AutocompleteMarkup.createEmptyDropdown();
-        AutocompleteDecorator.decorateDropdown(dropdown, options.theme);
+        /*var dropdown = AutocompleteMarkup.createEmptyDropdown();
+        AutocompleteDecorator.decorateDropdown(dropdown, options.theme);*/
+
+        var dropdown = null;
 
         this._autocompleteContainers[container_id] = {
             ajaxUrl: ajax_url,
@@ -379,33 +454,61 @@ var Autocomplete = {
             dataHandler: data_handler,
             _picked: false, // is picked from list, used in blur (focus out) event
             _onFocusValue: default_value, // value on focus
+            _isOpened: false,
+            _currentItemIndex: null, // currently active dropdown item index of dropdownItems when navigating with up/down keys
             options: options
         };
 
-        container.appendChild(dropdown);
+        //container.appendChild(dropdown);
 
         AutocompleteController.attachInputTypeEvent(container_id, data_handler, options.ajaxHeaders);
         AutocompleteController.attachInputFocusEvent(container_id);
         AutocompleteController.attachInputOutEvent(container_id);
+        AutocompleteController.attachInputKeydownEvent(container_id);
     },
     get: function get(container_id) {
         return this._autocompleteContainers[container_id];
     },
     setItems: function setItems(container_id, data) {
+
+        //var t0 = performance.now();
+
         var cont = this._autocompleteContainers[container_id];
-        AutocompleteMarkup.removeDropdownItems(cont.dropdown);
-        AutocompleteMarkup.createDropdownItemsFromData(data, function (item) {
+
+        if (cont.dropdown !== null) {
+            AutocompleteMarkup.removeDropdown(cont.dropdown);
+            cont.dropdownItems = [];
+            cont._currentItemIndex = null;
+        }
+
+        var dropdown = AutocompleteMarkup.createEmptyDropdown();
+        AutocompleteDecorator.decorateDropdown(dropdown, cont.options.theme);
+
+        var items_fragment = AutocompleteMarkup.createDropdownItemsFromData(data, function (item, value) {
             AutocompleteDecorator.decorateDropdownItem(item, cont.options.theme);
             cont.dropdownItems.push(item);
-            cont.dropdown.appendChild(item);
+            //cont.dropdown.appendChild(item);
         });
+
+        dropdown.appendChild(items_fragment);
+        cont.dropdown = dropdown;
+        AutocompleteMarkup.insertDropdown(cont.container, dropdown);
+
         AutocompleteController.attachItemSelectEvent(container_id);
+
+        //var t1 = performance.now();
+        //console.log("setItems() call took " + (t1 - t0) + " milliseconds.");
     },
     show: function show(container_id) {
+        this._autocompleteContainers[container_id]._isOpened = true;
         AutocompleteDecorator.showDropdown(this._autocompleteContainers[container_id].container, this._autocompleteContainers[container_id].options.theme);
     },
     hide: function hide(container_id) {
+        this._autocompleteContainers[container_id]._isOpened = false;
         AutocompleteDecorator.hideDropdown(this._autocompleteContainers[container_id].container, this._autocompleteContainers[container_id].options.theme);
+    },
+    isOpened: function isOpened(container_id) {
+        return this._autocompleteContainers[container_id]._isOpened;
     },
     onItemSelect: function onItemSelect(container_id, handler) {
         this._autocompleteContainers[container_id].itemSelectHandlers.push(handler);

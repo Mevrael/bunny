@@ -9,7 +9,7 @@ export var Autocomplete = {
     _options: {
         theme: 'bs4',
         minCharLimit: 2,
-        inputDelay: 300,
+        inputDelay: 200,
         allowCustomInput: false,
         defaultCustomHiddenInputValue: '',
         ajaxHeaders: {},
@@ -57,8 +57,10 @@ export var Autocomplete = {
             default_hidden_value = hidden_input.value;
         }
 
-        var dropdown = AutocompleteMarkup.createEmptyDropdown();
-        AutocompleteDecorator.decorateDropdown(dropdown, options.theme);
+        /*var dropdown = AutocompleteMarkup.createEmptyDropdown();
+        AutocompleteDecorator.decorateDropdown(dropdown, options.theme);*/
+
+        var dropdown = null;
 
         this._autocompleteContainers[container_id] = {
             ajaxUrl: ajax_url,
@@ -73,14 +75,17 @@ export var Autocomplete = {
             dataHandler: data_handler,
             _picked: false, // is picked from list, used in blur (focus out) event
             _onFocusValue: default_value, // value on focus
+            _isOpened: false,
+            _currentItemIndex: null, // currently active dropdown item index of dropdownItems when navigating with up/down keys
             options: options
         };
 
-        container.appendChild(dropdown);
+        //container.appendChild(dropdown);
 
         AutocompleteController.attachInputTypeEvent(container_id, data_handler, options.ajaxHeaders);
         AutocompleteController.attachInputFocusEvent(container_id);
         AutocompleteController.attachInputOutEvent(container_id);
+        AutocompleteController.attachInputKeydownEvent(container_id);
 
     },
 
@@ -89,24 +94,51 @@ export var Autocomplete = {
     },
 
     setItems(container_id, data) {
+
+        //var t0 = performance.now();
+
         var cont = this._autocompleteContainers[container_id];
-        AutocompleteMarkup.removeDropdownItems(cont.dropdown);
-        AutocompleteMarkup.createDropdownItemsFromData(data, function(item) {
+
+        if (cont.dropdown !== null) {
+            AutocompleteMarkup.removeDropdown(cont.dropdown);
+            cont.dropdownItems = [];
+            cont._currentItemIndex = null;
+        }
+
+        var dropdown = AutocompleteMarkup.createEmptyDropdown();
+        AutocompleteDecorator.decorateDropdown(dropdown, cont.options.theme);
+
+        var items_fragment = AutocompleteMarkup.createDropdownItemsFromData(data, function(item, value) {
             AutocompleteDecorator.decorateDropdownItem(item, cont.options.theme);
             cont.dropdownItems.push(item);
-            cont.dropdown.appendChild(item);
+            //cont.dropdown.appendChild(item);
         });
+
+        dropdown.appendChild(items_fragment);
+        cont.dropdown = dropdown;
+        AutocompleteMarkup.insertDropdown(cont.container, dropdown);
+
         AutocompleteController.attachItemSelectEvent(container_id);
+
+        //var t1 = performance.now();
+        //console.log("setItems() call took " + (t1 - t0) + " milliseconds.");
+
     },
 
     show(container_id) {
+        this._autocompleteContainers[container_id]._isOpened = true;
         AutocompleteDecorator.showDropdown(this._autocompleteContainers[container_id].container,
             this._autocompleteContainers[container_id].options.theme);
     },
 
     hide(container_id) {
+        this._autocompleteContainers[container_id]._isOpened = false;
         AutocompleteDecorator.hideDropdown(this._autocompleteContainers[container_id].container,
             this._autocompleteContainers[container_id].options.theme);
+    },
+
+    isOpened(container_id) {
+        return this._autocompleteContainers[container_id]._isOpened;
     },
 
     onItemSelect(container_id, handler) {

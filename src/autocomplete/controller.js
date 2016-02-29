@@ -72,29 +72,82 @@ export var AutocompleteController = {
                 }
                 ac._picked = false;
                 Autocomplete.hide(container_id);
-            }, 100);
+            }, 150);
         });
     },
 
     attachItemSelectEvent(container_id) {
         var ac = Autocomplete.get(container_id);
+        var self = this;
         for (var k = 0; k < ac.dropdownItems.length; k++) {
             ac.dropdownItems[k].addEventListener('click', function() {
-                var attr_val = this.getAttribute('value');
-                if (attr_val === null) {
-                    attr_val = this.innerHTML;
-                }
-                ac._picked = true;
-                Autocomplete.hide(container_id);
-                ac.input.value = this.innerHTML;
-                if (ac.hiddenInput !== null) {
-                    ac.hiddenInput.value = attr_val;
-                }
-                for (var i = 0; i < ac.itemSelectHandlers.length; i++) {
-                    ac.itemSelectHandlers[i](attr_val, this.innerHTML);
-                }
+                self.selectItem(container_id, this);
             });
         }
+    },
+
+    selectItem(container_id, item_el) {
+        var ac = Autocomplete.get(container_id);
+        var attr_val = item_el.getAttribute('value');
+        if (attr_val === null) {
+            attr_val = item_el.innerHTML;
+        }
+        ac._picked = true;
+        Autocomplete.hide(container_id);
+        ac.input.value = item_el.innerHTML;
+        if (ac.hiddenInput !== null) {
+            ac.hiddenInput.value = attr_val;
+        }
+        for (var i = 0; i < ac.itemSelectHandlers.length; i++) {
+            ac.itemSelectHandlers[i](attr_val, item_el.innerHTML);
+        }
+
+        document.activeElement.blur();
+    },
+
+    attachInputKeydownEvent(container_id) {
+        var ac = Autocomplete.get(container_id);
+        var self = this;
+        ac.input.addEventListener('keydown', function(e) {
+            var c = e.keyCode;
+
+            // If the dropdown `ul` is in view, then act on keydown for the following keys:
+            // Enter / Esc / Up / Down
+            if(Autocomplete.isOpened(container_id)) {
+                if (c === 9) { // tab
+                    if (ac._currentItemIndex === null) {
+                        self.selectItem(container_id, ac.dropdownItems[0]);
+                    } else {
+                        self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
+                    }
+                } else if (c === 13) { // Enter
+                    if (ac._currentItemIndex !== null) {
+                        self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
+                    }
+                } else if (c === 27) { // Esc
+                    document.activeElement.blur();
+                } else if (c === 38) { // up
+                    if (ac._currentItemIndex !== null && ac._currentItemIndex > 0) {
+                        ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                        ac._currentItemIndex -= 1;
+                        ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                        ac.dropdownItems[ac._currentItemIndex].scrollIntoView(false);
+                    }
+                } else if (c === 40) { // down
+                    if (ac._currentItemIndex === null) {
+                        ac._currentItemIndex = 0;
+                        ac.dropdownItems[0].classList.toggle('active');
+                    } else {
+                        if (ac._currentItemIndex + 1 < ac.dropdownItems.length) {
+                            ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                            ac._currentItemIndex += 1;
+                            ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
+                            ac.dropdownItems[ac._currentItemIndex].scrollIntoView(false);
+                        }
+                    }
+                }
+            }
+        });
     }
 
 };

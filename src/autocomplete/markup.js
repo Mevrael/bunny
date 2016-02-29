@@ -7,25 +7,37 @@ export var AutocompleteMarkup = {
     },
 
     createDropdownItem(value, content) {
-        var item = document.createElement('div');
+        var item = document.createElement('button');
+        item.setAttribute('type', 'button');
         item.setAttribute('value', value);
-        item.innerHTML = content;
+        item.textContent = content;
         return item;
     },
 
     createDropdownItemsFromData(data, callback = null) {
+        var fragment = document.createDocumentFragment();
         for (var key in data) {
             var item = this.createDropdownItem(key, data[key]);
             if (callback !== null) {
                 callback(item, key, data[key]);
             }
+            fragment.appendChild(item);
+        }
+        return fragment;
+    },
+
+    removeDropdown(dropdown) {
+        /*while (dropdown.firstChild) {
+            dropdown.removeChild(dropdown.firstChild);
+        }*/
+        if (dropdown.parentNode !== null) {
+            dropdown.parentNode.removeChild(dropdown);
         }
     },
 
-    removeDropdownItems(dropdown) {
-        while (dropdown.firstChild) {
-            dropdown.removeChild(dropdown.firstChild);
-        }
+    insertDropdown(container, dropdown) {
+        var el = container.querySelector('[name]');
+        el.parentNode.insertBefore(dropdown, el.nextSibling);
     }
 
 };

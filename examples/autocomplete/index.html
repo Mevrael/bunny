@@ -22,9 +22,11 @@
 
         <h1>BunnyJS Autocomplete example</h1>
 
-        <fieldset id="country_autocomplete" class="form-group dropdown">
+        <fieldset class="form-group">
             <label for="country">Country</label>
-            <input type="text" class="form-control" id="country" name="country">
+            <div id="country_autocomplete" class="dropdown">
+                <input type="text" class="form-control" id="country" name="country">
+            </div>
             <small class="text-muted">Start typing country to get autocomplete.</small>
         </fieldset>
         <input type="text" id="country_id" name="country"><br>
