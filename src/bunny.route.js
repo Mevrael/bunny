@@ -47,15 +47,24 @@ export var Route = {
 
     /**
      * Define new route
-     * @param uri
-     * @param callback
+     * If it is required to set route handler as an object method not a closure/function
+     * and set 'this' keyword to reference the correct object
+     * pass object to 2nd argument and method name as a string to 3rd argument
+     * Or use Route.get(uri, Object.method.bind(Object))
+     *
+     * @param {string} uri
+     * @param {callback} callback
+     * @param {string|null} method = null
      * @returns {boolean}
      */
-    get: function(uri, callback) {
+    get: function(uri, callback, method = null) {
 
         var route = this.defined(uri);
         if (route === false) {
-            this._routes[uri] = callback;
+            this._routes[uri] = {
+                handler: callback,
+                method: method
+            }
         } else {
             console.error('Route "' + uri + '" already defined.');
             return false;
@@ -91,7 +100,16 @@ export var Route = {
     call: function(uri) {
         var route = this.defined(uri);
         if (route !== false) {
-            this._routes[route](this.params(route))
+
+            if (this._routes[route].method === null) {
+                var f = this._routes[route].handler.bind(this._routes[route].handler);
+                f();
+            } else {
+                var Obj = this._routes[route].handler;
+                var method = this._routes[route].method;
+                Obj[method](this.params(route));
+            }
+
         } else {
             console.error('Route "' + uri + '" is not defined.');
             return false;
