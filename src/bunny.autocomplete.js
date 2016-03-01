@@ -49,6 +49,9 @@ export var Autocomplete = {
         var input = document.getElementById(input_id);
 
         var default_value = input.getAttribute('value');
+        if (default_value === null) {
+            default_value = '';
+        }
 
         var hidden_input = document.getElementById(hidden_input_id);
 

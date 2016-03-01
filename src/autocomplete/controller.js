@@ -45,6 +45,7 @@ export var AutocompleteController = {
     attachInputFocusEvent(container_id) {
         var ac = Autocomplete.get(container_id);
         ac.input.addEventListener('focus', function(e) {
+            ac._picked = false;
             ac._valueOnFocus = this.value;
         });
     },
@@ -69,9 +70,10 @@ export var AutocompleteController = {
                             Autocomplete.restoreDefaultValue(container_id);
                         }
                     }
+                    // hide dropdown
+                    Autocomplete.hide(container_id);
                 }
                 ac._picked = false;
-                Autocomplete.hide(container_id);
             }, 150);
         });
     },
@@ -80,8 +82,11 @@ export var AutocompleteController = {
         var ac = Autocomplete.get(container_id);
         var self = this;
         for (var k = 0; k < ac.dropdownItems.length; k++) {
-            ac.dropdownItems[k].addEventListener('click', function() {
-                self.selectItem(container_id, this);
+            ac.dropdownItems[k].addEventListener('mousedown', function(e) {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    self.selectItem(container_id, this);
+                }
             });
         }
     },
@@ -101,8 +106,6 @@ export var AutocompleteController = {
         for (var i = 0; i < ac.itemSelectHandlers.length; i++) {
             ac.itemSelectHandlers[i](attr_val, item_el.innerHTML);
         }
-
-        document.activeElement.blur();
     },
 
     attachInputKeydownEvent(container_id) {
@@ -111,8 +114,6 @@ export var AutocompleteController = {
         ac.input.addEventListener('keydown', function(e) {
             var c = e.keyCode;
 
-            // If the dropdown `ul` is in view, then act on keydown for the following keys:
-            // Enter / Esc / Up / Down
             if(Autocomplete.isOpened(container_id)) {
                 if (c === 9) { // tab
                     if (ac._currentItemIndex === null) {
@@ -125,7 +126,9 @@ export var AutocompleteController = {
                         self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
                     }
                 } else if (c === 27) { // Esc
-                    document.activeElement.blur();
+                    Autocomplete.restoreDefaultValue(container_id);
+                    Autocomplete.hide(container_id);
+                    e.preventDefault();
                 } else if (c === 38) { // up
                     if (ac._currentItemIndex !== null && ac._currentItemIndex > 0) {
                         ac.dropdownItems[ac._currentItemIndex].classList.toggle('active');
