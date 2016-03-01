@@ -214,6 +214,9 @@ export var Validate = {
         }
         var input = form_group.querySelector('[name]');
         var label = form_group.getElementsByTagName('label')[0];
+        if (label === undefined) {
+            label = null;
+        }
         return {
             formGroup: form_group,
             input: input,
@@ -251,8 +254,17 @@ export var Validate = {
 
         if (!valid) {
             // form_input is NOT valid
+            var input_title = '';
+            if (label === null) {
+                var placeholder = input.getAttribute('placeholder');
+                if (placeholder !== null) {
+                    input_title = placeholder;
+                }
+            } else {
+                input_title = label.innerHTML;
+            }
 
-            msg = this.lang[validator].replace('%s', label.innerHTML);
+            msg = this.lang[validator].replace('%s', input_title);
             for (var d in validator_data) {
                 msg = msg.replace('%'+d, validator_data[d]);
             }
