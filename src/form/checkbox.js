@@ -1,5 +1,5 @@
 
-var Checkbox = {
+export var Checkbox = {
 
     create(container_class, custom_checkbox_class, checked_class) {
         document.getElementsByClassName(container_class).forEach((container) => {
