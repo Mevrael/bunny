@@ -122,7 +122,6 @@ var Ajax = {
         var headers = arguments.length <= 5 || arguments[5] === undefined ? {} : arguments[5];
         var do_send = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
 
-
         var t = Object.create(this);
         t.method = method;
         t.url = url;
@@ -152,7 +151,6 @@ var Ajax = {
         return t;
     },
 
-
     /**
      * Should be called on instance created with factory Ajax.create() method
      * Opens request, applies headers, builds data URL encoded string and sends request
@@ -171,7 +169,6 @@ var Ajax = {
         }
         this.request.send(str_data);
     },
-
 
     /**
      * Sends a form via ajax POST with header Content-Type: application/x-www-form-urlencoded
@@ -193,7 +190,6 @@ var Ajax = {
         this.create('POST', form_el.getAttribute('action'), data, on_success, on_error, headers, true);
     },
 
-
     /**
      * Sends a form via ajax POST with header Content-Type: multipart/form-data which is required for file uploading
      * Data is automatically taken form all form input values
@@ -209,7 +205,6 @@ var Ajax = {
 
         this.sendForm(form_el, on_success, on_error, headers);
     },
-
 
     /**
      * Sends a simple GET request. By default adds header X-Requested-With: XMLHttpRequest
@@ -273,6 +268,7 @@ var AutocompleteController = {
     attachInputFocusEvent: function attachInputFocusEvent(container_id) {
         var ac = Autocomplete.get(container_id);
         ac.input.addEventListener('focus', function (e) {
+            ac._picked = false;
             ac._valueOnFocus = this.value;
         });
     },
@@ -296,9 +292,10 @@ var AutocompleteController = {
                             Autocomplete.restoreDefaultValue(container_id);
                         }
                     }
+                    // hide dropdown
+                    Autocomplete.hide(container_id);
                 }
                 ac._picked = false;
-                Autocomplete.hide(container_id);
             }, 150);
         });
     },
@@ -306,8 +303,11 @@ var AutocompleteController = {
         var ac = Autocomplete.get(container_id);
         var self = this;
         for (var k = 0; k < ac.dropdownItems.length; k++) {
-            ac.dropdownItems[k].addEventListener('click', function () {
-                self.selectItem(container_id, this);
+            ac.dropdownItems[k].addEventListener('mousedown', function (e) {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    self.selectItem(container_id, this);
+                }
             });
         }
     },
@@ -326,8 +326,6 @@ var AutocompleteController = {
         for (var i = 0; i < ac.itemSelectHandlers.length; i++) {
             ac.itemSelectHandlers[i](attr_val, item_el.innerHTML);
         }
-
-        document.activeElement.blur();
     },
     attachInputKeydownEvent: function attachInputKeydownEvent(container_id) {
         var ac = Autocomplete.get(container_id);
@@ -335,8 +333,6 @@ var AutocompleteController = {
         ac.input.addEventListener('keydown', function (e) {
             var c = e.keyCode;
 
-            // If the dropdown `ul` is in view, then act on keydown for the following keys:
-            // Enter / Esc / Up / Down
             if (Autocomplete.isOpened(container_id)) {
                 if (c === 9) {
                     // tab
@@ -352,7 +348,9 @@ var AutocompleteController = {
                     }
                 } else if (c === 27) {
                     // Esc
-                    document.activeElement.blur();
+                    Autocomplete.restoreDefaultValue(container_id);
+                    Autocomplete.hide(container_id);
+                    e.preventDefault();
                 } else if (c === 38) {
                     // up
                     if (ac._currentItemIndex !== null && ac._currentItemIndex > 0) {
@@ -404,7 +402,6 @@ var Autocomplete = {
         var data_handler = arguments.length <= 3 || arguments[3] === undefined ? JSON.parse : arguments[3];
         var options = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
 
-
         for (var i in this._options) {
             if (options[i] === undefined) {
                 options[i] = this._options[i];
@@ -428,6 +425,9 @@ var Autocomplete = {
         var input = document.getElementById(input_id);
 
         var default_value = input.getAttribute('value');
+        if (default_value === null) {
+            default_value = '';
+        }
 
         var hidden_input = document.getElementById(hidden_input_id);
 
@@ -515,6 +515,7 @@ var Autocomplete = {
     },
     restoreDefaultValue: function restoreDefaultValue(container_id) {
         var ac = this.get(container_id);
+        console.log(this.get(container_id).defaultValue);
         ac.input.value = this.get(container_id).defaultValue;
         if (ac.defaultHiddenValue !== null) {
             ac.hiddenInput.value = ac.defaultHiddenValue;
