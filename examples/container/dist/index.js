@@ -34,6 +34,7 @@ var Container = {
         return this._bindings[service_name] !== undefined;
     },
 
+
     getRegisteredBindings: function getRegisteredBindings() {
         var a = [];
         for (var key in this._bindings) {
