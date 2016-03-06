@@ -36,7 +36,7 @@ export var AutocompleteMarkup = {
     },
 
     insertDropdown(container, dropdown) {
-        var el = container.querySelector('[name]');
+        var el = container.getElementsByTagName('input')[0];
         el.parentNode.insertBefore(dropdown, el.nextSibling);
     }
 
