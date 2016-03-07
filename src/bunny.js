@@ -24,7 +24,12 @@ Object.create = function(proto, propertiesObject = null) {
     for (let k = 0; k < properties.length; k++) {
         let property_name = properties[k];
         if (typeof proto[property_name] === 'object') {
-            o[property_name] = Object.create(proto[property_name]);
+            if (proto[property_name].nodeType && 'cloneNode' in proto[property_name]) {
+                // DOM element
+                o[property_name] = proto[property_name];
+            } else {
+                o[property_name] = Object.create(proto[property_name]);
+            }
         } else {
             o[property_name] = proto[property_name];
         }
