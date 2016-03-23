@@ -1,21 +1,25 @@
 
 document.getElementsByClassName('dropdown').forEach((dropdown) => {
 
-    let toggle_btn = dropdown.getElementsByClassName('dropdown-toggle')[0];
+    const toggle_btn = dropdown.getElementsByClassName('dropdown-toggle')[0];
 
     if (toggle_btn !== undefined) {
-        
+
         if (toggle_btn.getAttribute('data-close-inside') === 'false') {
-            let dropdown_menu = dropdown.getElementsByClassName('dropdown-menu')[0];
+            const dropdown_menu = dropdown.getElementsByClassName('dropdown-menu')[0];
             dropdown_menu.addEventListener('click', (e) => {
                 e.stopPropagation();
             })
         }
 
-        let body_handler = () => {
+        const close_event = new Event('close');
+        const open_event = new Event('open');
+
+        const body_handler = () => {
             if (dropdown.classList.contains('open')) {
                 dropdown.classList.remove('open');
                 document.body.removeEventListener('click', body_handler);
+                toggle_btn.dispatchEvent(close_event);
             }
         };
 
@@ -24,10 +28,35 @@ document.getElementsByClassName('dropdown').forEach((dropdown) => {
             if (!dropdown.classList.contains('open')) {
                 dropdown.classList.add('open');
                 document.body.addEventListener('click', body_handler);
+                toggle_btn.dispatchEvent(open_event);
             } else {
                 dropdown.classList.remove('open');
+                toggle_btn.dispatchEvent(close_event);
             }
         });
+
+        toggle_btn.close = function() {
+            dropdown.classList.remove('open');
+            document.body.removeEventListener('click', body_handler);
+            toggle_btn.dispatchEvent(close_event);
+        };
+
+        toggle_btn.open = function() {
+            dropdown.classList.add('open');
+            document.body.addEventListener('click', body_handler);
+            toggle_btn.dispatchEvent(open_event);
+        };
+
+        toggle_btn.toggle = function() {
+            if (!dropdown.classList.contains('open')) {
+                dropdown.classList.add('open');
+                document.body.addEventListener('click', body_handler);
+                toggle_btn.dispatchEvent(open_event);
+            } else {
+                dropdown.classList.remove('open');
+                toggle_btn.dispatchEvent(close_event);
+            }
+        };
 
     }
 
