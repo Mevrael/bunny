@@ -12,8 +12,8 @@ document.getElementsByClassName('dropdown').forEach((dropdown) => {
             })
         }
 
-        const close_event = new Event('close');
-        const open_event = new Event('open');
+        const close_event = new CustomEvent('close');
+        const open_event = new CustomEvent('open');
 
         const body_handler = () => {
             if (dropdown.classList.contains('open')) {
