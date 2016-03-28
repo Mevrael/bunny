@@ -1,4 +1,9 @@
 # BunnyJS v 0.7.3
+
+[![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs)
+
+For help & ideas - [DM me on Twitter](https://twitter.com/Mevrael)
+
 Lightweight native JavaScript and ECMAScript 6 library and next generation front-end framework. BunnyJS is package of small stand-alone components without dependencies:
 
 1. Native lightweight javascript [Inversion of control](http://www.wikiwand.com/en/Inversion_of_control)
