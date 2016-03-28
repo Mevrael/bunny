@@ -1,8 +1,9 @@
-# BunnyJS v 0.7.3
+# BunnyJS v 0.7.10
 
 [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs)
 
 For help & ideas - [DM me on Twitter](https://twitter.com/Mevrael)
+
 
 Lightweight native JavaScript and ECMAScript 6 library and next generation front-end framework. BunnyJS is package of small stand-alone components without dependencies:
 
@@ -14,7 +15,7 @@ Lightweight native JavaScript and ECMAScript 6 library and next generation front
 6. Native lightweight javascript DataTable
 7. Native lightweight javascript Calendar
 8. Native lightweight javascript DatePicker
-9. Native lightweight javascript Autocomplete
+9. Native lightweight javascript Autocomplete, Dropdown
 10. Native lightweight javascript remote file upload from URL, image preview
 
 Designed in mind for best compatability with Laravel 5 and Bootstrap 4, however can be used anywhere.

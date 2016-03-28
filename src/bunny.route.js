@@ -124,7 +124,7 @@ export var Route = {
     to: function(uri) {
         if (this.defined(uri)) {
             history.pushState(null, null, uri);
-            var event = new Event('onRouteChange');
+            var event = new CustomEvent('onRouteChange');
             event.route = uri;
             document.dispatchEvent(event, uri);
         } else {

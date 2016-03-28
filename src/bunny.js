@@ -23,9 +23,24 @@ Object.create = function(proto, propertiesObject = null) {
     let properties = Object.keys(proto);
     for (let k = 0; k < properties.length; k++) {
         let property_name = properties[k];
-        if (typeof proto[property_name] === 'object') {
+
+        if(!proto[property_name] || typeof proto[property_name] !== "object" || Object.prototype.toString.call(proto[property_name]) === "[object Function]") {
+            // null, undefined, any non-object, or function
+            o[property_name] = proto[property_name];// anything
+        } else if (proto[property_name].nodeType && "cloneNode" in proto[property_name]){
+            // DOM Node
+            o[property_name] = proto[property_name];
+        } else if(proto[property_name] instanceof Date){
+            // Date
+            o[property_name] = new Date(proto[property_name].getTime());
+        } else if(proto[property_name] instanceof RegExp){
+            // RegExp
+            o[property_name] = new RegExp(proto[property_name]);
+        } else if (typeof proto[property_name] === 'object') {
+            // generic objects
             o[property_name] = Object.create(proto[property_name]);
         } else {
+            // not an object, just copy value
             o[property_name] = proto[property_name];
         }
     }
@@ -34,3 +49,22 @@ Object.create = function(proto, propertiesObject = null) {
     }
     return o;
 };
+
+/**
+ * CustomEvent polyfill for IE 11
+ */
+(function () {
+
+    if ( typeof window.CustomEvent === "function" ) return false;
+
+    function CustomEvent ( event, params ) {
+        params = params || { bubbles: false, cancelable: false, detail: undefined };
+        var evt = document.createEvent( 'CustomEvent' );
+        evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+        return evt;
+    }
+
+    CustomEvent.prototype = window.Event.prototype;
+
+    window.CustomEvent = CustomEvent;
+})();
