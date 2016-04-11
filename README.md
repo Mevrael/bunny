@@ -1,4 +1,4 @@
-# BunnyJS v 0.7.10
+# BunnyJS v 0.8.0
 
 [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs)
 
@@ -17,6 +17,7 @@ Lightweight native JavaScript and ECMAScript 6 library and next generation front
 8. Native lightweight javascript DatePicker
 9. Native lightweight javascript Autocomplete, Dropdown
 10. Native lightweight javascript remote file upload from URL, image preview
+11. Native lightweight javascript Element, positions, coordinates, smooth scrolling
 
 Designed in mind for best compatability with Laravel 5 and Bootstrap 4, however can be used anywhere.
 
