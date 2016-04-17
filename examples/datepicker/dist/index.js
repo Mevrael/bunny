@@ -1,5 +1,4 @@
-
-export var CalendarDate = {
+var CalendarDate = {
 
     /**
      * Get number of days in month of year
@@ -7,16 +6,16 @@ export var CalendarDate = {
      * @param  month_index (0-11)
      * @returns  {number} 28-31
      */
-    getDaysInMonth: function(year, month_index) {
-        return new Date(year, month_index+1, 0).getDate();
+    getDaysInMonth: function getDaysInMonth(year, month_index) {
+        return new Date(year, month_index + 1, 0).getDate();
     },
 
-    getWeeksInMonth: function(year, month_index) {
+    getWeeksInMonth: function getWeeksInMonth(year, month_index) {
         if (this.getDayOfWeekOfFirstMonthDay(year, month_index) === 0 && this.getDaysInMonth(year, month_index) === 28) {
             return 4; // only in February with 28 days when monday is February 1st are 4 weeks
         } else {
-            return 5;
-        }
+                return 5;
+            }
     },
 
     /**
@@ -25,12 +24,12 @@ export var CalendarDate = {
      * @param  month_index (0-11)
      * @returns  {number} day of week index - 0 (monday) - 6 (sunday)
      */
-    getDayOfWeekOfFirstMonthDay(year, month_index) {
+    getDayOfWeekOfFirstMonthDay: function getDayOfWeekOfFirstMonthDay(year, month_index) {
         var d = new Date(year, month_index).getDay();
         if (d === 0) {
             d = 7;
         }
-        return d-1;
+        return d - 1;
     },
 
     /**
@@ -41,7 +40,7 @@ export var CalendarDate = {
      * @param  month_index
      * @returns  {Array} - 2D array
      */
-    getMonthMatrix(year, month_index) {
+    getMonthMatrix: function getMonthMatrix(year, month_index) {
         var first_day_of_week = this.getDayOfWeekOfFirstMonthDay(year, month_index);
         var days_in_month = this.getDaysInMonth(year, month_index);
         var weeks_in_month = this.getWeeksInMonth(year, month_index);
@@ -77,8 +76,7 @@ export var CalendarDate = {
         }
         return matrix;
     },
-
-    getCurrentDate() {
+    getCurrentDate: function getCurrentDate() {
         var date = new Date();
         var year = date.getUTCFullYear();
         var month_index = date.getUTCMonth();
@@ -87,18 +85,18 @@ export var CalendarDate = {
             year: year,
             monthIndex: month_index,
             day: day
-        }
+        };
     }
 };
 
-export var CalendarMarkup = {
+var CalendarMarkup = {
 
     lang: {
         daysOfWeeks: ['Mon', 'Thu', 'Wed', 'Thr', 'Fri', 'Sat', 'Sun'],
-        months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+        months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     },
 
-    createTableHead: function() {
+    createTableHead: function createTableHead() {
         var thead = document.createElement('div');
         var tr = document.createElement('div');
         var th_collection = [];
@@ -106,17 +104,18 @@ export var CalendarMarkup = {
             var th = document.createElement('div');
             th.innerHTML = this.lang.daysOfWeeks[k];
             th_collection.push(th);
-            tr.appendChild(th)
+            tr.appendChild(th);
         }
         thead.appendChild(tr);
         return {
             thead: thead,
             row: tr,
             thCollection: th_collection
-        }
+        };
     },
 
-    createTableBody: function(year, month_index, current_day = null) {
+    createTableBody: function createTableBody(year, month_index) {
+        var current_day = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
         var matrix = CalendarDate.getMonthMatrix(year, month_index);
 
@@ -160,24 +159,30 @@ export var CalendarMarkup = {
         };
     },
 
-    createEmptyTable: function() {
+    createEmptyTable: function createEmptyTable() {
         var table = document.createElement('div');
         return table;
     },
 
-    createPrevButton: function(content = '') {
+    createPrevButton: function createPrevButton() {
+        var content = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+
         var el = document.createElement('div');
         el.innerHTML = content;
         return el;
     },
 
-    createNextButton: function(content = '') {
+    createNextButton: function createNextButton() {
+        var content = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+
         var el = document.createElement('div');
         el.innerHTML = content;
         return el;
     },
 
-    createMonthSelect: function(selected_month_index = 0) {
+    createMonthSelect: function createMonthSelect() {
+        var selected_month_index = arguments.length <= 0 || arguments[0] === undefined ? 0 : arguments[0];
+
         var select = document.createElement('select');
         for (var month_index = 0; month_index < this.lang.months.length; month_index++) {
             var option = document.createElement('option');
@@ -191,7 +196,11 @@ export var CalendarMarkup = {
         return select;
     },
 
-    createYearSelect: function(selected_year = 2000, min_year = 1950, max_year = 2050) {
+    createYearSelect: function createYearSelect() {
+        var selected_year = arguments.length <= 0 || arguments[0] === undefined ? 2000 : arguments[0];
+        var min_year = arguments.length <= 1 || arguments[1] === undefined ? 1950 : arguments[1];
+        var max_year = arguments.length <= 2 || arguments[2] === undefined ? 2050 : arguments[2];
+
         var select = document.createElement('select');
         for (var i = min_year; i <= max_year; i++) {
             var option = document.createElement('option');
@@ -205,18 +214,18 @@ export var CalendarMarkup = {
         return select;
     },
 
-    createEmptyHeader: function() {
+    createEmptyHeader: function createEmptyHeader() {
         var header = document.createElement('header');
         return header;
     },
 
-    createEmptyCalendar: function() {
+    createEmptyCalendar: function createEmptyCalendar() {
         var calendar = document.createElement('calendar');
         return calendar;
     }
 };
 
-export var CalendarDecorator = {
+var CalendarDecorator = {
     theme: {
         def: {
             classPrefix: 'bny-',
@@ -244,11 +253,13 @@ export var CalendarDecorator = {
         }
     },
 
-    buildClass: function(classProperty, theme = 'def') {
+    buildClass: function buildClass(classProperty) {
+        var theme = arguments.length <= 1 || arguments[1] === undefined ? 'def' : arguments[1];
+
         return this.theme[theme].classPrefix + this.theme[theme][classProperty + 'Class'];
     },
 
-    decorateTableHead: function(thead, row, th_collection) {
+    decorateTableHead: function decorateTableHead(thead, row, th_collection) {
         thead.classList.add(this.buildClass('tableHead'));
         row.classList.add(this.buildClass('tableRow'));
         for (var k = 0; k < th_collection.length; k++) {
@@ -256,7 +267,7 @@ export var CalendarDecorator = {
         }
     },
 
-    decorateTableBody: function(tbody, row_collection, td_collection, inactive_td_collection, current_td, current_date_td) {
+    decorateTableBody: function decorateTableBody(tbody, row_collection, td_collection, inactive_td_collection, current_td, current_date_td) {
         tbody.classList.add(this.buildClass('tableBody'));
         for (var k = 0; k < row_collection.length; k++) {
             row_collection[k].classList.add(this.buildClass('tableRow'));
@@ -276,7 +287,7 @@ export var CalendarDecorator = {
         }
     },
 
-    setCurrentDay: function(td_collection, day) {
+    setCurrentDay: function setCurrentDay(td_collection, day) {
         for (var k = 0; k < td_collection.length; k++) {
             if (td_collection[k].innerHTML == day) {
                 td_collection[k].classList.add(this.buildClass('dayCurrent'));
@@ -286,70 +297,69 @@ export var CalendarDecorator = {
         }
     },
 
-    decorateTable: function(table) {
+    decorateTable: function decorateTable(table) {
         table.classList.add(this.buildClass('table'));
     },
 
-    decoratePrevButton: function(prev_button) {
+    decoratePrevButton: function decoratePrevButton(prev_button) {
         prev_button.classList.add(this.buildClass('prevButton'));
     },
 
-    decorateNextButton: function(next_button) {
+    decorateNextButton: function decorateNextButton(next_button) {
         next_button.classList.add(this.buildClass('nextButton'));
     },
 
-    decorateMonthSelect: function(select) {
+    decorateMonthSelect: function decorateMonthSelect(select) {
         select.classList.add(this.buildClass('month'));
     },
 
-    decorateYearSelect: function(select) {
+    decorateYearSelect: function decorateYearSelect(select) {
         select.classList.add(this.buildClass('year'));
     },
 
-    decorateHeader: function(header) {
+    decorateHeader: function decorateHeader(header) {
         header.classList.add(this.buildClass('header'));
     },
 
-    decorateCalendar: function(calendar) {
+    decorateCalendar: function decorateCalendar(calendar) {
         calendar.classList.add(this.buildClass('calendar'));
     },
 
-    decorateCalendarPopup(calendar) {
+    decorateCalendarPopup: function decorateCalendarPopup(calendar) {
         calendar.classList.add(this.buildClass('popup'));
         document.body.classList.add(this.buildClass('popupBodyFade'));
     },
-
-    undecorateCalendarPopup(calendar) {
+    undecorateCalendarPopup: function undecorateCalendarPopup(calendar) {
         calendar.classList.remove(this.buildClass('popup'));
         document.body.classList.remove(this.buildClass('popupBodyFade'));
     }
 };
 
-export var CalendarController = {
+var CalendarController = {
 
-    attachDayClickEvent: function(calendar_id) {
+    attachDayClickEvent: function attachDayClickEvent(calendar_id) {
         var td_collection = Calendar._calendars[calendar_id].tableBody.tdCollection;
         for (var k = 0; k < td_collection.length; k++) {
-            td_collection[k].addEventListener('click', function() {
+            td_collection[k].addEventListener('click', function () {
                 Calendar.pickDay(calendar_id, Calendar._calendars[calendar_id].displayedYear, Calendar._calendars[calendar_id].displayedMonthIndex, this.innerHTML);
             });
         }
     },
 
-    attachMonthSelectEvent: function(calendar_id) {
-        Calendar._calendars[calendar_id].headerMonthSelect.addEventListener('change', function() {
+    attachMonthSelectEvent: function attachMonthSelectEvent(calendar_id) {
+        Calendar._calendars[calendar_id].headerMonthSelect.addEventListener('change', function () {
             Calendar.changeMonth(calendar_id, Calendar._calendars[calendar_id].displayedYear, this.value);
         });
     },
 
-    attachYearSelectEvent: function(calendar_id) {
-        Calendar._calendars[calendar_id].headerYearSelect.addEventListener('change', function() {
+    attachYearSelectEvent: function attachYearSelectEvent(calendar_id) {
+        Calendar._calendars[calendar_id].headerYearSelect.addEventListener('change', function () {
             Calendar.changeMonth(calendar_id, this.value, Calendar._calendars[calendar_id].displayedMonthIndex);
         });
     },
 
-    attachPrevClickEvent: function(calendar_id) {
-        Calendar._calendars[calendar_id].headerPrevButton.addEventListener('click', function() {
+    attachPrevClickEvent: function attachPrevClickEvent(calendar_id) {
+        Calendar._calendars[calendar_id].headerPrevButton.addEventListener('click', function () {
             if (Calendar._calendars[calendar_id].displayedMonthIndex === 0) {
                 Calendar.changeMonth(calendar_id, Calendar._calendars[calendar_id].displayedYear - 1, 11);
             } else {
@@ -358,8 +368,8 @@ export var CalendarController = {
         });
     },
 
-    attachNextClickEvent: function(calendar_id) {
-        Calendar._calendars[calendar_id].headerNextButton.addEventListener('click', function() {
+    attachNextClickEvent: function attachNextClickEvent(calendar_id) {
+        Calendar._calendars[calendar_id].headerNextButton.addEventListener('click', function () {
             if (Calendar._calendars[calendar_id].displayedMonthIndex === 11) {
                 Calendar.changeMonth(calendar_id, Calendar._calendars[calendar_id].displayedYear + 1, 0);
             } else {
@@ -368,25 +378,31 @@ export var CalendarController = {
         });
     },
 
-    attachCloseOnOutsideClickEvent: function(calendar_id) {
-        document.addEventListener('click', function() {
+    attachCloseOnOutsideClickEvent: function attachCloseOnOutsideClickEvent(calendar_id) {
+        document.addEventListener('click', function () {
             if (!Calendar.isHidden(calendar_id)) {
                 Calendar.hide(calendar_id);
             }
         });
 
-        Calendar.getCalendar(calendar_id).addEventListener('click', function(e) {
+        Calendar.getCalendar(calendar_id).addEventListener('click', function (e) {
             e.stopPropagation();
         });
     }
 
 };
 
-export var Calendar = {
+var Calendar = {
 
     _calendars: {},
 
-    create: function(id = 'datepicker', min_year = 1950, max_year = 2050, year = null, month_index = null, day = null) {
+    create: function create() {
+        var id = arguments.length <= 0 || arguments[0] === undefined ? 'datepicker' : arguments[0];
+        var min_year = arguments.length <= 1 || arguments[1] === undefined ? 1950 : arguments[1];
+        var max_year = arguments.length <= 2 || arguments[2] === undefined ? 2050 : arguments[2];
+        var year = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+        var month_index = arguments.length <= 4 || arguments[4] === undefined ? null : arguments[4];
+        var day = arguments.length <= 5 || arguments[5] === undefined ? null : arguments[5];
 
         var current_date = CalendarDate.getCurrentDate();
 
@@ -430,14 +446,7 @@ export var Calendar = {
         CalendarDecorator.decorateTableHead(table_head.thead, table_head.row, table_head.thCollection);
 
         var table_body = CalendarMarkup.createTableBody(year, month_index, day);
-        CalendarDecorator.decorateTableBody(
-            table_body.tbody,
-            table_body.rowCollection,
-            table_body.tdCollection,
-            table_body.inactiveTdCollection,
-            table_body.currentTd,
-            table_body.currentDateTd
-        );
+        CalendarDecorator.decorateTableBody(table_body.tbody, table_body.rowCollection, table_body.tdCollection, table_body.inactiveTdCollection, table_body.currentTd, table_body.currentDateTd);
 
         table.appendChild(table_head.thead);
         table.appendChild(table_body.tbody);
@@ -478,7 +487,7 @@ export var Calendar = {
         return calendar;
     },
 
-    changeMonth(calendar_id, year, month_index) {
+    changeMonth: function changeMonth(calendar_id, year, month_index) {
         var cal = this._calendars[calendar_id];
         if (year < cal.minYear || year > cal.maxYear) {
             return false;
@@ -490,21 +499,14 @@ export var Calendar = {
         cal.displayedYear = year;
         cal.displayedMonthIndex = month_index;
         var table_body = CalendarMarkup.createTableBody(year, month_index, current_day);
-        CalendarDecorator.decorateTableBody(
-            table_body.tbody,
-            table_body.rowCollection,
-            table_body.tdCollection,
-            table_body.inactiveTdCollection,
-            table_body.currentTd,
-            table_body.currentDateTd
-        );
+        CalendarDecorator.decorateTableBody(table_body.tbody, table_body.rowCollection, table_body.tdCollection, table_body.inactiveTdCollection, table_body.currentTd, table_body.currentDateTd);
 
         cal.tableBody.tbody.parentNode.removeChild(cal.tableBody.tbody);
         cal.tableBody = table_body;
         cal.table.appendChild(table_body.tbody);
 
         cal.headerYearSelect.querySelector('option[selected]').removeAttribute('selected');
-        cal.headerYearSelect.querySelector('option[value="'+year+'"]').setAttribute('selected', 'selected');
+        cal.headerYearSelect.querySelector('option[value="' + year + '"]').setAttribute('selected', 'selected');
         cal.headerYearSelect.value = year;
 
         cal.headerMonthSelect.querySelector('option[selected]').removeAttribute('selected');
@@ -514,7 +516,7 @@ export var Calendar = {
         CalendarController.attachDayClickEvent(calendar_id);
     },
 
-    pickDay: function(calendar_id, year, month_index, day) {
+    pickDay: function pickDay(calendar_id, year, month_index, day) {
         this._calendars[calendar_id].selectedYear = year;
         this._calendars[calendar_id].selectedMonthIndex = month_index;
         this._calendars[calendar_id].selectedDay = day;
@@ -527,29 +529,174 @@ export var Calendar = {
         }
     },
 
-    onPick: function(calendar_id, handler) {
+    onPick: function onPick(calendar_id, handler) {
         this._calendars[calendar_id].onPickHandlers.push(handler);
     },
 
-    getCalendar(calendar_id) {
+    getCalendar: function getCalendar(calendar_id) {
         return this._calendars[calendar_id].calendar;
     },
 
-    show: function(calendar_id, popup = false) {
+    show: function show(calendar_id) {
+        var popup = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
         if (popup) {
-            CalendarDecorator.decorateCalendarPopup(this._calendars[calendar_id].calendar)
+            CalendarDecorator.decorateCalendarPopup(this._calendars[calendar_id].calendar);
         }
         this._calendars[calendar_id].calendar.classList.remove('hidden');
     },
 
-    hide: function(calendar_id, popup = false) {
+    hide: function hide(calendar_id) {
+        var popup = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
         if (popup) {
-            CalendarDecorator.undecorateCalendarPopup(this._calendars[calendar_id].calendar)
+            CalendarDecorator.undecorateCalendarPopup(this._calendars[calendar_id].calendar);
         }
         this._calendars[calendar_id].calendar.classList.add('hidden');
     },
 
-    isHidden: function(calendar_id) {
+    isHidden: function isHidden(calendar_id) {
         return this._calendars[calendar_id].calendar.classList.contains('hidden');
     }
 };
+
+var DatePicker = {
+
+    _pickers: {},
+    _options: {
+        minYear: 1950,
+        maxYear: 2050,
+        popup: false,
+        onlyAsNativeFallback: true
+        //displayFormat: 'd.m.Y',
+        //storeFormat: 'Y-m-d'
+    },
+
+    /**
+     *
+     * @param {string} input_id
+     * @param {object} options
+     */
+    create: function create(input_id) {
+        var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+        for (var k in this._options) {
+            if (options[k] === undefined) options[k] = this._options[k];
+        }
+
+        if (options.onlyAsNativeFallback && this.isNativeDatePickerSupported()) {
+            return 2;
+        }
+
+        var self = this;
+        var input = document.getElementById(input_id);
+        var input_name = input.name;
+        input.id = '_' + input_id;
+        input.name = '_' + input_name;
+        var hidden_input = document.createElement('input');
+        hidden_input.id = input_id;
+        hidden_input.name = input_name;
+        hidden_input.type = 'hidden';
+        input.parentNode.insertBefore(hidden_input, input.nextSibling);
+
+        var calendar_id = input_id + '_calendar';
+        console.log(hidden_input.value);
+        if (input.value !== '') {
+            hidden_input.value = self.getSqlDateFromEuropeanDate(input.value);
+            var date_parts = this.getDatePartsFromISODate(hidden_input.value);
+            console.log(date_parts);
+            Calendar.create(calendar_id, options.minYear, options.maxYear, date_parts.year, date_parts.monthIndex, date_parts.day);
+        } else {
+            Calendar.create(calendar_id, options.minYear, options.maxYear);
+        }
+
+        Calendar.hide(calendar_id, options.popup);
+
+        Calendar.onPick(calendar_id, function (year, month, day) {
+            hidden_input.value = self.getSqlDateFromDateParts(year, month - 1, day);
+            input.value = self.getEuropeanDateFromDateParts(year, month - 1, day);
+            Calendar.hide(calendar_id, options.popup);
+        });
+
+        input.addEventListener('focus', function () {
+            Calendar.show(calendar_id, options.popup);
+        });
+
+        input.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        input.parentNode.insertBefore(Calendar.getCalendar(calendar_id), input.nextSibling);
+
+        this._pickers[input_id] = {
+            input: input,
+            options: options
+        };
+
+        return 1;
+    },
+    twoDigits: function twoDigits(num) {
+        if (num < 10) {
+            return '0' + num;
+        }
+        return num;
+    },
+    getDatePartsFromISODate: function getDatePartsFromISODate(iso_date_str) {
+        var date = new Date(iso_date_str);
+        return {
+            year: date.getUTCFullYear(),
+            monthIndex: date.getUTCMonth(),
+            month: date.getUTCMonth() + 1,
+            monthStr: this.twoDigits(date.getUTCMonth() + 1),
+            day: date.getUTCDate(),
+            dayStr: this.twoDigits(date.getUTCDate())
+        };
+    },
+    getISODateFromDateParts: function getISODateFromDateParts(year, month_index, day) {
+        var month = parseInt(month_index) + 1;
+        var _month = this.twoDigits(month);
+        var _day = this.twoDigits(day);
+        return year + '-' + _month + '-' + _day;
+    },
+    getSqlDateFromISODate: function getSqlDateFromISODate(iso_date_str) {
+        return iso_date_str;
+    },
+    getSqlDateFromDateParts: function getSqlDateFromDateParts(year, month_index, day) {
+        return this.getISODateFromDateParts(year, month_index, day);
+    },
+    getSqlDateFromEuropeanDate: function getSqlDateFromEuropeanDate(eu_date) {
+        if (/\d{2}(\.)\d{2}(\.)\d{4}/.test(eu_date)) {
+            var parts = eu_date.split('.');
+            return parts[2] + '-' + parts[1] + '-' + parts[0];
+        } else {
+            return '';
+        }
+    },
+    getEuropeanDateFromSqlDate: function getEuropeanDateFromSqlDate(sql_date) {
+        if (/\d{4}(\-)\d{2}(\-)\d{2}/.test(sql_date)) {
+            var parts = sql_date.split('-');
+            return parts[2] + '.' + parts[1] + '.' + parts[0];
+        } else {
+            return '';
+        }
+    },
+    getEuropeanDateFromISODate: function getEuropeanDateFromISODate(iso_date_str) {
+        var parts = this.getDatePartsFromISODate(iso_date_str);
+        return parts.dayStr + '.' + parts.monthStr + '.' + parts.year;
+    },
+    getEuropeanDateFromDateParts: function getEuropeanDateFromDateParts(year, month_index, day) {
+        var month = parseInt(month_index) + 1;
+        var _month = this.twoDigits(month);
+        var _day = this.twoDigits(day);
+        return _day + '.' + _month + '.' + year;
+    },
+    isNativeDatePickerSupported: function isNativeDatePickerSupported() {
+        var input = document.createElement('input');
+        input.setAttribute('type', 'date');
+        var notADateValue = 'not-a-date';
+        input.setAttribute('value', notADateValue);
+        return input.value !== notADateValue;
+    }
+};
+
+DatePicker.create('datepicker');

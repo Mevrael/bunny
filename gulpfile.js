@@ -2,11 +2,13 @@
 var gulp       = require('gulp'),
     rollup     = require('gulp-rollup'),
     //sourcemaps = require('gulp-sourcemaps'),
-    babel      = require('rollup-plugin-babel');
+    babel      = require('rollup-plugin-babel'),
+    sass       = require('gulp-sass');
 
 var examples = [
     'container',
-    'autocomplete'
+    'autocomplete',
+    'datepicker'
 ];
 
 gulp.task('default', function(){
@@ -26,4 +28,10 @@ gulp.task('default', function(){
 
     build_examples();
 
+});
+
+gulp.task('sass', function () {
+    return gulp.src('scss/calendar.scss')
+        .pipe(sass().on('error', sass.logError))
+        .pipe(gulp.dest('examples/datepicker/dist/'));
 });

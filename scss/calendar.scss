@@ -1,5 +1,12 @@
 
 $bny-cal-color: #408080;
+$bny-cal-padding: 1rem;
+$bny-cal-bg-color: #EEE;
+$bny-cal-color-secondary: #777;
+$bny-cal-font-size: 0.7rem;
+$bny-cal-border-radius: 4px;
+$bny-cal-border: none;
+$bny-cal-box-shadow: none;
 
 @mixin bny-cal-cell {
   box-sizing: border-box;
@@ -26,13 +33,36 @@ $bny-cal-color: #408080;
 }
 
 .bny-cal {
-  padding: 2rem;
-  background-color: #EEE;
-  color: #777;
-  border-radius: 0.25rem;
+  padding: $bny-cal-padding;
+  background-color: $bny-cal-bg-color;
+  color: $bny-cal-color-secondary;
+  font-size: $bny-cal-font-size;
+  border: $bny-cal-border;
+  border-radius: $bny-cal-border-radius;
+  box-shadow: $bny-cal-box-shadow;
   display: inline-block;
-  font-size: 0.8rem;
   text-align: center;
+}
+
+.bny-cal-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  margin-left: -150px;
+  margin-top: -150px;
+  z-index: 99999;
+}
+
+.bny-cal-popup-body-fade {
+  background-color: rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 99998;
 }
 
 .bny-cal.hidden {
@@ -46,22 +76,26 @@ $bny-cal-color: #408080;
 
 .bny-cal-prev,
 .bny-cal-next {
+  display: inline-block;
   @include bny-cal-cell;
   @include bny-cal-circle-border;
   font-size: 1.5rem;
   line-height: 1.1rem;
   vertical-align: middle;
   user-select: none;
+
+  &:hover {
+    @include bny-cal-circle-filled;
+    cursor: pointer;
+  }
 }
 
-.bny-cal-prev:hover,
-.bny-cal-next:hover {
-  @include bny-cal-cell;
-  @include bny-cal-circle-filled;
-  font-size: 1.5rem;
-  line-height: 1.1rem;
-  vertical-align: middle;
-  cursor: pointer;
+.bny-cal-prev:after {
+  content: "◂";
+}
+
+.bny-cal-next:after {
+  content: "▸";
 }
 
 .bny-cal-month,
@@ -123,6 +157,11 @@ $bny-cal-color: #408080;
 
 .bny-cal-day-inactive {
   @include bny-cal-cell;
+}
+
+.bny-cal-day-today {
+  font-weight: bold;
+  color: $bny-cal-color;
 }
 
 .bny-cal-day-current {

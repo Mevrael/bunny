@@ -7,6 +7,7 @@ export var DatePicker = {
     _options: {
         minYear: 1950,
         maxYear: 2050,
+        popup: false,
         onlyAsNativeFallback: true
         //displayFormat: 'd.m.Y',
         //storeFormat: 'Y-m-d'
@@ -37,31 +38,27 @@ export var DatePicker = {
         hidden_input.id = input_id;
         hidden_input.name = input_name;
         hidden_input.type = 'hidden';
-        hidden_input.value = input.value;
         input.parentNode.insertBefore(hidden_input, input.nextSibling);
 
         var calendar_id = input_id + '_calendar';
-        if (input.value != '') {
-            var date_parts = this.getDatePartsFromISODate(input.value);
+        if (input.value !== '') {
+            hidden_input.value = self.getSqlDateFromEuropeanDate(input.value);
+            var date_parts = this.getDatePartsFromISODate(hidden_input.value);
             Calendar.create(calendar_id, options.minYear, options.maxYear, date_parts.year, date_parts.monthIndex, date_parts.day);
         } else {
             Calendar.create(calendar_id, options.minYear, options.maxYear);
         }
 
-        if (input.value != '') {
-            input.value = this.getEuropeanDateFromISODate(input.value);
-        }
+        Calendar.hide(calendar_id, options.popup);
 
-        Calendar.hide(calendar_id);
-
-        Calendar.onPick(calendar_id, function(year, month, day) {
+        Calendar.onPick(calendar_id, (year, month, day) => {
             hidden_input.value = self.getSqlDateFromDateParts(year, month-1, day);
             input.value = self.getEuropeanDateFromDateParts(year, month-1, day);
-            Calendar.hide(calendar_id);
+            Calendar.hide(calendar_id, options.popup);
         });
 
-        input.addEventListener('focus', function() {
-            Calendar.show(calendar_id);
+        input.addEventListener('focus', () => {
+            Calendar.show(calendar_id, options.popup);
         });
 
         input.addEventListener('click', function(e) {
@@ -71,7 +68,8 @@ export var DatePicker = {
         input.parentNode.insertBefore(Calendar.getCalendar(calendar_id), input.nextSibling);
 
         this._pickers[input_id] = {
-            input: input
+            input: input,
+            options: options
         };
 
         return 1;
@@ -109,6 +107,24 @@ export var DatePicker = {
 
     getSqlDateFromDateParts(year, month_index, day) {
         return this.getISODateFromDateParts(year, month_index, day);
+    },
+
+    getSqlDateFromEuropeanDate(eu_date) {
+        if (/\d{2}(\.)\d{2}(\.)\d{4}/.test(eu_date)) {
+            const parts = eu_date.split('.');
+            return parts[2] + '-' + parts[1] + '-' + parts[0];
+        } else {
+            return '';
+        }
+    },
+
+    getEuropeanDateFromSqlDate(sql_date) {
+        if (/\d{4}(\-)\d{2}(\-)\d{2}/.test(sql_date)) {
+            const parts = sql_date.split('-');
+            return parts[2] + '.' + parts[1] + '.' + parts[0];
+        } else {
+            return '';
+        }
     },
 
     getEuropeanDateFromISODate(iso_date_str) {

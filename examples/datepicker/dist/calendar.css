@@ -1,0 +1,154 @@
+@charset "UTF-8";
+.bny-cal {
+  padding: 1rem;
+  background-color: #EEE;
+  color: #777;
+  font-size: 0.7rem;
+  border: none;
+  border-radius: 4px;
+  box-shadow: none;
+  display: inline-block;
+  text-align: center; }
+
+.bny-cal-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  margin-left: -150px;
+  margin-top: -150px;
+  z-index: 99999; }
+
+.bny-cal-popup-body-fade {
+  background-color: rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 99998; }
+
+.bny-cal.hidden {
+  display: none; }
+
+.bny-cal-header {
+  display: block;
+  text-align: center; }
+
+.bny-cal-prev,
+.bny-cal-next {
+  display: inline-block;
+  box-sizing: border-box;
+  display: inline-block;
+  height: 1.5rem;
+  width: 1.5rem;
+  line-height: 1.45rem;
+  text-align: center;
+  border: 2px solid transparent;
+  margin: 0.2rem;
+  vertical-align: top;
+  border-radius: 50%;
+  border: 2px solid #408080;
+  color: #408080;
+  font-size: 1.5rem;
+  line-height: 1.1rem;
+  vertical-align: middle;
+  user-select: none; }
+  .bny-cal-prev:hover,
+  .bny-cal-next:hover {
+    border-radius: 50%;
+    background-color: #408080;
+    color: #FFF;
+    cursor: pointer; }
+
+.bny-cal-prev:after {
+  content: "◂"; }
+
+.bny-cal-next:after {
+  content: "▸"; }
+
+.bny-cal-month,
+.bny-cal-year {
+  border: 0;
+  outline: 0;
+  margin: 0 0.4rem;
+  padding: 0.2rem;
+  background-color: transparent; }
+
+.bny-cal-month:hover,
+.bny-cal-year:hover {
+  color: #408080; }
+
+.bny-cal-month option[selected],
+.bny-cal-year option[selected] {
+  font-weight: bold;
+  color: #408080; }
+
+.bny-cal-table {
+  border-collapse: collapse;
+  table-layout: fixed; }
+
+.bny-cal-head {
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid #408080;
+  font-size: 0.6rem; }
+
+.bny-cal-body {
+  margin-top: 0.5rem; }
+
+.bny-cal-row {
+  display: block; }
+
+.bny-cal-day {
+  display: inline-block; }
+
+.bny-cal-day-of-week {
+  box-sizing: border-box;
+  display: inline-block;
+  height: 1.5rem;
+  width: 1.5rem;
+  line-height: 1.45rem;
+  text-align: center;
+  border: 2px solid transparent;
+  margin: 0.2rem;
+  vertical-align: top;
+  text-transform: uppercase; }
+
+.bny-cal-day {
+  box-sizing: border-box;
+  display: inline-block;
+  height: 1.5rem;
+  width: 1.5rem;
+  line-height: 1.45rem;
+  text-align: center;
+  border: 2px solid transparent;
+  margin: 0.2rem;
+  vertical-align: top; }
+
+.bny-cal-day:hover:not(.bny-cal-day-current) {
+  border-radius: 50%;
+  border: 2px solid #408080;
+  color: #408080;
+  cursor: pointer; }
+
+.bny-cal-day-inactive {
+  box-sizing: border-box;
+  display: inline-block;
+  height: 1.5rem;
+  width: 1.5rem;
+  line-height: 1.45rem;
+  text-align: center;
+  border: 2px solid transparent;
+  margin: 0.2rem;
+  vertical-align: top; }
+
+.bny-cal-day-today {
+  font-weight: bold;
+  color: #408080; }
+
+.bny-cal-day-current {
+  border-radius: 50%;
+  background-color: #408080;
+  color: #FFF;
+  cursor: default; }
