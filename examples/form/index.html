@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BunnyJS Form example</title>
+    <link rel="stylesheet" href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
+    <style>
+        [data-mirror]:empty:after {
+            content: "Empty";
+            color: #CCC;
+        }
+        img[src=""] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<img src="" alt="IMG" border="0" style="border-style:none;">
+
+<div class="container p-t-3">
+
+    <h1>BunnyJS Form component</h1>
+
+    <h3>Modern dynamic JavaScript form processing was never so easy</h3>
+
+    <div>
+        BunnyJS Form component:
+        <ul>
+            <li>Wraps native FormData and other APIs to allow working with same form from multiple closures</li>
+            <li>and adds custom methods to make form processing, including AJAX submit, 2-way data binding, file uploads and date/times, easier</li>
+            <li>Only 300 lines of vanilla JavaScript</li>
+        </ul>
+    </div>
+
+    <div class="card p-a-3">
+
+        <h3>Form 1</h3>
+        <div class="m-b-2">This form ID is <code>form1</code></div>
+
+        <form id="form1">
+
+            <div class="form-group">
+                <div>This input name is <code>name</code></div>
+                <input type="text" name="name" id="name" class="form-control" placeholder="Name">
+            </div>
+
+            <div class="form-group">
+                <div>This input name is <code>email</code></div>
+                <input type="email" name="email" id="email" class="form-control" placeholder="E-mail">
+            </div>
+
+            <div class="form-group">
+                <div>This is file input. It includes blob, file size, file type, etc. This input name is <code>photo</code></div>
+                <input type="file" name="photo" accept="image/*" id="photo" class="form-control" placeholder="Photo">
+                <img src="" id="photo_preview" data-mirror="form1.photo">
+            </div>
+
+            <div class="form-group">
+                <input type="submit" name="form1_submit" id="form1_submit" class="btn btn-primary" value="Submit">
+            </div>
+
+            Open console in browser and try:
+            <ul>
+                <li>Type any text in inputs above and try <code>Form.getAll(form_id)</code></li>
+                <li>Or <code>Form.get(form_id, input_name)</code> to get only one</li>
+                <li><code>Form.set(form_id, input_name, value)</code> which also updates input value and mirrors (bindings)</li>
+                <li>You can also set new virtual inputs, try <code>Form.set('form1', 'custom', 'Hello, World!')</code></li>
+                <li>And now <code>Form.getAll('form1')</code> again</li>
+                <li>This data will be sent via ajax using <code>Form.submit(form_id)</code></li>
+                <li>Ever wanted to set your <code>input type="file" ...</code> to any file by URL from JavaScript and keep back-end file processing without changes?</li>
+                <li>Images can be previewed instantly</li>
+                <li>Works perfect with BunnyJS Validation</li>
+            </ul>
+
+        </form>
+
+    </div>
+
+    <div class="card p-a-3">
+
+        <h3 class="m-b-2">Form 1 mirrors (two-way data bindings)</h3>
+        <p>Update fields in Form 1 to change contents also of mirrored (bound) elements automatically. Mirrors updated on focus out.</p>
+        <p>Or update field from JS with <code>Form.set(form_id, input_name, value);</code></p>
+        <p>All elements with attribute <code>data-mirror="form_id.input_name"</code> are updated when input value changed by user or from JS.</p>
+
+        <h5 class="m-t-3">Name:</h5>
+        <div data-mirror="form1.name"></div>
+
+        <h5 class="m-t-2">E-mail:</h5>
+        <div data-mirror="form1.email"></div>
+
+        <h5 class="m-t-2">E-mail within text:</h5>
+        <p>
+            Invoice information was sent to <strong data-mirror="form1.email"></strong>
+        </p>
+
+    </div>
+
+    <div class="card p-a-3">
+
+        <h3>Form 2</h3>
+
+        <p>Example with calculated fields</p>
+
+        <form id="form2">
+
+            <div class="form-group">
+                <input type="text" name="product_name" id="product_name" class="form-control" placeholder="Product name">
+            </div>
+
+            <div class="form-group">
+                <input type="text" name="product_price" id="product_price" class="form-control" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <input type="number" name="product_quantity" id="product_quantity" class="form-control" placeholder="1">
+            </div>
+
+            <div class="form-group">
+                <input type="submit" name="form2_submit" id="form2_submit" class="btn btn-primary" value="Submit">
+            </div>
+
+            Total price: <span data-mirror="form2" data-mirror-function="product_price*product_quantity"></span>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="dist/index.js"></script>
+</body>
+</html>

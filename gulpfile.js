@@ -8,7 +8,8 @@ var gulp       = require('gulp'),
 var examples = [
     'container',
     'autocomplete',
-    'datepicker'
+    'datepicker',
+    'form'
 ];
 
 gulp.task('default', function(){

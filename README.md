@@ -1,4 +1,4 @@
-# BunnyJS v 0.8.1
+# BunnyJS v 0.9.0
 
 [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs)
 
