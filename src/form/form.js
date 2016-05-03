@@ -60,6 +60,9 @@ export const Form = {
                 if (form_control.type === 'file') {
                     const fd = new FormData(document.forms[form_id]);
                     this._collection[form_id].set(form_control.id, fd.get(form_control.name));
+                } else if (form_control.type === 'radio') {
+                    form_control.checked = true;
+                    this._collection[form_id].set(form_control.id, form_control.value);
                 } else {
                     this._collection[form_id].set(form_control.id, form_control.value);
                 }
@@ -108,8 +111,13 @@ export const Form = {
         this._checkInit(form_id);
         this._collection[form_id].set(input_name, input_value);
         // update input value if input is in DOM and not file input
-        if (document.forms[form_id].elements[input_name] !== undefined && document.forms[form_id].elements[input_name].type !== 'file') {
-            document.forms[form_id].elements[input_name].value = input_value;
+        if (document.forms[form_id].elements[input_name] !== undefined) {
+            if (document.forms[form_id].elements[input_name].type === 'radio') {
+                document.forms[form_id].elements[input_name].checked = true;
+                document.forms[form_id].elements[input_name].value = input_value;
+            } else if (document.forms[form_id].elements[input_name].type !== 'file') {
+                document.forms[form_id].elements[input_name].value = input_value;
+            }
         }
         // update mirror if mirrored
         if (this._mirrorCollection[form_id] !== undefined) {
@@ -300,8 +308,9 @@ export const Form = {
             request.onload = () => {
                 if (request.status === 200) {
                     const blob = request.response;
-                    this.set(form_id, input_name, blob);
-                    success(blob);
+                    if (success(blob) !== false) {
+                        this.set(form_id, input_name, blob);
+                    }
                 } else {
                     fail(request);
                 }
