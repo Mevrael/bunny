@@ -1,5 +1,9 @@
 # BunnyJS v 0.9.0
 
+## ES6 browser framework
+
+#### "It's like a next-generation jQuery"
+
 [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs)
 
 For help & ideas - [DM me on Twitter](https://twitter.com/Mevrael)
@@ -19,7 +23,7 @@ Lightweight native JavaScript and ECMAScript 6 library and next generation front
 10. Native lightweight javascript remote file upload from URL, image preview
 11. Native lightweight javascript Element, positions, coordinates, smooth scrolling
 
-Designed in mind for best compatability with Laravel 5 and Bootstrap 4, however can be used anywhere.
+Designed in mind for best compatibility with Laravel 5 and Bootstrap 4, however can be used anywhere.
 
 Syntax is very simple and some API is identical with Laravel API.
 
