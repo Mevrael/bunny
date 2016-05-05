@@ -1,3 +1,37 @@
+// FormData polyfill extension for IE/Edge which supports only FormData constructor and append()
+/*FormData.prototype.init = function init(form) {
+
+    this._polyfillCollection = {};
+
+    for (var k = 0; k < form.elements.length; k++) {
+        var input = form.elements[k];
+        if (input.type === 'file') {
+            this._polyfillCollection[input.name] = (input.files[0] === null) ? '' : input.files[0];
+        } else {
+            this._polyfillCollection[input.name] = input.value;
+        }
+    }
+};
+
+if (FormData.prototype.get === undefined) {
+    FormData.prototype.get = function get(input_name) {
+        if (this._polyfillCollection[input_name] === undefined) {
+            return null;
+        } else {
+            return this._polyfillCollection[input_name];
+        }
+
+    };
+    FormData.prototype.set = function get(input_name, value) {
+        this._polyfillCollection[input_name] = value;
+    }
+    FormData.prototype.entries = function entries() {
+        for (var item in this._polyfillCollection) {
+
+        }
+    }
+}*/
+
 /**
  * BunnyJS Form component
  * Wraps native FormData API to allow working with same form from multiple closures
@@ -41,9 +75,11 @@ var Form = {
             console.trace();
             throw new Error('Form with ID ' + form_id + ' not found in DOM!');
         }
-        this._attachChangeEvent(form_id);
         this._collection[form_id] = new FormData(form);
+        //this._collection[form_id].init(form);
+        this._attachChangeEvent(form_id);
     },
+
 
     /**
      * Update FormData when user changed input's value
@@ -55,73 +91,47 @@ var Form = {
     _attachChangeEvent: function _attachChangeEvent(form_id) {
         var _this = this;
 
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-            var _loop = function _loop() {
-                var form_control = _step.value;
-
-                form_control.addEventListener('change', function () {
-                    if (form_control.type === 'file') {
+        [].forEach.call(document.forms[form_id].elements, function (form_control) {
+            form_control.addEventListener('change', function (e) {
+                if (form_control.type === 'file') {
+                    if (e.isTrusted) {
+                        // file selected by user
                         var fd = new FormData(document.forms[form_id]);
-                        _this._collection[form_id].set(form_control.id, fd.get(form_control.name));
+                        _this._collection[form_id].set(form_control.name, fd.get(form_control.name));
                     } else {
-                        _this._collection[form_id].set(form_control.id, form_control.value);
+                        // file set from script, do nothing because blob was set in Form.set() for File input.
                     }
-                });
-            };
+                } else if (form_control.type === 'radio') {
+                        var list = document.forms[form_id].elements[form_control.name];
+                        list.value = form_control.value;
+                        _this._collection[form_id].set(form_control.name, form_control.value);
+                    } else {
+                        _this._collection[form_id].set(form_control.name, form_control.value);
+                    }
 
-            for (var _iterator = document.forms[form_id].elements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                _loop();
-            }
-        } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
+                // update mirror if mirrored
+                if (_this._mirrorCollection[form_id] !== undefined) {
+                    if (_this._mirrorCollection[form_id][form_control.name] === true) {
+                        _this.setMirrors(form_id, form_control.name);
+                    }
                 }
-            } finally {
-                if (_didIteratorError) {
-                    throw _iteratorError;
-                }
-            }
-        }
+            });
+        });
     },
+
 
     /**
      * Init all forms in DOM
      * Must be called after DOMContentLoaded (ready)
      */
     initAll: function initAll() {
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
+        var _this2 = this;
 
-        try {
-            for (var _iterator2 = document.forms[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                var form = _step2.value;
-
-                this.init(form.id);
-            }
-        } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                    _iterator2.return();
-                }
-            } finally {
-                if (_didIteratorError2) {
-                    throw _iteratorError2;
-                }
-            }
-        }
+        [].forEach.call(document.forms, function (form) {
+            _this2.init(form.id);
+        });
     },
+
 
     /**
      * Check if form is initiated
@@ -138,12 +148,14 @@ var Form = {
         }
     },
 
+
     /*
     Get and set form data methods
      */
 
     /**
      * Set new value of real DOM input or virtual input
+     * Actually fires change event and values are set in _attachChangeEvent()
      *
      * @param {string} form_id
      * @param {string} input_name
@@ -151,26 +163,31 @@ var Form = {
      */
     set: function set(form_id, input_name, input_value) {
         this._checkInit(form_id);
-        this._collection[form_id].set(input_name, input_value);
-        // update input value if input is in DOM and not file input
-        if (document.forms[form_id].elements[input_name] !== undefined && document.forms[form_id].elements[input_name].type !== 'file') {
-            document.forms[form_id].elements[input_name].value = input_value;
-        }
-        // update mirror if mirrored
-        if (this._mirrorCollection[form_id] !== undefined) {
-            if (this._mirrorCollection[form_id][input_name] === true) {
-                this.setMirrors(form_id, input_name);
+        //this._collection[form_id].set(input_name, input_value);
+        var input = document.forms[form_id].elements[input_name];
+        var event = new CustomEvent('change');
+        if (input.constructor.name !== 'RadioNodeList') {
+            if (input.type === 'file') {
+                console.log(input_value);
+                this._collection[form_id].set(input_name, input_value);
+            } else {
+                input.value = input_value;
             }
-        }
-        // update calc mirrors if mirrored
-        /*if (this._calcMirrorCollection[form_id] !== undefined) {
-            if (this._calcMirrorCollection[form_id][input_name] !== undefined) {
-                for(let input2name in this._calcMirrorCollection[form_id][input_name]) {
-                    this._calcMirrorCollection[form_id][input_name][input2name].textContent = input_value * document.forms[form_id].elements[input2name].value;
+            input.dispatchEvent(event);
+            return true;
+        } else {
+            for (var k = 0; k < input.length; k++) {
+                var radio_input = input[k];
+                if (radio_input.value === input_value) {
+                    input.value = input_value;
+                    radio_input.dispatchEvent(event);
+                    return true;
                 }
             }
-        }*/
+            throw new TypeError('Trying to Form.set() on radio with unexisted value="' + input_value + '"');
+        }
     },
+
 
     /**
      * Get value of real DOM input or virtual input
@@ -185,6 +202,7 @@ var Form = {
         return this._collection[form_id].get(input_name);
     },
 
+
     /**
      * Get all form input values as key - value object
      * @param form_id
@@ -192,35 +210,42 @@ var Form = {
      */
     getAll: function getAll(form_id) {
         this._checkInit(form_id);
-        var items = this._collection[form_id].entries();
         var data = {};
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
+        /*if (FormData.prototype.get === undefined) {
+            for (let item in this._collection[form_id]._polyfillCollection) {
+                data[item] = this._collection[form_id]._polyfillCollection[item];
+            }
+        } else {*/
+        var items = this._collection[form_id].entries();
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
 
         try {
-            for (var _iterator3 = items[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                var item = _step3.value;
+            for (var _iterator = items[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var item = _step.value;
 
                 data[item[0]] = item[1];
             }
+            //}
         } catch (err) {
-            _didIteratorError3 = true;
-            _iteratorError3 = err;
+            _didIteratorError = true;
+            _iteratorError = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                    _iterator3.return();
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
                 }
             } finally {
-                if (_didIteratorError3) {
-                    throw _iteratorError3;
+                if (_didIteratorError) {
+                    throw _iteratorError;
                 }
             }
         }
 
         return data;
     },
+
 
     /**
      * Get native FormData object
@@ -233,6 +258,7 @@ var Form = {
         return this._collection[form_id];
     },
 
+
     /*
     binding (mirror) methods
      */
@@ -244,9 +270,13 @@ var Form = {
      * @param {string} input_name
      */
     mirror: function mirror(form_id, input_name) {
-        var _this2 = this;
+        var _this3 = this;
 
         this._checkInit(form_id);
+        if (document.forms[form_id].elements[input_name].constructor.name !== 'HTMLInputElement') {
+            console.trace();
+            throw new Error('Cannot mirror radio buttons or checkboxes.');
+        }
         if (this._mirrorCollection[form_id] === undefined) {
             this._mirrorCollection[form_id] = {};
         }
@@ -255,84 +285,51 @@ var Form = {
         var input = document.forms[form_id].elements[input_name];
         this.setMirrors(form_id, input_name);
         input.addEventListener('change', function () {
-            _this2.setMirrors(form_id, input_name);
+            _this3.setMirrors(form_id, input_name);
         });
     },
 
+
     /**
      * Mirrors all inputs of form
+     * Does not mirror radio buttons and checkboxes
      * See Form.mirror() for detailed description
      * @param form_id
      */
     mirrorAll: function mirrorAll(form_id) {
+        var _this4 = this;
+
         this._checkInit(form_id);
         var inputs = document.forms[form_id].elements;
-        var _iteratorNormalCompletion4 = true;
-        var _didIteratorError4 = false;
-        var _iteratorError4 = undefined;
-
-        try {
-            for (var _iterator4 = inputs[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                var input = _step4.value;
-
-                this.mirror(form_id, input.name);
+        [].forEach.call(inputs, function (input) {
+            if (document.forms[form_id].elements[input.name].constructor.name === 'HTMLInputElement') {
+                // make sure it is normal input and not RadioNodeList or other interfaces
+                _this4.mirror(form_id, input.name);
             }
-        } catch (err) {
-            _didIteratorError4 = true;
-            _iteratorError4 = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                    _iterator4.return();
-                }
-            } finally {
-                if (_didIteratorError4) {
-                    throw _iteratorError4;
-                }
-            }
-        }
+        });
     },
     getMirrors: function getMirrors(form_id, input_name) {
         this._checkInit(form_id);
         return document.querySelectorAll('[data-mirror="' + form_id + '.' + input_name + '"]');
     },
     setMirrors: function setMirrors(form_id, input_name) {
-        console.log('Setting mirrors for ' + input_name);
+        var _this5 = this;
+
         this._checkInit(form_id);
         var mirrors = this.getMirrors(form_id, input_name);
         var input = document.forms[form_id].elements[input_name];
-        var _iteratorNormalCompletion5 = true;
-        var _didIteratorError5 = false;
-        var _iteratorError5 = undefined;
-
-        try {
-            for (var _iterator5 = mirrors[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                var mirror = _step5.value;
-
-                if (mirror.tagName === 'IMG') {
-                    var data = this.get(form_id, input_name);
-                    if (data !== '') {
-                        mirror.src = URL.createObjectURL(this.get(form_id, input_name));
-                    }
-                } else {
-                    mirror.textContent = input.value;
+        [].forEach.call(mirrors, function (mirror) {
+            if (mirror.tagName === 'IMG') {
+                var data = _this5.get(form_id, input_name);
+                if (data !== '' && data.size !== 0) {
+                    mirror.src = URL.createObjectURL(_this5.get(form_id, input_name));
                 }
+            } else {
+                mirror.textContent = input.value;
             }
-        } catch (err) {
-            _didIteratorError5 = true;
-            _iteratorError5 = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                    _iterator5.return();
-                }
-            } finally {
-                if (_didIteratorError5) {
-                    throw _iteratorError5;
-                }
-            }
-        }
+        });
     },
+
 
     /*
     Calc methods
@@ -393,14 +390,14 @@ var Form = {
     file methods
      */
     setFileFromUrl: function setFileFromUrl(form_id, input_name, url) {
-        var _this3 = this;
+        var _this6 = this;
 
         var request = new XMLHttpRequest();
         var p = new Promise(function (success, fail) {
             request.onload = function () {
                 if (request.status === 200) {
                     var blob = request.response;
-                    _this3.set(form_id, input_name, blob);
+                    _this6.set(form_id, input_name, blob);
                     success(blob);
                 } else {
                     fail(request);
@@ -414,6 +411,7 @@ var Form = {
 
         return p;
     },
+
 
     /*
     submit methods
@@ -451,6 +449,8 @@ var Form = {
             request.setRequestHeader(header, headers[header]);
         }
 
+        this._collection[form_id].set('categories', [2, 3]);
+
         request.send(this._collection[form_id]);
 
         return p;
@@ -461,14 +461,18 @@ Form.initAll();
 Form.mirrorAll('form1');
 //Form.calcMirrorAll('form2');
 
+var link = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png';
+
 document.forms[0].addEventListener('submit', function (e) {
     e.preventDefault();
 
-    Form.setFileFromUrl(document.forms[0].id, 'photo', 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png').then(function (blob) {
+    Form.setFileFromUrl('form1', 'photo', link).then(function (blob) {
         Form.submit(document.forms[0].id).then(function (responseData) {
-            console.log(responseData);
+            console.log('ok');
         }).catch(function (response) {
-            console.log(response);
+            console.log('fail');
         });
+    }).catch(function (e) {
+        console.log(e);
     });
 });

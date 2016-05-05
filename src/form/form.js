@@ -1,4 +1,38 @@
 
+// FormData polyfill extension for IE/Edge which supports only FormData constructor and append()
+/*FormData.prototype.init = function init(form) {
+
+    this._polyfillCollection = {};
+
+    for (var k = 0; k < form.elements.length; k++) {
+        var input = form.elements[k];
+        if (input.type === 'file') {
+            this._polyfillCollection[input.name] = (input.files[0] === null) ? '' : input.files[0];
+        } else {
+            this._polyfillCollection[input.name] = input.value;
+        }
+    }
+};
+
+if (FormData.prototype.get === undefined) {
+    FormData.prototype.get = function get(input_name) {
+        if (this._polyfillCollection[input_name] === undefined) {
+            return null;
+        } else {
+            return this._polyfillCollection[input_name];
+        }
+
+    };
+    FormData.prototype.set = function get(input_name, value) {
+        this._polyfillCollection[input_name] = value;
+    }
+    FormData.prototype.entries = function entries() {
+        for (var item in this._polyfillCollection) {
+
+        }
+    }
+}*/
+
 /**
  * BunnyJS Form component
  * Wraps native FormData API to allow working with same form from multiple closures
@@ -43,8 +77,9 @@ export const Form = {
             console.trace();
             throw new Error(`Form with ID ${form_id} not found in DOM!`);
         }
-        this._attachChangeEvent(form_id);
         this._collection[form_id] = new FormData(form);
+        //this._collection[form_id].init(form);
+        this._attachChangeEvent(form_id);
     },
 
     /**
@@ -55,16 +90,32 @@ export const Form = {
      * @private
      */
     _attachChangeEvent(form_id) {
-        for (let form_control of document.forms[form_id].elements) {
-            form_control.addEventListener('change', () => {
+        [].forEach.call(document.forms[form_id].elements, (form_control) => {
+            form_control.addEventListener('change', (e) => {
                 if (form_control.type === 'file') {
-                    const fd = new FormData(document.forms[form_id]);
-                    this._collection[form_id].set(form_control.id, fd.get(form_control.name));
+                    if (e.isTrusted) {
+                        // file selected by user
+                        const fd = new FormData(document.forms[form_id]);
+                        this._collection[form_id].set(form_control.name, fd.get(form_control.name));
+                    } else {
+                        // file set from script, do nothing because blob was set in Form.set() for File input.
+                    }
+                } else if (form_control.type === 'radio') {
+                    const list = document.forms[form_id].elements[form_control.name];
+                    list.value = form_control.value;
+                    this._collection[form_id].set(form_control.name, form_control.value);
                 } else {
-                    this._collection[form_id].set(form_control.id, form_control.value);
+                    this._collection[form_id].set(form_control.name, form_control.value);
+                }
+
+                // update mirror if mirrored
+                if (this._mirrorCollection[form_id] !== undefined) {
+                    if (this._mirrorCollection[form_id][form_control.name] === true) {
+                        this.setMirrors(form_id, form_control.name);
+                    }
                 }
             });
-        }
+        });
     },
 
     /**
@@ -72,9 +123,9 @@ export const Form = {
      * Must be called after DOMContentLoaded (ready)
      */
     initAll() {
-        for (let form of document.forms) {
-            this.init(form.id);
-        }
+        [].forEach.call(document.forms, (form) => {
+            this.init(form.id)
+        });
     },
 
     /**
@@ -99,6 +150,7 @@ export const Form = {
 
     /**
      * Set new value of real DOM input or virtual input
+     * Actually fires change event and values are set in _attachChangeEvent()
      *
      * @param {string} form_id
      * @param {string} input_name
@@ -106,25 +158,29 @@ export const Form = {
      */
     set(form_id, input_name, input_value) {
         this._checkInit(form_id);
-        this._collection[form_id].set(input_name, input_value);
-        // update input value if input is in DOM and not file input
-        if (document.forms[form_id].elements[input_name] !== undefined && document.forms[form_id].elements[input_name].type !== 'file') {
-            document.forms[form_id].elements[input_name].value = input_value;
-        }
-        // update mirror if mirrored
-        if (this._mirrorCollection[form_id] !== undefined) {
-            if (this._mirrorCollection[form_id][input_name] === true) {
-                this.setMirrors(form_id, input_name);
+        //this._collection[form_id].set(input_name, input_value);
+        const input = document.forms[form_id].elements[input_name];
+        const event = new CustomEvent('change');
+        if (input.constructor.name !== 'RadioNodeList') {
+            if (input.type === 'file') {
+                console.log(input_value);
+                this._collection[form_id].set(input_name, input_value);
+            } else {
+                input.value = input_value;
             }
-        }
-        // update calc mirrors if mirrored
-        /*if (this._calcMirrorCollection[form_id] !== undefined) {
-            if (this._calcMirrorCollection[form_id][input_name] !== undefined) {
-                for(let input2name in this._calcMirrorCollection[form_id][input_name]) {
-                    this._calcMirrorCollection[form_id][input_name][input2name].textContent = input_value * document.forms[form_id].elements[input2name].value;
+            input.dispatchEvent(event);
+            return true;
+        } else {
+            for (let k = 0; k < input.length; k++) {
+                let radio_input = input[k];
+                if (radio_input.value === input_value) {
+                    input.value = input_value;
+                    radio_input.dispatchEvent(event);
+                    return true;
                 }
             }
-        }*/
+            throw new TypeError('Trying to Form.set() on radio with unexisted value="'+input_value+'"');
+        }
     },
 
     /**
@@ -147,11 +203,17 @@ export const Form = {
      */
     getAll(form_id) {
         this._checkInit(form_id);
-        const items = this._collection[form_id].entries();
         const data = {};
-        for (let item of items) {
-            data[item[0]] = item[1];
-        }
+        /*if (FormData.prototype.get === undefined) {
+            for (let item in this._collection[form_id]._polyfillCollection) {
+                data[item] = this._collection[form_id]._polyfillCollection[item];
+            }
+        } else {*/
+            const items = this._collection[form_id].entries();
+            for (let item of items) {
+                data[item[0]] = item[1];
+            }
+        //}
         return data;
     },
 
@@ -182,6 +244,10 @@ export const Form = {
      */
     mirror(form_id, input_name) {
         this._checkInit(form_id);
+        if (document.forms[form_id].elements[input_name].constructor.name !== 'HTMLInputElement') {
+            console.trace();
+            throw new Error('Cannot mirror radio buttons or checkboxes.')
+        }
         if (this._mirrorCollection[form_id] === undefined) {
             this._mirrorCollection[form_id] = {};
         }
@@ -196,15 +262,19 @@ export const Form = {
 
     /**
      * Mirrors all inputs of form
+     * Does not mirror radio buttons and checkboxes
      * See Form.mirror() for detailed description
      * @param form_id
      */
     mirrorAll(form_id) {
         this._checkInit(form_id);
         const inputs = document.forms[form_id].elements;
-        for (let input of inputs) {
-            this.mirror(form_id, input.name);
-        }
+        [].forEach.call(inputs, (input) => {
+            if (document.forms[form_id].elements[input.name].constructor.name === 'HTMLInputElement') {
+                // make sure it is normal input and not RadioNodeList or other interfaces
+                this.mirror(form_id, input.name);
+            }
+        });
     },
 
     getMirrors(form_id, input_name) {
@@ -216,16 +286,16 @@ export const Form = {
         this._checkInit(form_id);
         const mirrors = this.getMirrors(form_id, input_name);
         const input = document.forms[form_id].elements[input_name];
-        for(let mirror of mirrors) {
+        [].forEach.call(mirrors, (mirror) => {
             if (mirror.tagName === 'IMG') {
                 let data = this.get(form_id, input_name);
-                if (data !== '') {
+                if (data !== '' && data.size !== 0) {
                     mirror.src = URL.createObjectURL(this.get(form_id, input_name));
                 }
             } else {
                 mirror.textContent = input.value;
             }
-        }
+        });
     },
 
 
@@ -347,6 +417,8 @@ export const Form = {
         for (let header in headers) {
             request.setRequestHeader(header, headers[header]);
         }
+
+        this._collection[form_id].set('categories', [2, 3]);
 
         request.send(this._collection[form_id]);
 

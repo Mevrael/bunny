@@ -122,6 +122,7 @@ var Ajax = {
         var headers = arguments.length <= 5 || arguments[5] === undefined ? {} : arguments[5];
         var do_send = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
 
+
         var t = Object.create(this);
         t.method = method;
         t.url = url;
@@ -151,6 +152,7 @@ var Ajax = {
         return t;
     },
 
+
     /**
      * Should be called on instance created with factory Ajax.create() method
      * Opens request, applies headers, builds data URL encoded string and sends request
@@ -169,6 +171,7 @@ var Ajax = {
         }
         this.request.send(str_data);
     },
+
 
     /**
      * Sends a form via ajax POST with header Content-Type: application/x-www-form-urlencoded
@@ -190,6 +193,7 @@ var Ajax = {
         this.create('POST', form_el.getAttribute('action'), data, on_success, on_error, headers, true);
     },
 
+
     /**
      * Sends a form via ajax POST with header Content-Type: multipart/form-data which is required for file uploading
      * Data is automatically taken form all form input values
@@ -205,6 +209,7 @@ var Ajax = {
 
         this.sendForm(form_el, on_success, on_error, headers);
     },
+
 
     /**
      * Sends a simple GET request. By default adds header X-Requested-With: XMLHttpRequest
@@ -401,6 +406,7 @@ var Autocomplete = {
     create: function create(input_id, hidden_input_id, ajax_url) {
         var data_handler = arguments.length <= 3 || arguments[3] === undefined ? JSON.parse : arguments[3];
         var options = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
+
 
         for (var i in this._options) {
             if (options[i] === undefined) {

@@ -3,6 +3,7 @@ var gulp       = require('gulp'),
     rollup     = require('gulp-rollup'),
     //sourcemaps = require('gulp-sourcemaps'),
     babel      = require('rollup-plugin-babel'),
+    npm        = require('rollup-plugin-npm'),
     sass       = require('gulp-sass');
 
 var examples = [
@@ -20,7 +21,10 @@ gulp.task('default', function(){
                 .pipe(rollup({
                     // any option supported by rollup can be set here, including sourceMap
                     sourceMap: false,
-                    plugins: [babel()]
+                    plugins: [
+                        babel(),
+                        npm({ jsnext: true, main: true })
+                    ]
                 }))
                 //.pipe(sourcemaps.write(".")) // this only works if the sourceMap option is true
                 .pipe(gulp.dest('examples/' + example + '/dist'));
