@@ -1,5 +1,10 @@
 
+import '../../src/polyfills/ConstructorName';
+import '../../src/polyfills/CustomEvent';
+import '../../src/polyfills/Promise';
+
 import { Form } from '../../src/form/form';
+
 
 Form.initAll();
 Form.mirrorAll('form1');
@@ -21,3 +26,4 @@ document.forms[0].addEventListener('submit', (e) => {
     });
 
 });
+

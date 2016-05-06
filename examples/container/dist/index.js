@@ -1,7 +1,3 @@
-var ColorProvider = {
-    color: '#FBB'
-};
-
 var Container = {
 
     _bindings: {},
@@ -43,6 +39,10 @@ var Container = {
         return a;
     }
 
+};
+
+var ColorProvider = {
+    color: '#FBB'
 };
 
 Container.bind('color', ColorProvider);

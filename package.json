@@ -1,6 +1,6 @@
 {
   "name": "bunnyjs",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, validation, ajax, datatables, calendar, datepicker, autocomplete, pagination, url) and next generation front-end framework.",
   "main": "index.js",
   "scripts": {
@@ -53,5 +53,8 @@
     "gulp-sass": "^2.2.0",
     "rollup-plugin-babel": "^2.3.9",
     "rollup-plugin-npm": "^1.4.0"
+  },
+  "dependencies": {
+    "promise-polyfill": "^5.0.0"
   }
 }

@@ -1,37 +1,98 @@
 
-// FormData polyfill extension for IE/Edge which supports only FormData constructor and append()
-/*FormData.prototype.init = function init(form) {
+// FormData wrapper for IE/Edge/Safari/Android etc which supports only FormData constructor and append()
+function BunnyFormData(form) {
+    /*if (form.constructor.name !== 'HTMLFormElement') {
+        throw new Error('Form passed to BunnyFormData constructor is not an instance of HTMLFormElement');
+    }*/
 
-    this._polyfillCollection = {};
+    // form
+    this._form = form;
 
-    for (var k = 0; k < form.elements.length; k++) {
-        var input = form.elements[k];
+    // item collection;
+    this._collection = {};
+
+    // build collection from form elements
+    for (var k = 0; k < this._form.elements.length; k++) {
+        var input = this._form.elements[k];
         if (input.type === 'file') {
-            this._polyfillCollection[input.name] = (input.files[0] === null) ? '' : input.files[0];
+            this._collection[input.name] = (input.files[0] === undefined || input.files[0] === null) ? '' : input.files[0];
         } else {
-            this._polyfillCollection[input.name] = input.value;
+            this._collection[input.name] = input.value;
         }
+    }
+}
+
+BunnyFormData.prototype.get = function get(input_name) {
+    if (this._collection[input_name] === undefined) {
+        return null;
+    } else {
+        return this._collection[input_name];
     }
 };
 
-if (FormData.prototype.get === undefined) {
-    FormData.prototype.get = function get(input_name) {
-        if (this._polyfillCollection[input_name] === undefined) {
-            return null;
+// value can also be a Blob/File but this get() polyfill does not include 3rd argument filename
+BunnyFormData.prototype.set = function get(input_name, value) {
+    this._collection[input_name] = value;
+};
+
+BunnyFormData.prototype.append = function append(input_name, value) {
+    if (this._collection[input_name] === undefined) {
+        this._collection[input_name] = value;
+    } else if (Array.isArray(this._collection[input_name])) {
+        this._collection[input_name].push(value);
+    } else {
+        // convert single element into array and append new item
+        const item = this._collection[input_name];
+        this._collection[input_name] = [item, value];
+    }
+};
+
+BunnyFormData.prototype.getAll = function getAll(input_name) {
+    if (this._collection[input_name] === undefined) {
+        return [];
+    } else if (Array.isArray(this._collection[input_name])) {
+        return this._collection[input_name];
+    } else {
+        return [this._collection[input_name]];
+    }
+};
+
+// since entries(), keys(), values() return Iterator which is not supported in many browsers
+// there is only one element to simply get object of key => value pairs of all form elements
+// use this method instead of entries(), keys() or values()
+BunnyFormData.prototype.getAllElements = function getAllElements() {
+    return this._collection;
+};
+
+BunnyFormData.prototype.buildFormDataObject = function buildFormDataObject() {
+    const formData = new FormData();
+    for (let key in this._collection) {
+        if (Array.isArray(this._collection[key])) {
+            this._collection[key].forEach((item) => {
+                formData.append(key, item);
+            });
         } else {
-            return this._polyfillCollection[input_name];
-        }
-
-    };
-    FormData.prototype.set = function get(input_name, value) {
-        this._polyfillCollection[input_name] = value;
-    }
-    FormData.prototype.entries = function entries() {
-        for (var item in this._polyfillCollection) {
-
+            formData.append(key, this._collection[key]);
         }
     }
-}*/
+    return formData;
+};
+
+// remove instead of delete(). Also can remove element from array
+BunnyFormData.prototype.remove = function remove(input_name, array_value = undefined) {
+    if (array_value !== undefined) {
+        // remove element from array
+        let new_array = [];
+        this._collection[input_name].forEach((item) => {
+            if (item !== array_value) {
+                new_array.push(item);
+            }
+        });
+        this._collection[input_name] = new_array;
+    } else {
+        delete this._collection[input_name];
+    }
+};
 
 /**
  * BunnyJS Form component
@@ -77,7 +138,7 @@ export const Form = {
             console.trace();
             throw new Error(`Form with ID ${form_id} not found in DOM!`);
         }
-        this._collection[form_id] = new FormData(form);
+        this._collection[form_id] = new BunnyFormData(form);
         //this._collection[form_id].init(form);
         this._attachChangeEvent(form_id);
     },
@@ -138,7 +199,6 @@ export const Form = {
      */
     _checkInit(form_id) {
         if (this._collection[form_id] === undefined) {
-            console.trace();
             throw new Error(`Form with ID ${form_id} is not initiated! Init form with Form.init(form_id) first.`);
         }
     },
@@ -163,7 +223,6 @@ export const Form = {
         const event = new CustomEvent('change');
         if (input.constructor.name !== 'RadioNodeList') {
             if (input.type === 'file') {
-                console.log(input_value);
                 this._collection[form_id].set(input_name, input_value);
             } else {
                 input.value = input_value;
@@ -203,18 +262,13 @@ export const Form = {
      */
     getAll(form_id) {
         this._checkInit(form_id);
-        const data = {};
-        /*if (FormData.prototype.get === undefined) {
-            for (let item in this._collection[form_id]._polyfillCollection) {
-                data[item] = this._collection[form_id]._polyfillCollection[item];
-            }
-        } else {*/
-            const items = this._collection[form_id].entries();
-            for (let item of items) {
-                data[item[0]] = item[1];
-            }
-        //}
-        return data;
+        /*const data = {};
+        const items = this._collection[form_id].entries();
+        for (let item of items) {
+            data[item[0]] = item[1];
+        }
+        return data;*/
+        return this._collection[form_id].getAllElements();
     },
 
     /**
@@ -225,16 +279,36 @@ export const Form = {
      */
     getFormDataObject(form_id) {
         this._checkInit(form_id);
-        return this._collection[form_id];
+        return this._collection[form_id].buildFormDataObject();
+    },
+
+
+    /*
+     virtual checkbox, item list, tag list, etc methods
+     */
+    append(form_id, array_name, value) {
+        this._checkInit(form_id);
+        const formData = this._collection[form_id];
+        formData.append(array_name, value);
+    },
+
+    remove(form_id, array_name, value = undefined) {
+        this._checkInit(form_id);
+        /*const formData = this._collection[form_id];
+        formData.delete(array_name);
+        const collection = formData.getAll(array_name);
+        collection.forEach( (item) => {
+            if (item !== value) {
+                formData.append(array_name, item);
+            }
+        });*/
+        this._collection[form_id].remove(array_name, value);
     },
 
 
     /*
     binding (mirror) methods
      */
-
-
-
 
     /**
      * Mirrors real DOM input's value with any DOM element (two-way data binding)
@@ -245,7 +319,6 @@ export const Form = {
     mirror(form_id, input_name) {
         this._checkInit(form_id);
         if (document.forms[form_id].elements[input_name].constructor.name !== 'HTMLInputElement') {
-            console.trace();
             throw new Error('Cannot mirror radio buttons or checkboxes.')
         }
         if (this._mirrorCollection[form_id] === undefined) {
@@ -420,7 +493,7 @@ export const Form = {
 
         this._collection[form_id].set('categories', [2, 3]);
 
-        request.send(this._collection[form_id]);
+        request.send(this.getFormDataObject(form_id));
 
         return p;
     }
