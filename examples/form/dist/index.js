@@ -290,14 +290,25 @@ function BunnyFormData(form) {
 }
 
 BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
-    if (input.type === 'file') {
-        this._collection[input.name] = input.files[0] === undefined || input.files[0] === null ? '' : input.files[0];
+    if (input.type === 'radio') {
+        if (input.checked) {
+            this._collection[input.name] = input.value;
+        }
     } else if (this._collection[input.name] !== undefined) {
-        // element with same name already exists in collection, make array
+        // element with same name already exists in collection
         if (!Array.isArray(this._collection[input.name])) {
+            // is not array, convert to array first
             this._collection[input.name] = [this._collection[input.name]];
         }
         this._collection[input.name].push(input.value);
+    } else if (input.type === 'checkbox') {
+        if (input.checked) {
+            this._collection[input.name] = input.value;
+        } else {
+            this._collection[input.name] = '';
+        }
+    } else if (input.type === 'file') {
+        this._collection[input.name] = input.files[0] === undefined || input.files[0] === null ? '' : input.files[0];
     } else {
         this._collection[input.name] = input.value;
     }
@@ -444,6 +455,9 @@ var Form = {
         this._attachChangeEvent(form_id);
         this._attachDOMChangeEvent(form_id);
     },
+    isInitiated: function isInitiated(form_id) {
+        return this._collection[form_id] !== undefined;
+    },
 
 
     /**
@@ -493,9 +507,10 @@ var Form = {
         var _this5 = this;
 
         var target = document.forms[form_id];
-        var observer_config = { childList: true, subtree: true };
+        var observer_config = { attributeOldValue: true, childList: true, subtree: true };
         var observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
+                console.log(mutation);
                 if (mutation.addedNodes.length > 0) {
                     // probably new input added, update form data
                     for (var k = 0; k < mutation.addedNodes.length; k++) {
