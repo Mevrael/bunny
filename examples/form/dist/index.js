@@ -285,13 +285,23 @@ function BunnyFormData(form) {
     // build collection from form elements
     for (var k = 0; k < this._form.elements.length; k++) {
         var input = this._form.elements[k];
-        if (input.type === 'file') {
-            this._collection[input.name] = input.files[0] === undefined || input.files[0] === null ? '' : input.files[0];
-        } else {
-            this._collection[input.name] = input.value;
-        }
+        this._initSingleInput(input);
     }
 }
+
+BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
+    if (input.type === 'file') {
+        this._collection[input.name] = input.files[0] === undefined || input.files[0] === null ? '' : input.files[0];
+    } else if (this._collection[input.name] !== undefined) {
+        // element with same name already exists in collection, make array
+        if (!Array.isArray(this._collection[input.name])) {
+            this._collection[input.name] = [this._collection[input.name]];
+        }
+        this._collection[input.name].push(input.value);
+    } else {
+        this._collection[input.name] = input.value;
+    }
+};
 
 BunnyFormData.prototype.get = function get(input_name) {
     if (this._collection[input_name] === undefined) {
@@ -363,16 +373,21 @@ BunnyFormData.prototype.remove = function remove(input_name) {
     var array_value = arguments.length <= 1 || arguments[1] === undefined ? undefined : arguments[1];
 
     if (array_value !== undefined) {
-        (function () {
-            // remove element from array
-            var new_array = [];
-            _this2._collection[input_name].forEach(function (item) {
-                if (item !== array_value) {
-                    new_array.push(item);
-                }
-            });
-            _this2._collection[input_name] = new_array;
-        })();
+        // remove element from array
+        if (Array.isArray(this._collection[input_name])) {
+            (function () {
+                var new_array = [];
+                _this2._collection[input_name].forEach(function (item) {
+                    if (item !== array_value) {
+                        new_array.push(item);
+                    }
+                });
+                _this2._collection[input_name] = new_array;
+            })();
+        } else {
+            // not an array, just remove single element
+            delete this._collection[input_name];
+        }
     } else {
         delete this._collection[input_name];
     }
@@ -382,6 +397,8 @@ BunnyFormData.prototype.remove = function remove(input_name) {
  * BunnyJS Form component
  * Wraps native FormData API to allow working with same form from multiple closures
  * and adds custom methods to make form processing, including AJAX submit, file uploads and date/times, easier
+ * works only with real forms and elements in DOM
+ * Whenever new input is added or removed from DOM - Form data is updated
  */
 var Form = {
 
@@ -418,12 +435,14 @@ var Form = {
     init: function init(form_id) {
         var form = document.forms[form_id];
         if (form === undefined) {
-            console.trace();
             throw new Error('Form with ID ' + form_id + ' not found in DOM!');
         }
+        if (this._collection[form_id] !== undefined) {
+            throw new Error('Form with ID ' + form_id + ' already initiated!');
+        }
         this._collection[form_id] = new BunnyFormData(form);
-        //this._collection[form_id].init(form);
         this._attachChangeEvent(form_id);
+        this._attachDOMChangeEvent(form_id);
     },
 
 
@@ -438,31 +457,86 @@ var Form = {
         var _this3 = this;
 
         [].forEach.call(document.forms[form_id].elements, function (form_control) {
-            form_control.addEventListener('change', function (e) {
-                if (form_control.type === 'file') {
-                    if (e.isTrusted) {
-                        // file selected by user
-                        var fd = new FormData(document.forms[form_id]);
-                        _this3._collection[form_id].set(form_control.name, fd.get(form_control.name));
-                    } else {
+            _this3.__attachSingleChangeEvent(form_id, form_control);
+        });
+    },
+    __attachSingleChangeEvent: function __attachSingleChangeEvent(form_id, form_control) {
+        var _this4 = this;
+
+        form_control.addEventListener('change', function (e) {
+            if (form_control.type === 'file') {
+                if (e.isTrusted) {
+                    // file selected by user
+                    var fd = new FormData(document.forms[form_id]);
+                    _this4._collection[form_id].set(form_control.name, fd.get(form_control.name));
+                    // TODO: fix get() not supported for IE
+                } else {
                         // file set from script, do nothing because blob was set in Form.set() for File input.
                     }
-                } else if (form_control.type === 'radio') {
-                        var list = document.forms[form_id].elements[form_control.name];
-                        list.value = form_control.value;
-                        _this3._collection[form_id].set(form_control.name, form_control.value);
-                    } else {
-                        _this3._collection[form_id].set(form_control.name, form_control.value);
-                    }
+            } else if (form_control.type === 'radio') {
+                    var list = document.forms[form_id].elements[form_control.name];
+                    list.value = form_control.value;
+                    _this4._collection[form_id].set(form_control.name, form_control.value);
+                } else {
+                    _this4._collection[form_id].set(form_control.name, form_control.value);
+                }
 
-                // update mirror if mirrored
-                if (_this3._mirrorCollection[form_id] !== undefined) {
-                    if (_this3._mirrorCollection[form_id][form_control.name] === true) {
-                        _this3.setMirrors(form_id, form_control.name);
+            // update mirror if mirrored
+            if (_this4._mirrorCollection[form_id] !== undefined) {
+                if (_this4._mirrorCollection[form_id][form_control.name] === true) {
+                    _this4.setMirrors(form_id, form_control.name);
+                }
+            }
+        });
+    },
+    _attachDOMChangeEvent: function _attachDOMChangeEvent(form_id) {
+        var _this5 = this;
+
+        var target = document.forms[form_id];
+        var observer_config = { childList: true, subtree: true };
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.addedNodes.length > 0) {
+                    // probably new input added, update form data
+                    for (var k = 0; k < mutation.addedNodes.length; k++) {
+                        var node = mutation.addedNodes[k];
+                        if (node.tagName == 'input') {
+                            var input = node;
+                            _this5._collection[form_id]._initSingleInput(input);
+                            _this5.__attachSingleChangeEvent(form_id, input);
+                        } else {
+                            var inputs = node.getElementsByTagName('input');
+                            if (inputs.length > 0) {
+                                for (var k2 = 0; k2 < inputs.length; k2++) {
+                                    var input = inputs[k2];
+                                    _this5._collection[form_id]._initSingleInput(input);
+                                    _this5.__attachSingleChangeEvent(form_id, input);
+                                }
+                            }
+                        }
+                    }
+                } else if (mutation.removedNodes.length > 0) {
+                    // probably input removed, update form data
+                    for (var k = 0; k < mutation.removedNodes.length; k++) {
+                        var node = mutation.removedNodes[k];
+                        if (node.tagName == 'input') {
+                            var input = node;
+                            _this5._collection[form_id].remove(input.name, input.value);
+                        } else {
+                            var inputs = node.getElementsByTagName('input');
+                            if (inputs.length > 0) {
+                                // input(s) removed from DOM, update form data
+                                for (var k2 = 0; k2 < inputs.length; k2++) {
+                                    var input = inputs[k2];
+                                    _this5._collection[form_id].remove(input.name, input.value);
+                                }
+                            }
+                        }
                     }
                 }
             });
         });
+        observer.observe(target, observer_config);
     },
 
 
@@ -471,10 +545,10 @@ var Form = {
      * Must be called after DOMContentLoaded (ready)
      */
     initAll: function initAll() {
-        var _this4 = this;
+        var _this6 = this;
 
         [].forEach.call(document.forms, function (form) {
-            _this4.init(form.id);
+            _this6.init(form.id);
         });
     },
 
@@ -611,7 +685,7 @@ var Form = {
      * @param {string} input_name
      */
     mirror: function mirror(form_id, input_name) {
-        var _this5 = this;
+        var _this7 = this;
 
         this._checkInit(form_id);
         if (document.forms[form_id].elements[input_name].constructor.name !== 'HTMLInputElement') {
@@ -625,7 +699,7 @@ var Form = {
         var input = document.forms[form_id].elements[input_name];
         this.setMirrors(form_id, input_name);
         input.addEventListener('change', function () {
-            _this5.setMirrors(form_id, input_name);
+            _this7.setMirrors(form_id, input_name);
         });
     },
 
@@ -637,14 +711,14 @@ var Form = {
      * @param form_id
      */
     mirrorAll: function mirrorAll(form_id) {
-        var _this6 = this;
+        var _this8 = this;
 
         this._checkInit(form_id);
         var inputs = document.forms[form_id].elements;
         [].forEach.call(inputs, function (input) {
             if (document.forms[form_id].elements[input.name].constructor.name === 'HTMLInputElement') {
                 // make sure it is normal input and not RadioNodeList or other interfaces
-                _this6.mirror(form_id, input.name);
+                _this8.mirror(form_id, input.name);
             }
         });
     },
@@ -653,16 +727,16 @@ var Form = {
         return document.querySelectorAll('[data-mirror="' + form_id + '.' + input_name + '"]');
     },
     setMirrors: function setMirrors(form_id, input_name) {
-        var _this7 = this;
+        var _this9 = this;
 
         this._checkInit(form_id);
         var mirrors = this.getMirrors(form_id, input_name);
         var input = document.forms[form_id].elements[input_name];
         [].forEach.call(mirrors, function (mirror) {
             if (mirror.tagName === 'IMG') {
-                var data = _this7.get(form_id, input_name);
+                var data = _this9.get(form_id, input_name);
                 if (data !== '' && data.size !== 0) {
-                    mirror.src = URL.createObjectURL(_this7.get(form_id, input_name));
+                    mirror.src = URL.createObjectURL(_this9.get(form_id, input_name));
                 }
             } else {
                 mirror.textContent = input.value;
@@ -730,14 +804,14 @@ var Form = {
     file methods
      */
     setFileFromUrl: function setFileFromUrl(form_id, input_name, url) {
-        var _this8 = this;
+        var _this10 = this;
 
         var request = new XMLHttpRequest();
         var p = new Promise(function (success, fail) {
             request.onload = function () {
                 if (request.status === 200) {
                     var blob = request.response;
-                    _this8.set(form_id, input_name, blob);
+                    _this10.set(form_id, input_name, blob);
                     success(blob);
                 } else {
                     fail(request);
@@ -815,4 +889,24 @@ document.forms[0].addEventListener('submit', function (e) {
     }).catch(function (e) {
         console.log(e);
     });
+});
+
+var counter = 1;
+
+document.getElementById('add').addEventListener('click', function () {
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'custom_input';
+    input.value = counter++;
+    var close = document.createElement('a');
+    close.classList.add('btn');
+    close.classList.add('btn-danger');
+    close.textContent = 'Delete';
+    var div = document.createElement('div');
+    div.appendChild(input);
+    div.appendChild(close);
+    close.addEventListener('click', function () {
+        document.forms.form1.removeChild(div);
+    });
+    document.forms.form1.appendChild(div);
 });

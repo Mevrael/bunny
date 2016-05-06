@@ -14,13 +14,23 @@ function BunnyFormData(form) {
     // build collection from form elements
     for (var k = 0; k < this._form.elements.length; k++) {
         var input = this._form.elements[k];
-        if (input.type === 'file') {
-            this._collection[input.name] = (input.files[0] === undefined || input.files[0] === null) ? '' : input.files[0];
-        } else {
-            this._collection[input.name] = input.value;
-        }
+        this._initSingleInput(input);
     }
 }
+
+BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
+    if (input.type === 'file') {
+        this._collection[input.name] = (input.files[0] === undefined || input.files[0] === null) ? '' : input.files[0];
+    } else if (this._collection[input.name] !== undefined) {
+        // element with same name already exists in collection, make array
+        if (!Array.isArray(this._collection[input.name])) {
+            this._collection[input.name] = [this._collection[input.name]];
+        }
+        this._collection[input.name].push(input.value);
+    } else {
+        this._collection[input.name] = input.value;
+    }
+};
 
 BunnyFormData.prototype.get = function get(input_name) {
     if (this._collection[input_name] === undefined) {
@@ -82,13 +92,18 @@ BunnyFormData.prototype.buildFormDataObject = function buildFormDataObject() {
 BunnyFormData.prototype.remove = function remove(input_name, array_value = undefined) {
     if (array_value !== undefined) {
         // remove element from array
-        let new_array = [];
-        this._collection[input_name].forEach((item) => {
-            if (item !== array_value) {
-                new_array.push(item);
-            }
-        });
-        this._collection[input_name] = new_array;
+        if (Array.isArray(this._collection[input_name])) {
+            let new_array = [];
+            this._collection[input_name].forEach((item) => {
+                if (item !== array_value) {
+                    new_array.push(item);
+                }
+            });
+            this._collection[input_name] = new_array;
+        } else {
+            // not an array, just remove single element
+            delete this._collection[input_name];
+        }
     } else {
         delete this._collection[input_name];
     }
@@ -98,6 +113,8 @@ BunnyFormData.prototype.remove = function remove(input_name, array_value = undef
  * BunnyJS Form component
  * Wraps native FormData API to allow working with same form from multiple closures
  * and adds custom methods to make form processing, including AJAX submit, file uploads and date/times, easier
+ * works only with real forms and elements in DOM
+ * Whenever new input is added or removed from DOM - Form data is updated
  */
 export const Form = {
 
@@ -135,12 +152,14 @@ export const Form = {
     init(form_id) {
         const form = document.forms[form_id];
         if (form === undefined) {
-            console.trace();
             throw new Error(`Form with ID ${form_id} not found in DOM!`);
         }
+        if (this._collection[form_id] !== undefined) {
+            throw new Error(`Form with ID ${form_id} already initiated!`);
+        }
         this._collection[form_id] = new BunnyFormData(form);
-        //this._collection[form_id].init(form);
         this._attachChangeEvent(form_id);
+        this._attachDOMChangeEvent(form_id);
     },
 
     /**
@@ -152,31 +171,84 @@ export const Form = {
      */
     _attachChangeEvent(form_id) {
         [].forEach.call(document.forms[form_id].elements, (form_control) => {
-            form_control.addEventListener('change', (e) => {
-                if (form_control.type === 'file') {
-                    if (e.isTrusted) {
-                        // file selected by user
-                        const fd = new FormData(document.forms[form_id]);
-                        this._collection[form_id].set(form_control.name, fd.get(form_control.name));
-                    } else {
-                        // file set from script, do nothing because blob was set in Form.set() for File input.
-                    }
-                } else if (form_control.type === 'radio') {
-                    const list = document.forms[form_id].elements[form_control.name];
-                    list.value = form_control.value;
-                    this._collection[form_id].set(form_control.name, form_control.value);
-                } else {
-                    this._collection[form_id].set(form_control.name, form_control.value);
-                }
+            this.__attachSingleChangeEvent(form_id, form_control);
+        });
+    },
 
-                // update mirror if mirrored
-                if (this._mirrorCollection[form_id] !== undefined) {
-                    if (this._mirrorCollection[form_id][form_control.name] === true) {
-                        this.setMirrors(form_id, form_control.name);
+    __attachSingleChangeEvent(form_id, form_control) {
+        form_control.addEventListener('change', (e) => {
+            if (form_control.type === 'file') {
+                if (e.isTrusted) {
+                    // file selected by user
+                    const fd = new FormData(document.forms[form_id]);
+                    this._collection[form_id].set(form_control.name, fd.get(form_control.name));
+                    // TODO: fix get() not supported for IE
+                } else {
+                    // file set from script, do nothing because blob was set in Form.set() for File input.
+                }
+            } else if (form_control.type === 'radio') {
+                const list = document.forms[form_id].elements[form_control.name];
+                list.value = form_control.value;
+                this._collection[form_id].set(form_control.name, form_control.value);
+            } else {
+                this._collection[form_id].set(form_control.name, form_control.value);
+            }
+
+            // update mirror if mirrored
+            if (this._mirrorCollection[form_id] !== undefined) {
+                if (this._mirrorCollection[form_id][form_control.name] === true) {
+                    this.setMirrors(form_id, form_control.name);
+                }
+            }
+        });
+    },
+
+    _attachDOMChangeEvent(form_id) {
+        const target = document.forms[form_id];
+        const observer_config = { childList: true, subtree: true };
+        const observer = new MutationObserver( (mutations) => {
+            mutations.forEach( (mutation) => {
+                if (mutation.addedNodes.length > 0) {
+                    // probably new input added, update form data
+                    for (let k = 0; k < mutation.addedNodes.length; k++) {
+                        let node = mutation.addedNodes[k];
+                        if (node.tagName == 'input') {
+                            let input = node;
+                            this._collection[form_id]._initSingleInput(input);
+                            this.__attachSingleChangeEvent(form_id, input);
+                        } else {
+                            let inputs = node.getElementsByTagName('input');
+                            if (inputs.length > 0) {
+                                for (let k2 = 0; k2 < inputs.length; k2++) {
+                                    let input = inputs[k2];
+                                    this._collection[form_id]._initSingleInput(input);
+                                    this.__attachSingleChangeEvent(form_id, input);
+                                }
+                            }
+                        }
+                    }
+                } else if (mutation.removedNodes.length > 0) {
+                    // probably input removed, update form data
+                    for (let k = 0; k < mutation.removedNodes.length; k++) {
+                        let node = mutation.removedNodes[k];
+                        if (node.tagName == 'input') {
+                            let input = node;
+                            this._collection[form_id].remove(input.name, input.value);
+                        } else {
+                            let inputs = node.getElementsByTagName('input');
+                            if (inputs.length > 0) {
+                                // input(s) removed from DOM, update form data
+                                for (let k2 = 0; k2 < inputs.length; k2++) {
+                                    let input = inputs[k2];
+                                    this._collection[form_id].remove(input.name, input.value);
+                                }
+                            }
+                        }
                     }
                 }
             });
         });
+        observer.observe(target, observer_config);
     },
 
     /**

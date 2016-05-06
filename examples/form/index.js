@@ -27,3 +27,22 @@ document.forms[0].addEventListener('submit', (e) => {
 
 });
 
+let counter = 1;
+
+document.getElementById('add').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'custom_input';
+    input.value = counter++;
+    const close = document.createElement('a');
+    close.classList.add('btn');
+    close.classList.add('btn-danger');
+    close.textContent = 'Delete';
+    const div = document.createElement('div');
+    div.appendChild(input);
+    div.appendChild(close);
+    close.addEventListener('click', function() {
+        document.forms.form1.removeChild(div);
+    });
+    document.forms.form1.appendChild(div);
+});

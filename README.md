@@ -1,4 +1,4 @@
-# BunnyJS v 0.9.2
+# BunnyJS v 0.9.3
 
 ## ES6 browser framework
 
