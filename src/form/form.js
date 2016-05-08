@@ -26,6 +26,9 @@ export default Form = {
      */
     _mirrorCollection: {},
 
+    _valueSetFromEvent: false,
+
+
     //_calcMirrorCollection: {},
 
 
@@ -95,14 +98,14 @@ export default Form = {
 
     __attachSingleChangeEvent(form_id, form_control) {
         form_control.addEventListener('change', (e) => {
-
-            this._parseFormControl(form_id, form_control, form_control.value);
-
-            if (form_control.type === 'file') {
-                if (e.isTrusted) {
-                    // file selected by user
-                    this._collection[form_id].set(form_control.name, form_control.files[0]);
-                }
+            if (form_control.type === 'file' && e.isTrusted) {
+                // file selected by user
+                //this._collection[form_id].set(form_control.name, form_control.files[0]);
+                this._valueSetFromEvent = true;
+                form_control.value = form_control.files[0];
+                this._valueSetFromEvent = false;
+            } else {
+                this._parseFormControl(form_id, form_control, form_control.value);
             }
 
             // update mirror if mirrored
@@ -178,8 +181,8 @@ export default Form = {
     },
 
     _parseFormControlFile(form_id, form_control, value) {
-        if (!(value instanceof Blob)) {
-            throw new TypeError('Only Blob object is allowed to be assigned to .value property of file input using Bunny Form');
+        if (!(value instanceof Blob) && !(value instanceof File)) {
+            throw new TypeError('Only Blob or File object is allowed to be assigned to .value property of file input using Bunny Form');
         } else {
             if (value.name === undefined) {
                 value.name = 'blob';
@@ -194,11 +197,9 @@ export default Form = {
         return this.get(form_id, form_control.name);
     },
 
-
-
-
     __observeSingleValueChange(form_id, form_control) {
         const self = this;
+
         Object.defineProperty(form_control, 'value', {
             get: function() {
                 return self._parseFormControl(form_id, form_control);
@@ -211,12 +212,20 @@ export default Form = {
 
                 self._parseFormControl(form_id, form_control, value);
                 if (!(form_control instanceof RadioNodeList)) {
-                    const event = new CustomEvent('change');
-                    form_control.dispatchEvent(event);
+                    if (!this._valueSetFromEvent) {
+                        const event = new CustomEvent('change');
+                        form_control.dispatchEvent(event);
+
+                    }
                 }
             }
         });
     },
+
+
+
+
+
 
     _initNewInput(form_id, input) {
         this._checkInit(form_id);
@@ -246,7 +255,7 @@ export default Form = {
         __handleAddedNodes(form_id, added_nodes) {
             for (let k = 0; k < added_nodes.length; k++) {
                 let node = added_nodes[k];
-                if (node.tagName == 'input') {
+                if (node.tagName === 'INPUT') {
                     this._initNewInput(form_id, node);
                 } else {
                     let inputs = node.getElementsByTagName('input');
@@ -262,7 +271,7 @@ export default Form = {
         __handleRemovedNodes(form_id, removed_nodes) {
             for (let k = 0; k < removed_nodes.length; k++) {
                 let node = removed_nodes[k];
-                if (node.tagName == 'input') {
+                if (node.tagName === 'INPUT') {
                     let input = node;
                     this._collection[form_id].remove(input.name, input.value);
                 } else {

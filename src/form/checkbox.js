@@ -11,19 +11,19 @@ export var Checkbox = {
                 // if input is checked by default but don't have checked_class, add it
                 if (input.checked && !custom_cb.classList.contains(checked_class)) {
                     custom_cb.classList.add(checked_class);
-                    input.value = 1;
-                } else if (!input.checked) {
+                    //input.value = 1;
+                } /*else if (!input.checked) {
                     input.value = 0;
-                }
+                }*/
 
                 // add handler to toggle checked_class when input is checked/unchecked
                 input.addEventListener('change', () => {
                     if (input.checked) {
                         custom_cb.classList.add(checked_class);
-                        input.value = 1;
+                        //input.value = 1;
                     } else {
                         custom_cb.classList.remove(checked_class);
-                        input.value = 0;
+                        //input.value = 0;
                     }
                 });
             }

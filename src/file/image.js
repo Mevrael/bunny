@@ -17,36 +17,37 @@ export const BunnyImage = {
      * @returns {Promise} success(Image object), fail(error)
      */
     getImageByURL(URL) {
+        return this._toImagePromise(URL);
+    },
+
+    _toImagePromise(src) {
         const img = new Image;
-        const p = new Promise((resolve, reject) => {
+        const p = new Promise( (ok, fail) => {
             img.onload = () => {
-                resolve(img);
+                ok(img);
             };
             img.onerror = (e) => {
-                reject(e);
+                fail(e);
             }
         });
         img.crossOrigin = 'Anonymous';
-        img.src = URL;
+        img.src = src;
         return p;
     },
 
-    blobToImage(blob) {
-        const img = new Image;
-        img.src = BunnyFile.getBlobLocalURL(blob);
-        return img;
+    getImageByBlob(blob) {
+        const url = BunnyFile.getBlobLocalURL(blob);
+        return this._toImagePromise(url);
     },
 
-    base64ToImage(base64) {
-        const img = new Image;
-        img.src = base64;
-        return img;
+    getImageByBase64(base64) {
+        const url = base64;
+        return this._toImagePromise(url);
     },
 
-    canvasToImage(canvas) {
-        var img = new Image;
-        img.src = canvas.toDataURL();
-        return img;
+    getImageByCanvas(canvas) {
+        const url = canvas.toDataURL();
+        return this._toImagePromise(url);
     },
 
 
@@ -55,6 +56,9 @@ export const BunnyImage = {
     // SECTION:: create different sources from Image object
 
     imageToCanvas(img, width = null, height = null) {
+        if (!img.complete) {
+            throw new Error('Can not create canvas from Image. Image is not loaded yet.');
+        }
         const canvas = document.createElement("canvas");
         if (width === null && height === null) {
             canvas.width = img.width;
@@ -86,10 +90,16 @@ export const BunnyImage = {
     },
 
     getImageWidth(img) {
+        if (!img.complete) {
+            throw new Error('Can not get Image.width. Image is not loaded yet.');
+        }
         return img.width;
     },
 
     getImageHeight(img) {
+        if (!img.complete) {
+            throw new Error('Can not get Image.height. Image is not loaded yet.');
+        }
         return img.height;
     },
 
@@ -99,24 +109,17 @@ export const BunnyImage = {
     // SECTION: basic Image data math functions
 
     getImageNewAspectSizes(img, max_width, max_height) {
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-            if (width > max_width) {
-                height *= max_width / width;
-                width = max_width;
-            }
-        } else {
-            if (height > max_height) {
-                width *= max_height / height;
-                height = max_height;
-            }
+        const img_width = this.getImageWidth(img);
+        const img_height = this.getImageHeight(img);
+        if (img_width === 0 || img_height === 0) {
+            throw new Error('Image width or height is 0 in BunnyImage.getImageNewAspectSizes().')
         }
+        const ratio = Math.min(max_width / img_width, max_height / img_height);
 
         return {
-            width: width,
-            height: height
-        }
+            width: Math.floor(img_width * ratio),
+            height: Math.floor(img_height * ratio)
+        };
     },
 
 
@@ -130,14 +133,14 @@ export const BunnyImage = {
      * @param {Image} img
      * @param {Number} max_width
      * @param {Number} max_height
-     * @returns {Image}
+     * @returns {Promise} success(Image), fail(error)
      */
     resizeImage(img, max_width, max_height) {
         const sizes = this.getImageNewAspectSizes(img, max_width, max_height);
         const width = sizes.width;
         const height = sizes.height;
         const canvas = this.imageToCanvas(img, width, height);
-        return this.canvasToImage(canvas);
+        return this.getImageByCanvas(canvas);
     }
 
 };
