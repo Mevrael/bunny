@@ -1,124 +1,5 @@
 
-// FormData wrapper for IE/Edge/Safari/Android etc which supports only FormData constructor and append()
-function BunnyFormData(form) {
-    /*if (form.constructor.name !== 'HTMLFormElement') {
-        throw new Error('Form passed to BunnyFormData constructor is not an instance of HTMLFormElement');
-    }*/
-
-    // form
-    this._form = form;
-
-    // item collection;
-    this._collection = {};
-
-    // build collection from form elements
-    for (var k = 0; k < this._form.elements.length; k++) {
-        var input = this._form.elements[k];
-        this._initSingleInput(input);
-    }
-}
-
-BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
-    if (input.type === 'radio') {
-        if (input.checked) {
-            this._collection[input.name] = input.value;
-        }
-    } else if (this._collection[input.name] !== undefined) {
-        // element with same name already exists in collection
-        if (!Array.isArray(this._collection[input.name])) {
-            // is not array, convert to array first
-            this._collection[input.name] = [this._collection[input.name]];
-        }
-        this._collection[input.name].push(input.value);
-    } else if (input.type === 'checkbox') {
-        if (input.checked) {
-            this._collection[input.name] = input.value;
-        } else {
-            this._collection[input.name] = '';
-        }
-    } else if (input.type === 'file') {
-        this._collection[input.name] = (input.files[0] === undefined || input.files[0] === null) ? '' : input.files[0];
-    } else {
-        this._collection[input.name] = input.value;
-    }
-};
-
-BunnyFormData.prototype.get = function get(input_name) {
-    if (this._collection[input_name] === undefined) {
-        return null;
-    } else {
-        return this._collection[input_name];
-    }
-};
-
-// value can also be a Blob/File but this get() polyfill does not include 3rd argument filename
-BunnyFormData.prototype.set = function get(input_name, value) {
-    this._collection[input_name] = value;
-};
-
-BunnyFormData.prototype.append = function append(input_name, value) {
-    if (this._collection[input_name] === undefined) {
-        this._collection[input_name] = value;
-    } else if (Array.isArray(this._collection[input_name])) {
-        this._collection[input_name].push(value);
-    } else {
-        // convert single element into array and append new item
-        const item = this._collection[input_name];
-        this._collection[input_name] = [item, value];
-    }
-};
-
-BunnyFormData.prototype.getAll = function getAll(input_name) {
-    if (this._collection[input_name] === undefined) {
-        return [];
-    } else if (Array.isArray(this._collection[input_name])) {
-        return this._collection[input_name];
-    } else {
-        return [this._collection[input_name]];
-    }
-};
-
-// since entries(), keys(), values() return Iterator which is not supported in many browsers
-// there is only one element to simply get object of key => value pairs of all form elements
-// use this method instead of entries(), keys() or values()
-BunnyFormData.prototype.getAllElements = function getAllElements() {
-    return this._collection;
-};
-
-BunnyFormData.prototype.buildFormDataObject = function buildFormDataObject() {
-    const formData = new FormData();
-    for (let key in this._collection) {
-        if (Array.isArray(this._collection[key])) {
-            this._collection[key].forEach((item) => {
-                formData.append(key, item);
-            });
-        } else {
-            formData.append(key, this._collection[key]);
-        }
-    }
-    return formData;
-};
-
-// remove instead of delete(). Also can remove element from array
-BunnyFormData.prototype.remove = function remove(input_name, array_value = undefined) {
-    if (array_value !== undefined) {
-        // remove element from array
-        if (Array.isArray(this._collection[input_name])) {
-            let new_array = [];
-            this._collection[input_name].forEach((item) => {
-                if (item !== array_value) {
-                    new_array.push(item);
-                }
-            });
-            this._collection[input_name] = new_array;
-        } else {
-            // not an array, just remove single element
-            delete this._collection[input_name];
-        }
-    } else {
-        delete this._collection[input_name];
-    }
-};
+import BunnyFormData from '../polyfills/BunnyFormData';
 
 /**
  * BunnyJS Form component
@@ -127,7 +8,7 @@ BunnyFormData.prototype.remove = function remove(input_name, array_value = undef
  * works only with real forms and elements in DOM
  * Whenever new input is added or removed from DOM - Form data is updated
  */
-export const Form = {
+export default Form = {
 
     /*
     properties
@@ -169,7 +50,8 @@ export const Form = {
             throw new Error(`Form with ID ${form_id} already initiated!`);
         }
         this._collection[form_id] = new BunnyFormData(form);
-        this._attachChangeEvent(form_id);
+        this._attachChangeAndDefaultFileEvent(form_id);
+        this._attachRadioListChangeEvent(form_id);
         this._attachDOMChangeEvent(form_id);
     },
 
@@ -179,34 +61,48 @@ export const Form = {
 
     /**
      * Update FormData when user changed input's value
+     * or when value changed from script
+     *
+     * Also init default value for File inputs
      *
      * @param {string} form_id
      *
      * @private
      */
-    _attachChangeEvent(form_id) {
-        [].forEach.call(document.forms[form_id].elements, (form_control) => {
+    _attachChangeAndDefaultFileEvent(form_id) {
+        const elements = this._collection[form_id].getInputs();
+        [].forEach.call(elements, (form_control) => {
+
             this.__attachSingleChangeEvent(form_id, form_control);
+            this.__observeSingleValueChange(form_id, form_control);
+
+            if (form_control.type === 'file' && form_control.hasAttribute('value')) {
+                const url = form_control.getAttribute('value');
+                if (url !== '') {
+                    this.setFileFromUrl(form_id, form_control.name, url);
+                }
+            }
         });
+    },
+
+    _attachRadioListChangeEvent(form_id) {
+        const radio_lists = this._collection[form_id].getRadioLists();
+        for (let radio_group_name in radio_lists) {
+            let single_radio_list = radio_lists[radio_group_name];
+            this.__observeSingleValueChange(form_id, single_radio_list);
+        }
     },
 
     __attachSingleChangeEvent(form_id, form_control) {
         form_control.addEventListener('change', (e) => {
+
+            this._parseFormControl(form_id, form_control, form_control.value);
+
             if (form_control.type === 'file') {
                 if (e.isTrusted) {
                     // file selected by user
-                    const fd = new FormData(document.forms[form_id]);
-                    this._collection[form_id].set(form_control.name, fd.get(form_control.name));
-                    // TODO: fix get() not supported for IE
-                } else {
-                    // file set from script, do nothing because blob was set in Form.set() for File input.
+                    this._collection[form_id].set(form_control.name, form_control.files[0]);
                 }
-            } else if (form_control.type === 'radio') {
-                const list = document.forms[form_id].elements[form_control.name];
-                list.value = form_control.value;
-                this._collection[form_id].set(form_control.name, form_control.value);
-            } else {
-                this._collection[form_id].set(form_control.name, form_control.value);
             }
 
             // update mirror if mirrored
@@ -218,54 +114,168 @@ export const Form = {
         });
     },
 
+    // handlers for different input types
+    // with 3rd argument - setter
+    // without 3rd argument - getter
+    // called from .value property observer
+    _parseFormControl(form_id, form_control, value = undefined) {
+        if (form_control.tagName === 'TEXTAREA') {
+            form_control.type = 'textarea';
+        } else if (form_control instanceof RadioNodeList) {
+            form_control.type = 'radiolist';
+        }
+
+        // check if parser for specific input type exists and call it instead
+        let method = form_control.type.toLowerCase();
+        method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
+        method = '_parseFormControl' + method;
+
+        if (value === undefined) {
+            method = method + 'Getter';
+        }
+
+        if (this[method] !== undefined) {
+            return this[method](form_id, form_control, value);
+        } else {
+            // call default parser
+            // if input with same name exists - override
+            if (value === undefined) {
+                return this._parseFormControlDefaultGetter(form_id, form_control);
+            } else {
+                this._parseFormControlDefault(form_id, form_control, value);
+            }
+        }
+    },
+
+    _parseFormControlDefault(form_id, form_control, value) {
+        this._collection[form_id].set(form_control.name, value);
+    },
+
+    _parseFormControlDefaultGetter(form_id, form_control) {
+        return Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').get.call(form_control);
+        //return this._collection[form_id].get(form_control.name);
+    },
+
+    _parseFormControlRadiolist(form_id, form_control, value) {
+        let found = false;
+        for (let k = 0; k < form_control.length; k++) {
+            let radio_input = form_control[k];
+            if (radio_input.value === value) {
+                this._collection[form_id].set(radio_input.name, value);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new TypeError('Trying to Form.set() on radio with unexisted value="'+value+'"');
+        }
+    },
+
+    _parseFormControlCheckbox(form_id, form_control, value) {
+        const fd = this._collection[form_id];
+        fd.setCheckbox(form_control.name, value, form_control.checked);
+    },
+
+    _parseFormControlFile(form_id, form_control, value) {
+        if (!(value instanceof Blob)) {
+            throw new TypeError('Only Blob object is allowed to be assigned to .value property of file input using Bunny Form');
+        } else {
+            if (value.name === undefined) {
+                value.name = 'blob';
+            }
+            this._collection[form_id].set(form_control.name, value);
+        }
+    },
+
+    _parseFormControlFileGetter(form_id, form_control) {
+        // Override native file input .value logic
+        // return Blob or File object or empty string if no file set
+        return this.get(form_id, form_control.name);
+    },
+
+
+
+
+    __observeSingleValueChange(form_id, form_control) {
+        const self = this;
+        Object.defineProperty(form_control, 'value', {
+            get: function() {
+                return self._parseFormControl(form_id, form_control);
+            },
+            set: function (value) {
+                // call parent setter to redraw changes in UI, update checked etc.
+                if (form_control.type !== 'file') {
+                    Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').set.call(form_control, value);
+                }
+
+                self._parseFormControl(form_id, form_control, value);
+                if (!(form_control instanceof RadioNodeList)) {
+                    const event = new CustomEvent('change');
+                    form_control.dispatchEvent(event);
+                }
+            }
+        });
+    },
+
+    _initNewInput(form_id, input) {
+        this._checkInit(form_id);
+        this._collection[form_id]._initSingleInput(input);
+        this.__attachSingleChangeEvent(form_id, input);
+        this.__observeSingleValueChange(form_id, input);
+    },
+
     _attachDOMChangeEvent(form_id) {
         const target = document.forms[form_id];
-        const observer_config = { attributeOldValue: true, childList: true, subtree: true };
+        const observer_config = { childList: true, subtree: true };
         const observer = new MutationObserver( (mutations) => {
             mutations.forEach( (mutation) => {
-                console.log(mutation);
                 if (mutation.addedNodes.length > 0) {
                     // probably new input added, update form data
-                    for (let k = 0; k < mutation.addedNodes.length; k++) {
-                        let node = mutation.addedNodes[k];
-                        if (node.tagName == 'input') {
-                            let input = node;
-                            this._collection[form_id]._initSingleInput(input);
-                            this.__attachSingleChangeEvent(form_id, input);
-                        } else {
-                            let inputs = node.getElementsByTagName('input');
-                            if (inputs.length > 0) {
-                                for (let k2 = 0; k2 < inputs.length; k2++) {
-                                    let input = inputs[k2];
-                                    this._collection[form_id]._initSingleInput(input);
-                                    this.__attachSingleChangeEvent(form_id, input);
-                                }
-                            }
-                        }
-                    }
+                    this.__handleAddedNodes(form_id, mutation.addedNodes);
                 } else if (mutation.removedNodes.length > 0) {
                     // probably input removed, update form data
-                    for (let k = 0; k < mutation.removedNodes.length; k++) {
-                        let node = mutation.removedNodes[k];
-                        if (node.tagName == 'input') {
-                            let input = node;
-                            this._collection[form_id].remove(input.name, input.value);
-                        } else {
-                            let inputs = node.getElementsByTagName('input');
-                            if (inputs.length > 0) {
-                                // input(s) removed from DOM, update form data
-                                for (let k2 = 0; k2 < inputs.length; k2++) {
-                                    let input = inputs[k2];
-                                    this._collection[form_id].remove(input.name, input.value);
-                                }
-                            }
-                        }
-                    }
+                    this.__handleRemovedNodes(form_id, mutation.removedNodes);
                 }
             });
         });
+
         observer.observe(target, observer_config);
     },
+
+        __handleAddedNodes(form_id, added_nodes) {
+            for (let k = 0; k < added_nodes.length; k++) {
+                let node = added_nodes[k];
+                if (node.tagName == 'input') {
+                    this._initNewInput(form_id, node);
+                } else {
+                    let inputs = node.getElementsByTagName('input');
+                    if (inputs.length > 0) {
+                        for (let k2 = 0; k2 < inputs.length; k2++) {
+                            this._initNewInput(form_id, inputs[k2]);
+                        }
+                    }
+                }
+            }
+        },
+
+        __handleRemovedNodes(form_id, removed_nodes) {
+            for (let k = 0; k < removed_nodes.length; k++) {
+                let node = removed_nodes[k];
+                if (node.tagName == 'input') {
+                    let input = node;
+                    this._collection[form_id].remove(input.name, input.value);
+                } else {
+                    let inputs = node.getElementsByTagName('input');
+                    if (inputs.length > 0) {
+                        for (let k2 = 0; k2 < inputs.length; k2++) {
+                            let input = inputs[k2];
+                            this._collection[form_id].remove(input.name, input.value);
+                        }
+                    }
+                }
+            }
+        },
 
     /**
      * Init all forms in DOM
@@ -298,7 +308,7 @@ export const Form = {
 
     /**
      * Set new value of real DOM input or virtual input
-     * Actually fires change event and values are set in _attachChangeEvent()
+     * Actually fires change event and values are set in _attachChangeAndDefaultFileEvent()
      *
      * @param {string} form_id
      * @param {string} input_name
@@ -306,28 +316,8 @@ export const Form = {
      */
     set(form_id, input_name, input_value) {
         this._checkInit(form_id);
-        //this._collection[form_id].set(input_name, input_value);
-        const input = document.forms[form_id].elements[input_name];
-        const event = new CustomEvent('change');
-        if (input.constructor.name !== 'RadioNodeList') {
-            if (input.type === 'file') {
-                this._collection[form_id].set(input_name, input_value);
-            } else {
-                input.value = input_value;
-            }
-            input.dispatchEvent(event);
-            return true;
-        } else {
-            for (let k = 0; k < input.length; k++) {
-                let radio_input = input[k];
-                if (radio_input.value === input_value) {
-                    input.value = input_value;
-                    radio_input.dispatchEvent(event);
-                    return true;
-                }
-            }
-            throw new TypeError('Trying to Form.set() on radio with unexisted value="'+input_value+'"');
-        }
+        const input = this._collection[form_id].getInput(input_name);
+        input.value = input_value;
     },
 
     /**
@@ -370,6 +360,10 @@ export const Form = {
         return this._collection[form_id].buildFormDataObject();
     },
 
+    getInput(form_id, input_name) {
+        return this._collection[form_id].getInput(input_name);
+    },
+
 
     /*
      virtual checkbox, item list, tag list, etc methods
@@ -406,7 +400,9 @@ export const Form = {
      */
     mirror(form_id, input_name) {
         this._checkInit(form_id);
-        if (document.forms[form_id].elements[input_name].constructor.name !== 'HTMLInputElement') {
+        const input = this._collection[form_id].getInput(input_name);
+        if (!(input instanceof HTMLInputElement)) {
+            // make sure it is normal input and not RadioNodeList or other interfaces which don't have addEventListener
             throw new Error('Cannot mirror radio buttons or checkboxes.')
         }
         if (this._mirrorCollection[form_id] === undefined) {
@@ -414,7 +410,7 @@ export const Form = {
         }
         this._mirrorCollection[form_id][input_name] = true;
 
-        const input = document.forms[form_id].elements[input_name];
+        //const input = document.forms[form_id].elements[input_name];
         this.setMirrors(form_id, input_name);
         input.addEventListener('change', () => {
             this.setMirrors(form_id, input_name);
@@ -429,10 +425,10 @@ export const Form = {
      */
     mirrorAll(form_id) {
         this._checkInit(form_id);
-        const inputs = document.forms[form_id].elements;
+        const inputs = this._collection[form_id].getInputs();
         [].forEach.call(inputs, (input) => {
-            if (document.forms[form_id].elements[input.name].constructor.name === 'HTMLInputElement') {
-                // make sure it is normal input and not RadioNodeList or other interfaces
+            if (input instanceof HTMLInputElement && input.type !== 'checkbox' && input.type !== 'radio') {
+                // make sure it is normal input and not RadioNodeList or other interfaces which don't have addEventListener
                 this.mirror(form_id, input.name);
             }
         });
@@ -446,7 +442,8 @@ export const Form = {
     setMirrors(form_id, input_name) {
         this._checkInit(form_id);
         const mirrors = this.getMirrors(form_id, input_name);
-        const input = document.forms[form_id].elements[input_name];
+        const input = this._collection[form_id].getInput(input_name);
+        //const input = document.forms[form_id].elements[input_name];
         [].forEach.call(mirrors, (mirror) => {
             if (mirror.tagName === 'IMG') {
                 let data = this.get(form_id, input_name);
@@ -542,7 +539,6 @@ export const Form = {
         request.open('GET', url, true);
         request.responseType = 'blob';
         request.send();
-
         return p;
     },
 
@@ -562,9 +558,7 @@ export const Form = {
                 url = '';
             }
         }
-
         request.open(method, url);
-
         const p = new Promise( (success, fail) => {
             request.onload = () => {
                 if (request.status === 200) {
@@ -574,15 +568,11 @@ export const Form = {
                 }
             };
         });
-
         for (let header in headers) {
             request.setRequestHeader(header, headers[header]);
         }
-
         this._collection[form_id].set('categories', [2, 3]);
-
         request.send(this.getFormDataObject(form_id));
-
         return p;
     }
 

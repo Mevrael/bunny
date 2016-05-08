@@ -3,7 +3,7 @@ var gulp       = require('gulp'),
     rollup     = require('gulp-rollup'),
     //sourcemaps = require('gulp-sourcemaps'),
     babel      = require('rollup-plugin-babel'),
-    npm        = require('rollup-plugin-npm'),
+    npm        = require('rollup-plugin-node-resolve'),
     sass       = require('gulp-sass');
 
 var examples = [
@@ -23,7 +23,7 @@ gulp.task('default', function(){
                     sourceMap: false,
                     plugins: [
                         babel(),
-                        npm({ jsnext: true, main: true })
+                        npm({ jsnext: true, main: true, browser: true, preferBuiltins: false })
                     ]
                 }))
                 //.pipe(sourcemaps.write(".")) // this only works if the sourceMap option is true

@@ -3,8 +3,8 @@ import '../../src/polyfills/ConstructorName';
 import '../../src/polyfills/CustomEvent';
 import '../../src/polyfills/Promise';
 
-import { Form } from '../../src/form/form';
-
+import Form from '../../src/form/form';
+import { BunnyImage } from '../../src/file/image';
 
 Form.initAll();
 Form.mirrorAll('form1');
@@ -12,19 +12,29 @@ Form.mirrorAll('form1');
 
 const link = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png';
 
-document.forms[0].addEventListener('submit', (e) => {
-    e.preventDefault();
+var image = null;
 
+BunnyImage.getImageByURL(link).then( (img) => {
+    image = img;
+});
+
+document.forms.form1.addEventListener('submit', (e) => {
+    e.preventDefault();
+    Form.submit(document.forms[0].id).then((responseData) => {
+        console.log('ajax submit ok');
+    }).catch((response) => {
+        console.log('ajax fail');
+    });
+});
+
+document.getElementById('set_photo').addEventListener('click', (e) => {
+    document.getElementById('form1_submit').setAttribute('disabled', 'disabled');
     Form.setFileFromUrl('form1', 'photo', link).then( (blob) => {
-        Form.submit(document.forms[0].id).then((responseData) => {
-            console.log('ok');
-        }).catch((response) => {
-            console.log('fail');
-        });
+        document.getElementById('form1_submit').removeAttribute('disabled');
+        console.log(blob);
     }).catch((e) => {
         console.log(e);
     });
-
 });
 
 let counter = 1;

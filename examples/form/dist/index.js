@@ -270,48 +270,160 @@ babelHelpers;
   }
 })(this);
 
-// FormData wrapper for IE/Edge/Safari/Android etc which supports only FormData constructor and append()
+function nonEnumKeys(object) {
+    var target = object;
+    var enum_and_nonenum = Object.getOwnPropertyNames(target);
+    var enum_only = Object.keys(target);
+    var nonenum_only = enum_and_nonenum.filter(function (key) {
+        var indexInEnum = enum_only.indexOf(key);
+        if (indexInEnum == -1) {
+            // not found in enum_only keys mean the key is non-enumerable,
+            // so return true so we keep this in the filter
+            return true;
+        } else {
+            return false;
+        }
+    });
+
+    return nonenum_only;
+}
+
+/**
+ * FormData wrapper for browsers supporting only FormData constructor and append()
+ * Instead of keys(), entries(), values() have getAllElements()
+ * Instead of delete() -> remove()
+ * To get real FormData object use buildFormDataObject()
+ * Also adds custom methods
+  */
+
 function BunnyFormData(form) {
-    /*if (form.constructor.name !== 'HTMLFormElement') {
+    if (!(form instanceof HTMLFormElement)) {
         throw new Error('Form passed to BunnyFormData constructor is not an instance of HTMLFormElement');
-    }*/
+    }
 
     // form
     this._form = form;
 
-    // item collection;
+    // form control collection;
     this._collection = {};
 
     // build collection from form elements
-    for (var k = 0; k < this._form.elements.length; k++) {
-        var input = this._form.elements[k];
+    var elements = this.getInputs();
+    for (var k = 0; k < elements.length; k++) {
+        var input = elements[k];
         this._initSingleInput(input);
     }
 }
 
 BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
-    if (input.type === 'radio') {
-        if (input.checked) {
-            this._collection[input.name] = input.value;
-        }
-    } else if (this._collection[input.name] !== undefined) {
+    if (input.tagName === 'TEXTAREA') {
+        input.type = 'textarea';
+    }
+
+    // check if parser for specific input type exists and call it instead
+    var method = input.type.toLowerCase();
+    method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
+    method = '_formControlParser' + method;
+    if (this[method] !== undefined) {
+        this[method](input);
+    } else {
+        // call default parser
+        // if input with same name exists - override
+        this._formControlParserDefault(input);
+    }
+};
+
+BunnyFormData.prototype._formControlParserDefault = function _formControlParserDefault(input) {
+    if (this._collection[input.name] !== undefined) {
         // element with same name already exists in collection
         if (!Array.isArray(this._collection[input.name])) {
             // is not array, convert to array first
             this._collection[input.name] = [this._collection[input.name]];
         }
         this._collection[input.name].push(input.value);
-    } else if (input.type === 'checkbox') {
+    } else {
+        this._collection[input.name] = input.value;
+    }
+};
+
+BunnyFormData.prototype._formControlParserRadio = function _formControlParserRadio(input) {
+    // radio buttons must have same name and only one can be checked
+    // exactly one radio must have checked attribute
+    // radio buttons must have value attribute
+    if (input.checked) {
+        this._collection[input.name] = input.value;
+    }
+};
+
+BunnyFormData.prototype._formControlParserCheckbox = function _formControlParserCheckbox(input) {
+    // checkboxes may have different names or same name if checkboxes should be an array
+    // each checkbox may have checked attribute
+    // checkboxes must have value attribute
+    if (this._collection[input.name] === undefined) {
+        // first checkbox with this name found
         if (input.checked) {
             this._collection[input.name] = input.value;
         } else {
             this._collection[input.name] = '';
         }
-    } else if (input.type === 'file') {
-        this._collection[input.name] = input.files[0] === undefined || input.files[0] === null ? '' : input.files[0];
     } else {
-        this._collection[input.name] = input.value;
+        if (input.checked) {
+            // checkbox with same name already exists in collection
+            if (!Array.isArray(this._collection[input.name])) {
+                // is not array, convert to array first
+                this._collection[input.name] = [this._collection[input.name]];
+            }
+            this._collection[input.name].push(input.value);
+        }
     }
+};
+
+BunnyFormData.prototype._formControlParserFile = function _formControlParserFile(input) {
+    this._collection[input.name] = input.files[0] === undefined || input.files[0] === null ? '' : input.files[0];
+};
+
+// since form inputs can be accessed via form.input_name and if input_name = elements
+// then form.elements will return input not FormControlsCollection
+// make sure to get real FormControlsCollection from prototype
+BunnyFormData.prototype.getInputs = function getInputs() {
+    return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form);
+};
+
+BunnyFormData.prototype.getNamedInputs = function getNamedInputs() {
+    var elements = this.getInputs();
+    var keys = nonEnumKeys(elements);
+    var named_inputs = {};
+    for (var k = 0; k < keys.length; k++) {
+        var input_name = keys[k];
+        named_inputs[input_name] = elements[input_name];
+    }
+    return named_inputs;
+};
+
+BunnyFormData.prototype.getNodeLists = function getNodeLists() {
+    var elements = this.getNamedInputs();
+    var node_lists = {};
+    for (var input_name in elements) {
+        if (this.isNodeList(input_name)) {
+            node_lists[input_name] = elements[input_name];
+        }
+    }
+    return node_lists;
+};
+
+BunnyFormData.prototype.getRadioLists = function getRadioLists() {
+    var node_lists = this.getNodeLists();
+    var radio_lists = {};
+    for (var input_name in node_lists) {
+        if (node_lists[input_name][0].type === 'radio') {
+            radio_lists[input_name] = node_lists[input_name];
+        }
+    }
+    return radio_lists;
+};
+
+BunnyFormData.prototype.getInput = function getInput(name) {
+    return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form)[name];
 };
 
 BunnyFormData.prototype.get = function get(input_name) {
@@ -325,6 +437,61 @@ BunnyFormData.prototype.get = function get(input_name) {
 // value can also be a Blob/File but this get() polyfill does not include 3rd argument filename
 BunnyFormData.prototype.set = function get(input_name, value) {
     this._collection[input_name] = value;
+};
+
+BunnyFormData.prototype.setCheckbox = function setArrayKey(input_name, value, checked) {
+    if (this.has(input_name) && !this.empty(input_name)) {
+        if (checked) {
+            // add element to array if not exists
+            if (!this.isArray(input_name)) {
+                // convert to array first
+                if (this._collection[input_name] !== value) {
+                    this._collection[input_name] = [this._collection[input_name]];
+                    this._collection[input_name].push(value);
+                }
+            } else {
+                if (this._collection[input_name].indexOf(value) === -1) {
+                    this._collection[input_name].push(value);
+                }
+            }
+        } else {
+            // remove element from array if exists
+            if (!this.isArray(input_name)) {
+                // convert to array first
+                if (this._collection[input_name] === value) {
+                    this._collection[input_name] = '';
+                }
+            } else {
+                var pos = this._collection[input_name].indexOf(value);
+                if (pos !== -1) {
+                    if (this._collection[input_name].length === 1) {
+                        this._collection[input_name] = '';
+                    } else {
+                        this._collection[input_name].splice(pos, 1);
+                    }
+                }
+            }
+        }
+    } else {
+        this._collection[input_name] = value;
+    }
+};
+
+BunnyFormData.prototype.has = function has(input_name) {
+    return this._collection[input_name] !== undefined;
+};
+
+BunnyFormData.prototype.empty = function has(input_name) {
+    return this._collection[input_name].length === 0;
+};
+
+BunnyFormData.prototype.isArray = function isArray(input_name) {
+    return Array.isArray(this._collection[input_name]);
+};
+
+BunnyFormData.prototype.isNodeList = function isNodeList(input_name) {
+    var input = this.getInput(input_name);
+    return input instanceof RadioNodeList;
 };
 
 BunnyFormData.prototype.append = function append(input_name, value) {
@@ -411,7 +578,7 @@ BunnyFormData.prototype.remove = function remove(input_name) {
  * works only with real forms and elements in DOM
  * Whenever new input is added or removed from DOM - Form data is updated
  */
-var Form = {
+var Form$1 = Form = {
 
     /*
     properties
@@ -452,7 +619,8 @@ var Form = {
             throw new Error('Form with ID ' + form_id + ' already initiated!');
         }
         this._collection[form_id] = new BunnyFormData(form);
-        this._attachChangeEvent(form_id);
+        this._attachChangeAndDefaultFileEvent(form_id);
+        this._attachRadioListChangeEvent(form_id);
         this._attachDOMChangeEvent(form_id);
     },
     isInitiated: function isInitiated(form_id) {
@@ -462,96 +630,213 @@ var Form = {
 
     /**
      * Update FormData when user changed input's value
+     * or when value changed from script
+     *
+     * Also init default value for File inputs
      *
      * @param {string} form_id
      *
      * @private
      */
-    _attachChangeEvent: function _attachChangeEvent(form_id) {
-        var _this3 = this;
+    _attachChangeAndDefaultFileEvent: function _attachChangeAndDefaultFileEvent(form_id) {
+        var _this = this;
 
-        [].forEach.call(document.forms[form_id].elements, function (form_control) {
-            _this3.__attachSingleChangeEvent(form_id, form_control);
-        });
-    },
-    __attachSingleChangeEvent: function __attachSingleChangeEvent(form_id, form_control) {
-        var _this4 = this;
+        var elements = this._collection[form_id].getInputs();
+        [].forEach.call(elements, function (form_control) {
 
-        form_control.addEventListener('change', function (e) {
-            if (form_control.type === 'file') {
-                if (e.isTrusted) {
-                    // file selected by user
-                    var fd = new FormData(document.forms[form_id]);
-                    _this4._collection[form_id].set(form_control.name, fd.get(form_control.name));
-                    // TODO: fix get() not supported for IE
-                } else {
-                        // file set from script, do nothing because blob was set in Form.set() for File input.
-                    }
-            } else if (form_control.type === 'radio') {
-                    var list = document.forms[form_id].elements[form_control.name];
-                    list.value = form_control.value;
-                    _this4._collection[form_id].set(form_control.name, form_control.value);
-                } else {
-                    _this4._collection[form_id].set(form_control.name, form_control.value);
-                }
+            _this.__attachSingleChangeEvent(form_id, form_control);
+            _this.__observeSingleValueChange(form_id, form_control);
 
-            // update mirror if mirrored
-            if (_this4._mirrorCollection[form_id] !== undefined) {
-                if (_this4._mirrorCollection[form_id][form_control.name] === true) {
-                    _this4.setMirrors(form_id, form_control.name);
+            if (form_control.type === 'file' && form_control.hasAttribute('value')) {
+                var url = form_control.getAttribute('value');
+                if (url !== '') {
+                    _this.setFileFromUrl(form_id, form_control.name, url);
                 }
             }
         });
     },
+    _attachRadioListChangeEvent: function _attachRadioListChangeEvent(form_id) {
+        var radio_lists = this._collection[form_id].getRadioLists();
+        for (var radio_group_name in radio_lists) {
+            var single_radio_list = radio_lists[radio_group_name];
+            this.__observeSingleValueChange(form_id, single_radio_list);
+        }
+    },
+    __attachSingleChangeEvent: function __attachSingleChangeEvent(form_id, form_control) {
+        var _this2 = this;
+
+        form_control.addEventListener('change', function (e) {
+
+            _this2._parseFormControl(form_id, form_control, form_control.value);
+
+            if (form_control.type === 'file') {
+                if (e.isTrusted) {
+                    // file selected by user
+                    _this2._collection[form_id].set(form_control.name, form_control.files[0]);
+                }
+            }
+
+            // update mirror if mirrored
+            if (_this2._mirrorCollection[form_id] !== undefined) {
+                if (_this2._mirrorCollection[form_id][form_control.name] === true) {
+                    _this2.setMirrors(form_id, form_control.name);
+                }
+            }
+        });
+    },
+
+
+    // handlers for different input types
+    // with 3rd argument - setter
+    // without 3rd argument - getter
+    // called from .value property observer
+    _parseFormControl: function _parseFormControl(form_id, form_control) {
+        var value = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
+
+        if (form_control.tagName === 'TEXTAREA') {
+            form_control.type = 'textarea';
+        } else if (form_control instanceof RadioNodeList) {
+            form_control.type = 'radiolist';
+        }
+
+        // check if parser for specific input type exists and call it instead
+        var method = form_control.type.toLowerCase();
+        method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
+        method = '_parseFormControl' + method;
+
+        if (value === undefined) {
+            method = method + 'Getter';
+        }
+
+        if (this[method] !== undefined) {
+            return this[method](form_id, form_control, value);
+        } else {
+            // call default parser
+            // if input with same name exists - override
+            if (value === undefined) {
+                return this._parseFormControlDefaultGetter(form_id, form_control);
+            } else {
+                this._parseFormControlDefault(form_id, form_control, value);
+            }
+        }
+    },
+    _parseFormControlDefault: function _parseFormControlDefault(form_id, form_control, value) {
+        this._collection[form_id].set(form_control.name, value);
+    },
+    _parseFormControlDefaultGetter: function _parseFormControlDefaultGetter(form_id, form_control) {
+        return Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').get.call(form_control);
+        //return this._collection[form_id].get(form_control.name);
+    },
+    _parseFormControlRadiolist: function _parseFormControlRadiolist(form_id, form_control, value) {
+        var found = false;
+        for (var k = 0; k < form_control.length; k++) {
+            var radio_input = form_control[k];
+            if (radio_input.value === value) {
+                this._collection[form_id].set(radio_input.name, value);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new TypeError('Trying to Form.set() on radio with unexisted value="' + value + '"');
+        }
+    },
+    _parseFormControlCheckbox: function _parseFormControlCheckbox(form_id, form_control, value) {
+        var fd = this._collection[form_id];
+        fd.setCheckbox(form_control.name, value, form_control.checked);
+    },
+    _parseFormControlFile: function _parseFormControlFile(form_id, form_control, value) {
+        if (!(value instanceof Blob)) {
+            throw new TypeError('Only Blob object is allowed to be assigned to .value property of file input using Bunny Form');
+        } else {
+            if (value.name === undefined) {
+                value.name = 'blob';
+            }
+            this._collection[form_id].set(form_control.name, value);
+        }
+    },
+    _parseFormControlFileGetter: function _parseFormControlFileGetter(form_id, form_control) {
+        // Override native file input .value logic
+        // return Blob or File object or empty string if no file set
+        return this.get(form_id, form_control.name);
+    },
+    __observeSingleValueChange: function __observeSingleValueChange(form_id, form_control) {
+        var self = this;
+        Object.defineProperty(form_control, 'value', {
+            get: function get() {
+                return self._parseFormControl(form_id, form_control);
+            },
+            set: function set(value) {
+                // call parent setter to redraw changes in UI, update checked etc.
+                if (form_control.type !== 'file') {
+                    Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').set.call(form_control, value);
+                }
+
+                self._parseFormControl(form_id, form_control, value);
+                if (!(form_control instanceof RadioNodeList)) {
+                    var event = new CustomEvent('change');
+                    form_control.dispatchEvent(event);
+                }
+            }
+        });
+    },
+    _initNewInput: function _initNewInput(form_id, input) {
+        this._checkInit(form_id);
+        this._collection[form_id]._initSingleInput(input);
+        this.__attachSingleChangeEvent(form_id, input);
+        this.__observeSingleValueChange(form_id, input);
+    },
     _attachDOMChangeEvent: function _attachDOMChangeEvent(form_id) {
-        var _this5 = this;
+        var _this3 = this;
 
         var target = document.forms[form_id];
-        var observer_config = { attributeOldValue: true, childList: true, subtree: true };
+        var observer_config = { childList: true, subtree: true };
         var observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
-                console.log(mutation);
                 if (mutation.addedNodes.length > 0) {
                     // probably new input added, update form data
-                    for (var k = 0; k < mutation.addedNodes.length; k++) {
-                        var node = mutation.addedNodes[k];
-                        if (node.tagName == 'input') {
-                            var input = node;
-                            _this5._collection[form_id]._initSingleInput(input);
-                            _this5.__attachSingleChangeEvent(form_id, input);
-                        } else {
-                            var inputs = node.getElementsByTagName('input');
-                            if (inputs.length > 0) {
-                                for (var k2 = 0; k2 < inputs.length; k2++) {
-                                    var input = inputs[k2];
-                                    _this5._collection[form_id]._initSingleInput(input);
-                                    _this5.__attachSingleChangeEvent(form_id, input);
-                                }
-                            }
-                        }
-                    }
+                    _this3.__handleAddedNodes(form_id, mutation.addedNodes);
                 } else if (mutation.removedNodes.length > 0) {
                     // probably input removed, update form data
-                    for (var k = 0; k < mutation.removedNodes.length; k++) {
-                        var node = mutation.removedNodes[k];
-                        if (node.tagName == 'input') {
-                            var input = node;
-                            _this5._collection[form_id].remove(input.name, input.value);
-                        } else {
-                            var inputs = node.getElementsByTagName('input');
-                            if (inputs.length > 0) {
-                                // input(s) removed from DOM, update form data
-                                for (var k2 = 0; k2 < inputs.length; k2++) {
-                                    var input = inputs[k2];
-                                    _this5._collection[form_id].remove(input.name, input.value);
-                                }
-                            }
-                        }
-                    }
+                    _this3.__handleRemovedNodes(form_id, mutation.removedNodes);
                 }
             });
         });
+
         observer.observe(target, observer_config);
+    },
+    __handleAddedNodes: function __handleAddedNodes(form_id, added_nodes) {
+        for (var k = 0; k < added_nodes.length; k++) {
+            var node = added_nodes[k];
+            if (node.tagName == 'input') {
+                this._initNewInput(form_id, node);
+            } else {
+                var inputs = node.getElementsByTagName('input');
+                if (inputs.length > 0) {
+                    for (var k2 = 0; k2 < inputs.length; k2++) {
+                        this._initNewInput(form_id, inputs[k2]);
+                    }
+                }
+            }
+        }
+    },
+    __handleRemovedNodes: function __handleRemovedNodes(form_id, removed_nodes) {
+        for (var k = 0; k < removed_nodes.length; k++) {
+            var node = removed_nodes[k];
+            if (node.tagName == 'input') {
+                var input = node;
+                this._collection[form_id].remove(input.name, input.value);
+            } else {
+                var inputs = node.getElementsByTagName('input');
+                if (inputs.length > 0) {
+                    for (var k2 = 0; k2 < inputs.length; k2++) {
+                        var _input = inputs[k2];
+                        this._collection[form_id].remove(_input.name, _input.value);
+                    }
+                }
+            }
+        }
     },
 
 
@@ -560,10 +845,10 @@ var Form = {
      * Must be called after DOMContentLoaded (ready)
      */
     initAll: function initAll() {
-        var _this6 = this;
+        var _this4 = this;
 
         [].forEach.call(document.forms, function (form) {
-            _this6.init(form.id);
+            _this4.init(form.id);
         });
     },
 
@@ -589,7 +874,7 @@ var Form = {
 
     /**
      * Set new value of real DOM input or virtual input
-     * Actually fires change event and values are set in _attachChangeEvent()
+     * Actually fires change event and values are set in _attachChangeAndDefaultFileEvent()
      *
      * @param {string} form_id
      * @param {string} input_name
@@ -597,28 +882,8 @@ var Form = {
      */
     set: function set(form_id, input_name, input_value) {
         this._checkInit(form_id);
-        //this._collection[form_id].set(input_name, input_value);
-        var input = document.forms[form_id].elements[input_name];
-        var event = new CustomEvent('change');
-        if (input.constructor.name !== 'RadioNodeList') {
-            if (input.type === 'file') {
-                this._collection[form_id].set(input_name, input_value);
-            } else {
-                input.value = input_value;
-            }
-            input.dispatchEvent(event);
-            return true;
-        } else {
-            for (var k = 0; k < input.length; k++) {
-                var radio_input = input[k];
-                if (radio_input.value === input_value) {
-                    input.value = input_value;
-                    radio_input.dispatchEvent(event);
-                    return true;
-                }
-            }
-            throw new TypeError('Trying to Form.set() on radio with unexisted value="' + input_value + '"');
-        }
+        var input = this._collection[form_id].getInput(input_name);
+        input.value = input_value;
     },
 
 
@@ -663,6 +928,9 @@ var Form = {
         this._checkInit(form_id);
         return this._collection[form_id].buildFormDataObject();
     },
+    getInput: function getInput(form_id, input_name) {
+        return this._collection[form_id].getInput(input_name);
+    },
 
 
     /*
@@ -700,10 +968,12 @@ var Form = {
      * @param {string} input_name
      */
     mirror: function mirror(form_id, input_name) {
-        var _this7 = this;
+        var _this5 = this;
 
         this._checkInit(form_id);
-        if (document.forms[form_id].elements[input_name].constructor.name !== 'HTMLInputElement') {
+        var input = this._collection[form_id].getInput(input_name);
+        if (!(input instanceof HTMLInputElement)) {
+            // make sure it is normal input and not RadioNodeList or other interfaces which don't have addEventListener
             throw new Error('Cannot mirror radio buttons or checkboxes.');
         }
         if (this._mirrorCollection[form_id] === undefined) {
@@ -711,10 +981,10 @@ var Form = {
         }
         this._mirrorCollection[form_id][input_name] = true;
 
-        var input = document.forms[form_id].elements[input_name];
+        //const input = document.forms[form_id].elements[input_name];
         this.setMirrors(form_id, input_name);
         input.addEventListener('change', function () {
-            _this7.setMirrors(form_id, input_name);
+            _this5.setMirrors(form_id, input_name);
         });
     },
 
@@ -726,14 +996,14 @@ var Form = {
      * @param form_id
      */
     mirrorAll: function mirrorAll(form_id) {
-        var _this8 = this;
+        var _this6 = this;
 
         this._checkInit(form_id);
-        var inputs = document.forms[form_id].elements;
+        var inputs = this._collection[form_id].getInputs();
         [].forEach.call(inputs, function (input) {
-            if (document.forms[form_id].elements[input.name].constructor.name === 'HTMLInputElement') {
-                // make sure it is normal input and not RadioNodeList or other interfaces
-                _this8.mirror(form_id, input.name);
+            if (input instanceof HTMLInputElement && input.type !== 'checkbox' && input.type !== 'radio') {
+                // make sure it is normal input and not RadioNodeList or other interfaces which don't have addEventListener
+                _this6.mirror(form_id, input.name);
             }
         });
     },
@@ -742,16 +1012,17 @@ var Form = {
         return document.querySelectorAll('[data-mirror="' + form_id + '.' + input_name + '"]');
     },
     setMirrors: function setMirrors(form_id, input_name) {
-        var _this9 = this;
+        var _this7 = this;
 
         this._checkInit(form_id);
         var mirrors = this.getMirrors(form_id, input_name);
-        var input = document.forms[form_id].elements[input_name];
+        var input = this._collection[form_id].getInput(input_name);
+        //const input = document.forms[form_id].elements[input_name];
         [].forEach.call(mirrors, function (mirror) {
             if (mirror.tagName === 'IMG') {
-                var data = _this9.get(form_id, input_name);
+                var data = _this7.get(form_id, input_name);
                 if (data !== '' && data.size !== 0) {
-                    mirror.src = URL.createObjectURL(_this9.get(form_id, input_name));
+                    mirror.src = URL.createObjectURL(_this7.get(form_id, input_name));
                 }
             } else {
                 mirror.textContent = input.value;
@@ -767,19 +1038,19 @@ var Form = {
         this._checkInit(form_id);
         return document.querySelectorAll(`[data-mirror="${form_id}"]`);
     },
-     _getCalcMirrorFunction(calc_mirror_el) {
+      _getCalcMirrorFunction(calc_mirror_el) {
         return calc_mirror_el.getAttribute('data-mirror-function');
     },
-     _calcMirror(form_id, calc_mirror, calc_mirror_function) {
+      _calcMirror(form_id, calc_mirror, calc_mirror_function) {
         // parse function
         const input_names = calc_mirror_function.split('*');
         console.log(input_names);
         // get arguments (inputs)
         const input1 = document.forms[form_id].elements[input_names[0]];
         const input2 = document.forms[form_id].elements[input_names[1]];
-         const value1 = (input1.value === '') ? 0 : input1.value;
+          const value1 = (input1.value === '') ? 0 : input1.value;
         const value2 = (input2.value === '') ? 0 : input2.value;
-         // update collection
+          // update collection
         if (this._calcMirrorCollection[form_id] === undefined) {
             this._calcMirrorCollection[form_id] = {};
         }
@@ -791,9 +1062,9 @@ var Form = {
         }
         this._calcMirrorCollection[form_id][input1.name][input2.name] = calc_mirror;
         this._calcMirrorCollection[form_id][input2.name][input1.name] = calc_mirror;
-         // set initial value
+          // set initial value
         calc_mirror.textContent = value1 * value2;
-         // set new value when input value changed
+          // set new value when input value changed
         input1.addEventListener('change', () => {
             calc_mirror.textContent = input1.value * document.forms[form_id].elements[input2.name].value;
         });
@@ -801,7 +1072,7 @@ var Form = {
             calc_mirror.textContent = input2.value * document.forms[form_id].elements[input1.name].value;
         });
     },
-     calcMirrorAll(form_id) {
+      calcMirrorAll(form_id) {
         this._checkInit(form_id);
         const calc_mirrors = this._getCalcMirrors(form_id);
         for(let calc_mirror of calc_mirrors) {
@@ -819,14 +1090,14 @@ var Form = {
     file methods
      */
     setFileFromUrl: function setFileFromUrl(form_id, input_name, url) {
-        var _this10 = this;
+        var _this8 = this;
 
         var request = new XMLHttpRequest();
         var p = new Promise(function (success, fail) {
             request.onload = function () {
                 if (request.status === 200) {
                     var blob = request.response;
-                    _this10.set(form_id, input_name, blob);
+                    _this8.set(form_id, input_name, blob);
                     success(blob);
                 } else {
                     fail(request);
@@ -837,7 +1108,6 @@ var Form = {
         request.open('GET', url, true);
         request.responseType = 'blob';
         request.send();
-
         return p;
     },
 
@@ -861,9 +1131,7 @@ var Form = {
                 url = '';
             }
         }
-
         request.open(method, url);
-
         var p = new Promise(function (success, fail) {
             request.onload = function () {
                 if (request.status === 200) {
@@ -873,34 +1141,269 @@ var Form = {
                 }
             };
         });
-
         for (var header in headers) {
             request.setRequestHeader(header, headers[header]);
         }
-
         this._collection[form_id].set('categories', [2, 3]);
-
         request.send(this.getFormDataObject(form_id));
-
         return p;
     }
 };
 
-Form.initAll();
-Form.mirrorAll('form1');
+var BunnyFile = {
+
+    /**
+     * Download file from URL via AJAX and make Blob object or return base64 string if 2nd argument is false
+     * Only files from CORS-enabled domains can be downloaded or AJAX will get security error
+     *
+     * @param {String} URL
+     * @param {Boolean} convert_to_blob = true
+     * @returns {Promise}: success(Blob object), fail(response XHR object)
+     */
+
+    download: function download(URL) {
+        var convert_to_blob = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+        var request = new XMLHttpRequest();
+        var p = new Promise(function (success, fail) {
+            request.onload = function () {
+                if (request.status === 200) {
+                    var blob = request.response;
+                    success(blob);
+                } else {
+                    fail(request);
+                }
+            };
+        });
+
+        request.open('GET', URL, true);
+        if (convert_to_blob) {
+            request.responseType = 'blob';
+        }
+        request.send();
+
+        return p;
+    },
+
+
+    /**
+     * Convert base64 string to Blob object
+     * @param {String} base64
+     * @returns {Blob}
+     */
+    base64ToBlob: function base64ToBlob(base64) {
+        // convert base64 to raw binary data held in a string
+        // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+        var byteString = atob(base64.split(',')[1]);
+
+        // separate out the mime component
+        var mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+
+        // write the bytes of the string to an ArrayBuffer
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        // write the ArrayBuffer to a blob, and you're done
+        return new Blob([ab], { type: mimeString });
+    },
+
+
+    /**
+     * Convert Blob object to base64string
+     * @param {Blob} blob
+     * @returns {Promise} success(base64 string), fail(error)
+     */
+    blobToBase64: function blobToBase64(blob) {
+        var reader = new FileReader();
+        var p = new Promise(function (success, fail) {
+            reader.onloadend = function () {
+                var base64 = reader.result;
+                success(base64);
+            };
+            reader.onerror = function (e) {
+                fail(e);
+            };
+        });
+
+        reader.readAsDataURL(blob);
+
+        return p;
+    },
+
+
+    /**
+     * Get local browser object URL which can be used in img.src for example
+     * @param {Blob} blob
+     * @returns {String}
+     */
+    getBlobLocalURL: function getBlobLocalURL(blob) {
+        if (!(blob instanceof Blob || blob instanceof File)) {
+            throw new TypeError('Argument in BunnyFile.getBlobLocalURL() is not a Blob or File object');
+        }
+        return URL.createObjectURL(blob);
+    }
+};
+
+/**
+ * @component BunnyImage
+ * Wrapper for Image object representing <img> tag, uses Canvas and BunnyFile
+ *
+ */
+var BunnyImage = {
+
+    // SECTION: get Image object via different sources
+
+    /**
+     * Downloads image by any URL, should work also for non-CORS domains
+     *
+     * @param {String} URL
+     * @returns {Promise} success(Image object), fail(error)
+     */
+
+    getImageByURL: function getImageByURL(URL) {
+        var img = new Image();
+        var p = new Promise(function (resolve, reject) {
+            img.onload = function () {
+                resolve(img);
+            };
+            img.onerror = function (e) {
+                reject(e);
+            };
+        });
+        img.crossOrigin = 'Anonymous';
+        img.src = URL;
+        return p;
+    },
+    blobToImage: function blobToImage(blob) {
+        var img = new Image();
+        img.src = BunnyFile.getBlobLocalURL(blob);
+        return img;
+    },
+    base64ToImage: function base64ToImage(base64) {
+        var img = new Image();
+        img.src = base64;
+        return img;
+    },
+    canvasToImage: function canvasToImage(canvas) {
+        var img = new Image();
+        img.src = canvas.toDataURL();
+        return img;
+    },
+
+
+    // SECTION:: create different sources from Image object
+
+    imageToCanvas: function imageToCanvas(img) {
+        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        var canvas = document.createElement("canvas");
+        if (width === null && height === null) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext("2d").drawImage(img, 0, 0);
+        } else {
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        }
+        return canvas;
+    },
+    imageToBase64: function imageToBase64(img) {
+        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        return this.imageToCanvas(img, width, height).toDataURL();
+    },
+    imageToBlob: function imageToBlob(img) {
+        return BunnyFile.base64ToBlob(this.imageToBase64(img));
+    },
+
+
+    // SECTION: basic Image statistics and info functions
+
+    getImageURL: function getImageURL(img) {
+        return img.src;
+    },
+    getImageWidth: function getImageWidth(img) {
+        return img.width;
+    },
+    getImageHeight: function getImageHeight(img) {
+        return img.height;
+    },
+
+
+    // SECTION: basic Image data math functions
+
+    getImageNewAspectSizes: function getImageNewAspectSizes(img, max_width, max_height) {
+        var width = img.width;
+        var height = img.height;
+        if (width > height) {
+            if (width > max_width) {
+                height *= max_width / width;
+                width = max_width;
+            }
+        } else {
+            if (height > max_height) {
+                width *= max_height / height;
+                height = max_height;
+            }
+        }
+
+        return {
+            width: width,
+            height: height
+        };
+    },
+
+
+    // SECTION: basic Image manipulation
+
+    /**
+     * Resize image
+     * @param {Image} img
+     * @param {Number} max_width
+     * @param {Number} max_height
+     * @returns {Image}
+     */
+    resizeImage: function resizeImage(img, max_width, max_height) {
+        var sizes = this.getImageNewAspectSizes(img, max_width, max_height);
+        var width = sizes.width;
+        var height = sizes.height;
+        var canvas = this.imageToCanvas(img, width, height);
+        return this.canvasToImage(canvas);
+    }
+};
+
+Form$1.initAll();
+Form$1.mirrorAll('form1');
 //Form.calcMirrorAll('form2');
 
 var link = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png';
 
-document.forms[0].addEventListener('submit', function (e) {
-    e.preventDefault();
+var image = null;
 
-    Form.setFileFromUrl('form1', 'photo', link).then(function (blob) {
-        Form.submit(document.forms[0].id).then(function (responseData) {
-            console.log('ok');
-        }).catch(function (response) {
-            console.log('fail');
-        });
+BunnyImage.getImageByURL(link).then(function (img) {
+    image = img;
+});
+
+document.forms.form1.addEventListener('submit', function (e) {
+    e.preventDefault();
+    Form$1.submit(document.forms[0].id).then(function (responseData) {
+        console.log('ajax submit ok');
+    }).catch(function (response) {
+        console.log('ajax fail');
+    });
+});
+
+document.getElementById('set_photo').addEventListener('click', function (e) {
+    document.getElementById('form1_submit').setAttribute('disabled', 'disabled');
+    Form$1.setFileFromUrl('form1', 'photo', link).then(function (blob) {
+        document.getElementById('form1_submit').removeAttribute('disabled');
+        console.log(blob);
     }).catch(function (e) {
         console.log(e);
     });

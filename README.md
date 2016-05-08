@@ -1,8 +1,8 @@
-# BunnyJS v 0.9.3
+# BunnyJS v 0.9.4
 
 ## ES6 browser framework
 
-#### "It's like a next-generation jQuery"
+#### "It's like a next-generation jQuery with jQuery UI"
 
 [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs)
 
@@ -11,21 +11,19 @@ For help & ideas - [DM me on Twitter](https://twitter.com/Mevrael)
 
 Lightweight native JavaScript and ECMAScript 6 library and next generation front-end framework. BunnyJS is package of small stand-alone components without dependencies:
 
-1. Native lightweight javascript [Inversion of control](http://www.wikiwand.com/en/Inversion_of_control)
-2. Native lightweight javascript Routing
-3. Native lightweight javascript HTML5 validation
+1. Powerful native lightweight JavaScript Form processing with native API, AJAX submit, file upload, image preview, data binding and more.
+2. Powerful native lightweight JavaScript HTML5 validation
+3. Native lightweight javascript Routing
 4. Native lightweight javascript Template engine
 5. Native lightweight javascript Ajax
 6. Native lightweight javascript DataTable
 7. Native lightweight javascript Calendar
 8. Native lightweight javascript DatePicker
 9. Native lightweight javascript Autocomplete, Dropdown
-10. Native lightweight javascript remote file upload from URL, image preview
-11. Native lightweight javascript Element, positions, coordinates, smooth scrolling
+10. Native lightweight javascript Element, positions, coordinates, smooth scrolling
+11. Native lightweight javascript [Inversion of control](http://www.wikiwand.com/en/Inversion_of_control)
 
 Designed in mind for best compatibility with Laravel 5 and Bootstrap 4, however can be used anywhere.
-
-Syntax is very simple and some API is identical with Laravel API.
 
 Rollup.js with babel and npm plugins is recommended for transpiling and bundling.
 
