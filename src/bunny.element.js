@@ -12,6 +12,8 @@ export var Element = {
                 curtop += el.offsetTop;
             } while (el = el.offsetParent);
             return curtop;
+        } else {
+            return 0;
         }
     },
 
@@ -20,7 +22,7 @@ export var Element = {
         const current_position = this.getCurrentDocumentPosition();
         const destination_position = this.getPosition(el);
 
-        const distance = destination_position - current_position;
+        const distance = Math.abs(destination_position - current_position);
         const step = Math.round(distance / 40);
 
         let time = speed;
@@ -31,6 +33,7 @@ export var Element = {
                     window.scrollTo(0, current_position + k - navbar_height);
                 } else {
                     // element is located above current position, scroll up
+                    console.log(current_position - k - navbar_height);
                     window.scrollTo(0, current_position - k - navbar_height);
                 }
             }, time);
