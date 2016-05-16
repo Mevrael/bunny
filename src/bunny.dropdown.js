@@ -1,63 +1,121 @@
 
-document.getElementsByClassName('dropdown').forEach((dropdown) => {
+export const Dropdown = {
 
-    const toggle_btn = dropdown.getElementsByClassName('dropdown-toggle')[0];
+    _collection: {},
 
-    if (toggle_btn !== undefined) {
+    init(dropdown) {
+        dropdown = this._elOrId(dropdown);
+        if (dropdown.id !== undefined) {
+            this._collection[dropdown.id] = dropdown;
+        }
+        const toggle_btn = this.getDropdownToggleBtn(dropdown);
+        if (toggle_btn !== undefined) {
+            this._makeUnclosableInside(dropdown);
+            this._attachToggleClickEvent(dropdown);
+            this._attachToggleBtnMethods(dropdown);
+        }
+    },
 
-        if (toggle_btn.getAttribute('data-close-inside') === 'false') {
-            const dropdown_menu = dropdown.getElementsByClassName('dropdown-menu')[0];
-            dropdown_menu.addEventListener('click', (e) => {
+    _elOrId(dropdown) {
+        if (typeof dropdown === 'string') {
+            return document.getElementById(dropdown);
+        }
+        return dropdown;
+    },
+
+    _attachToggleClickEvent(dropdown) {
+        this.getDropdownToggleBtn(dropdown).addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggle(dropdown);
+        });
+    },
+
+    get(id) {
+        return this._collection[id];
+    },
+
+    getDropdownToggleBtn(dropdown) {
+        dropdown = this._elOrId(dropdown);
+        //return dropdown.getElementsByClassName('dropdown-toggle')[0];
+        return dropdown.querySelector('[data-toggle="dropdown"]');
+    },
+
+    getDropdownMenu(dropdown) {
+        dropdown = this._elOrId(dropdown);
+        return dropdown.getElementsByClassName('dropdown-menu')[0];
+    },
+
+    isClosableInside(dropdown) {
+        return dropdown.hasAttribute('data-close-inside');
+    },
+
+    _makeUnclosableInside(dropdown) {
+        if (this.isClosableInside(dropdown)) {
+            this.getDropdownMenu(dropdown).addEventListener('click', (e) => {
                 e.stopPropagation();
             })
         }
+    },
 
-        const close_event = new CustomEvent('close');
-        const open_event = new CustomEvent('open');
+    _getCloseEvent(dropdown) {
+        return new CustomEvent('close', {detail: {dropdown: dropdown}});
+    },
 
-        const body_handler = () => {
-            if (dropdown.classList.contains('open')) {
-                dropdown.classList.remove('open');
-                document.body.removeEventListener('click', body_handler);
-                toggle_btn.dispatchEvent(close_event);
-            }
-        };
+    _getOpenEvent(dropdown) {
+        return new CustomEvent('open', {detail: {dropdown: dropdown}});
+    },
 
-        toggle_btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!dropdown.classList.contains('open')) {
-                dropdown.classList.add('open');
-                document.body.addEventListener('click', body_handler);
-                toggle_btn.dispatchEvent(open_event);
-            } else {
-                dropdown.classList.remove('open');
-                toggle_btn.dispatchEvent(close_event);
-            }
-        });
+    _bodyHandler(dropdown) {
+        if (dropdown.classList.contains('open')) {
+            this.close(dropdown);
+        }
+    },
 
+    _getUniqueBodyHandler(dropdown) {
+        if (dropdown._bodyHandler === undefined) {
+            dropdown._bodyHandler = this._bodyHandler.bind(this, dropdown);
+        }
+        return dropdown._bodyHandler;
+    },
+
+    close(dropdown) {
+        dropdown = this._elOrId(dropdown);
+        dropdown.classList.remove('open');
+        document.body.removeEventListener('click', this._getUniqueBodyHandler(dropdown));
+        this.getDropdownToggleBtn(dropdown).dispatchEvent(this._getCloseEvent(dropdown));
+    },
+
+    _attachToggleBtnMethods(dropdown) {
+        const toggle_btn = this.getDropdownToggleBtn(dropdown);
         toggle_btn.close = function() {
-            dropdown.classList.remove('open');
-            document.body.removeEventListener('click', body_handler);
-            toggle_btn.dispatchEvent(close_event);
+            this.close(dropdown);
         };
-
         toggle_btn.open = function() {
-            dropdown.classList.add('open');
-            document.body.addEventListener('click', body_handler);
-            toggle_btn.dispatchEvent(open_event);
+            this.open(dropdown);
         };
-
         toggle_btn.toggle = function() {
-            if (!dropdown.classList.contains('open')) {
-                dropdown.classList.add('open');
-                document.body.addEventListener('click', body_handler);
-                toggle_btn.dispatchEvent(open_event);
-            } else {
-                dropdown.classList.remove('open');
-                toggle_btn.dispatchEvent(close_event);
-            }
+            this.toggle(dropdown);
         };
+    },
 
+    open(dropdown) {
+        dropdown = this._elOrId(dropdown);
+        dropdown.classList.add('open');
+        document.body.addEventListener('click', this._getUniqueBodyHandler(dropdown));
+        this.getDropdownToggleBtn(dropdown).dispatchEvent(this._getOpenEvent(dropdown));
+    },
+
+    toggle(dropdown) {
+        dropdown = this._elOrId(dropdown);
+        if (!dropdown.classList.contains('open')) {
+            this.open(dropdown);
+        } else {
+            this.close(dropdown);
+        }
     }
 
+};
+
+document.getElementsByClassName('dropdown').forEach((dropdown) => {
+    Dropdown.init(dropdown);
 });
