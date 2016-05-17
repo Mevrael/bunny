@@ -9,7 +9,7 @@ export const Dropdown = {
             this._collection[dropdown.id] = dropdown;
         }
         const toggle_btn = this.getDropdownToggleBtn(dropdown);
-        if (toggle_btn !== undefined) {
+        if (toggle_btn !== null) {
             this._makeUnclosableInside(dropdown);
             this._attachToggleClickEvent(dropdown);
             this._attachToggleBtnMethods(dropdown);
