@@ -181,8 +181,8 @@ export default Form = {
     },
 
     _parseFormControlFile(form_id, form_control, value) {
-        if (!(value instanceof Blob) && !(value instanceof File)) {
-            throw new TypeError('Only Blob or File object is allowed to be assigned to .value property of file input using Bunny Form');
+        if (value !== '' && !(value instanceof Blob) && !(value instanceof File)) {
+            throw new TypeError('Only empty string, Blob or File object is allowed to be assigned to .value property of file input using Bunny Form');
         } else {
             if (value.name === undefined) {
                 value.name = 'blob';
@@ -456,7 +456,9 @@ export default Form = {
         [].forEach.call(mirrors, (mirror) => {
             if (mirror.tagName === 'IMG') {
                 let data = this.get(form_id, input_name);
-                if (data !== '' && data.size !== 0) {
+                if (data === '') {
+                    mirror.src = '';
+                } else if (data.size !== 0) {
                     mirror.src = URL.createObjectURL(this.get(form_id, input_name));
                 }
             } else {
