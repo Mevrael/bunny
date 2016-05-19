@@ -257,7 +257,8 @@ export default Form = {
                 let node = added_nodes[k];
                 if (node.tagName === 'INPUT') {
                     this._initNewInput(form_id, node);
-                } else {
+                } else if (node.getElementsByTagName !== undefined) {
+                    // to make sure node is not text node or any other type of node without full Element API
                     let inputs = node.getElementsByTagName('input');
                     if (inputs.length > 0) {
                         for (let k2 = 0; k2 < inputs.length; k2++) {
@@ -274,7 +275,8 @@ export default Form = {
                 if (node.tagName === 'INPUT') {
                     let input = node;
                     this._collection[form_id].remove(input.name, input.value);
-                } else {
+                } else if (node.getElementsByTagName !== undefined) {
+                    // to make sure node is not text node or any other type of node without full Element API
                     let inputs = node.getElementsByTagName('input');
                     if (inputs.length > 0) {
                         for (let k2 = 0; k2 < inputs.length; k2++) {
