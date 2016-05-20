@@ -39,7 +39,8 @@ export var Route = {
         var params = {};
         for (var i = 1; i < route_length; i++) {
             if (route_segments[i].indexOf('{') !== -1) {
-                params[route_segments[i]] = original_segments[i];
+                var name = route_segments[i].substr(1, route_segments[i].length-2);
+                params[name] = original_segments[i];
             }
         }
         return params;
@@ -103,7 +104,7 @@ export var Route = {
 
             if (this._routes[route].method === null) {
                 var f = this._routes[route].handler.bind(this._routes[route].handler);
-                f();
+                f(this.params(route));
             } else {
                 var Obj = this._routes[route].handler;
                 var method = this._routes[route].method;
