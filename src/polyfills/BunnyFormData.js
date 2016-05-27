@@ -1,5 +1,6 @@
 
 import nonEnumKeys from '../utils/object/nonEnumKeys';
+import constructorName from '../utils/object/constructorName';
 
 /**
  * FormData wrapper for browsers supporting only FormData constructor and append()
@@ -7,7 +8,7 @@ import nonEnumKeys from '../utils/object/nonEnumKeys';
  * Instead of delete() -> remove()
  * To get real FormData object use buildFormDataObject()
  * Also adds custom methods
-  */
+ */
 
 function BunnyFormData(form) {
     if (!(form instanceof HTMLFormElement)) {
@@ -108,8 +109,10 @@ BunnyFormData.prototype._formControlParserFile = function _formControlParserFile
 // since form inputs can be accessed via form.input_name and if input_name = elements
 // then form.elements will return input not FormControlsCollection
 // make sure to get real FormControlsCollection from prototype
+// TODO: does not work in iOS safari
 BunnyFormData.prototype.getInputs = function getInputs() {
-    return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form);
+    //return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form);
+    return this._form.elements;
 };
 
 BunnyFormData.prototype.getNamedInputs = function getNamedInputs() {
@@ -145,8 +148,10 @@ BunnyFormData.prototype.getRadioLists = function getRadioLists() {
     return radio_lists;
 };
 
+// TODO: does not work in iOS Safari
 BunnyFormData.prototype.getInput = function getInput(name) {
-    return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form)[name];
+    //return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form)[name];
+    return this._form.elements[name];
 };
 
 BunnyFormData.prototype.get = function get(input_name) {
@@ -214,7 +219,7 @@ BunnyFormData.prototype.isArray = function isArray(input_name) {
 
 BunnyFormData.prototype.isNodeList = function isNodeList(input_name) {
     const input = this.getInput(input_name);
-    return input instanceof RadioNodeList;
+    return constructorName(input) === 'RadioNodeList';
 };
 
 BunnyFormData.prototype.append = function append(input_name, value) {

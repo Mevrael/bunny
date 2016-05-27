@@ -155,7 +155,14 @@ export default Form = {
     },
 
     _parseFormControlDefaultGetter(form_id, form_control) {
-        return Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').get.call(form_control);
+        const getter = Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value');
+        if (getter !== undefined) {
+            return getter.get.call(form_control);
+        } else {
+            return form_control.value;
+        }
+        // since not working in iOS safari, return value from form control itself
+        //return Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').get.call(form_control);
         //return this._collection[form_id].get(form_control.name);
     },
 
@@ -207,7 +214,13 @@ export default Form = {
             set: function (value) {
                 // call parent setter to redraw changes in UI, update checked etc.
                 if (form_control.type !== 'file') {
-                    Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').set.call(form_control, value);
+                    const setter = Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value');
+                    if (setter !== undefined) {
+                        setter.set.call(form_control, value);
+                    } else {
+                        form_control.value = value;
+                    }
+                    //Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').set.call(form_control, value);
                 }
 
                 self._parseFormControl(form_id, form_control, value);
