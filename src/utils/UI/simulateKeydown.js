@@ -1,15 +1,13 @@
 
+import simulateEvent from './simulateEvent';
+
 export default function simulateKeydown(el, keyCode) {
-    var eventObj = document.createEventObject ?
-        document.createEventObject() : document.createEvent("Events");
-
-    if(eventObj.initEvent){
-        eventObj.initEvent("keydown", true, true);
-    }
-
-    eventObj.keyCode = keyCode;
-    eventObj.which = keyCode;
-
-    el.dispatchEvent ? el.dispatchEvent(eventObj) : el.fireEvent("onkeydown", eventObj);
-
+    const event_names = ['keyup', 'keypress, keydown'];
+    const event_properties = {
+        keyCode: keyCode,
+        which: keyCode
+    };
+    event_names.forEach( event_name => {
+        simulateEvent(el, event_name, event_properties);
+    })
 }
