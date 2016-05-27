@@ -4,14 +4,14 @@
     window.KEY_TAB = 9;
     window.KEY_ENTER = 13;
     window.KEY_SHIFT = 16;
-    window.CTRL = 17;
-    window.ALT = 18;
-    window.ESCAPE = 27;
-    window.PAGE_UP = 33;
-    window.PAGE_DOWN = 34;
-    window.LEFT_ARROW = 37;
-    window.UP_ARROW = 38;
-    window.RIGHT_ARROW = 39;
-    window.DOWN_ARROW = 40;
-    window.DELETE = 46
+    window.KEY_CTRL = 17;
+    window.KEY_ALT = 18;
+    window.KEY_ESCAPE = 27;
+    window.KEY_PAGE_UP = 33;
+    window.KEY_PAGE_DOWN = 34;
+    window.KEY_ARROW_LEFT = 37;
+    window.KEY_ARROW_UP = 38;
+    window.KEY_ARROW_RIGHT = 39;
+    window.KEY_ARROW_DOWN = 40;
+    window.KEY_DELETE = 46
 })();
