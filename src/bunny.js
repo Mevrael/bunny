@@ -7,3 +7,5 @@ import './polyfills/Promise';
 
 import './shims/ForEach';
 import './shims/ObjectCreateDeepCopy';
+
+import './constants/keycodes';
