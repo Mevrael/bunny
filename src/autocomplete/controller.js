@@ -122,6 +122,7 @@ export var AutocompleteController = {
                         self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
                     }
                 } else if (c === 13) { // Enter
+                    e.preventDefault();
                     if (ac._currentItemIndex !== null) {
                         self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
                     }
