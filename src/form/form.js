@@ -217,6 +217,18 @@ export default Form = {
                         form_control.dispatchEvent(event);
 
                     }
+                } else {
+                    // For radio - call change event on changed input
+                    for (let k = 0; k < form_control.length; k++) {
+                        let radio_input = form_control[k];
+                        if (radio_input.getAttribute('value') === value) {
+                            if (!this._valueSetFromEvent) {
+                                const event = new CustomEvent('change');
+                                radio_input.dispatchEvent(event);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         });
