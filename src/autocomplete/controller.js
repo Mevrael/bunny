@@ -4,42 +4,49 @@ import { Ajax } from '../bunny.ajax';
 
 export var AutocompleteController = {
 
-    inputDelay(handler, ms) {
-        var timer = 0;
-        (function() {
-            clearTimeout(timer);
-            timer = setTimeout(handler, ms);
-        })();
-    },
-
     attachInputTypeEvent(container_id, data_handler = JSON.parse, ajax_headers = {}) {
         var ac = Autocomplete.get(container_id);
         var timer = 0;
         ac._picked = false;
-        ac.input.addEventListener('input', function() {
-            var input = this;
+        ac.input.addEventListener('input', () => {
             clearTimeout(timer);
-            if (input.value.length >= ac.options.minCharLimit) {
-                timer = setTimeout(function() {
-                    var ajax_url = ac.ajaxUrl.replace('{search}', encodeURI(input.value));
-                    Ajax.get(ajax_url, function(data) {
-                        var $data = data_handler(data);
-                        if ($data.length !== 0) {
-                            Autocomplete.setItems(container_id, $data);
-                            Autocomplete.show(container_id);
-                        } else {
-                            Autocomplete.hide(container_id);
-                        }
-                    }, function(response_text, status_code) {
-                        if (ac.options.ajaxErrorHandler !== null) {
-                            ac.options.ajaxErrorHandler(response_text, status_code);
-                        }
-                        Autocomplete.hide(container_id);
-                    }, ajax_headers);
-                }, ac.options.inputDelay);
-            }
-
+            timer = setTimeout(() => {
+                this._handleDataLoad(container_id, data_handler, ajax_headers);
+            }, ac.options.inputDelay);
         });
+
+        ac.input.addEventListener('change', (e) => {
+            // if value was reset by script
+            if (ac.input.value === '' && !e.isTrusted) {
+                Autocomplete.hide(container_id);
+            }
+        });
+    },
+
+    _handleDataLoad(container_id, data_handler, ajax_headers) {
+        var ac = Autocomplete.get(container_id);
+        if (ac.input.value.length >= ac.options.minCharLimit) {
+
+            var ajax_url = ac.ajaxUrl.replace('{search}', encodeURI(ac.input.value));
+            Ajax.get(ajax_url, function(data) {
+                var $data = data_handler(data);
+                if ($data.length !== 0) {
+                    Autocomplete.setItems(container_id, $data);
+                    Autocomplete.show(container_id);
+                } else {
+                    Autocomplete.hide(container_id);
+                }
+            }, function(response_text, status_code) {
+                if (ac.options.ajaxErrorHandler !== null) {
+                    ac.options.ajaxErrorHandler(response_text, status_code);
+                }
+                Autocomplete.hide(container_id);
+            }, ajax_headers);
+
+        } else {
+            // if dropdown already displayed and user deleted value, hide dropdown
+            Autocomplete.hide(container_id);
+        }
     },
 
     attachInputFocusEvent(container_id) {
