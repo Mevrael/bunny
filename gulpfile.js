@@ -10,7 +10,8 @@ var examples = [
     'container',
     'autocomplete',
     'datepicker',
-    'form'
+    'form',
+    'datatable'
 ];
 
 gulp.task('default', function(){

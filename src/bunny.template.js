@@ -62,12 +62,12 @@ export var Template = {
         t.isTable = (this._loadedTemplates[id].tagName === 'TABLE');
 
         t.varElements = [];
-        t.content.querySelectorAll('[' + data_var_name + ']').forEach(function (e) {
+        [].forEach.call(t.content.querySelectorAll('[' + data_var_name + ']'), function (e) {
             t.varElements[e.getAttribute(data_var_name)] = e;
         });
 
         t.attrVarElements = [];
-        t.content.querySelectorAll('[' + attr_data_var_name + ']').forEach(function (e) {
+        [].forEach.call(t.content.querySelectorAll('[' + attr_data_var_name + ']'), function (e) {
             attr_parts = e.getAttribute(attr_data_var_name).split(':');
             t.attrVarElements[attr_parts[1]] = {
                 el: e,
@@ -83,7 +83,7 @@ export var Template = {
         this.addAttributeReplaceElement('src', t);*/
 
         t.handlerElements = [];
-        t.content.querySelectorAll('[data-handler]').forEach(function (e) {
+        [].forEach.call(t.content.querySelectorAll('[data-handler]'), function (e) {
             t.handlerElements.push(e);
         });
 

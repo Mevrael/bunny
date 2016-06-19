@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DataTable example</title>
+    <link rel="stylesheet" href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
+    <style>
+        datatable stats {
+            float: right;
+            line-height: 2rem;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container p-t-3">
+
+    <datatable url="https://bunnyjs.com/api/users/" template="users_row_template">
+        <table class="table">
+            <tr>
+                <th>ID</th>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>email</th>
+                <th>Age</th>
+                <th>Actions</th>
+            </tr>
+        </table>
+        <footer>
+            <pagination limit="9" outer></pagination>
+            <stats></stats>
+        </footer>
+    </datatable>
+
+</div>
+
+<table id="users_row_template" hidden>
+    <tr>
+        <td v="index"></td>
+        <td><img av="src:picture" alt="Picture"></td>
+        <td v="name"></td>
+        <td v="email"></td>
+        <td v="age"></td>
+        <td>
+            <a href="/users/edit/" class="btn btn-primary" data-handler="edit">Edit</a>
+            <a href="/users/delete/" class="btn btn-danger" data-handler="remove">Delete</a>
+        </td>
+    </tr>
+</table>
+
+<script src="../../dist/utils_dom.min.js"></script>
+<script src="../../dist/ajax.min.js"></script>
+<script src="../../dist/template.min.js"></script>
+<script src="../../dist/pagination.min.js"></script>
+<script src="../../dist/url.min.js"></script>
+<script src="../../dist/datatable.min.js"></script>
+
+<script src="dist/index.js"></script>
+</body>
+</html>

@@ -18,14 +18,11 @@ export const BunnyURL = {
      * @return {String|Array|undefined}             The GET param value or undefined
      */
     getParam(get_param, url = window.location.href) {
-        /*var reg = new RegExp( '[?&]' + get_param + '=([^&#]*)', 'i' );
-         var string = reg.exec(url);
-         return string ? string[1] : null;*/
         return this.getParams(url)[get_param];
     },
 
     getQueryString(url = window.location.href) {
-        return decodeURI(url.slice(window.location.href.indexOf('?') + 1));
+        return decodeURI(url.slice(url.indexOf('?') + 1));
     },
 
     getParams(url = window.location.href) {

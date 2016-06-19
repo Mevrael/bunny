@@ -232,14 +232,9 @@ var Ajax = {
 };
 
 var AutocompleteController = {
-    inputDelay: function inputDelay(handler, ms) {
-        var timer = 0;
-        (function () {
-            clearTimeout(timer);
-            timer = setTimeout(handler, ms);
-        })();
-    },
     attachInputTypeEvent: function attachInputTypeEvent(container_id) {
+        var _this = this;
+
         var data_handler = arguments.length <= 1 || arguments[1] === undefined ? JSON.parse : arguments[1];
         var ajax_headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
@@ -247,28 +242,42 @@ var AutocompleteController = {
         var timer = 0;
         ac._picked = false;
         ac.input.addEventListener('input', function () {
-            var input = this;
             clearTimeout(timer);
-            if (input.value.length >= ac.options.minCharLimit) {
-                timer = setTimeout(function () {
-                    var ajax_url = ac.ajaxUrl.replace('{search}', encodeURI(input.value));
-                    Ajax.get(ajax_url, function (data) {
-                        var $data = data_handler(data);
-                        if ($data.length !== 0) {
-                            Autocomplete.setItems(container_id, $data);
-                            Autocomplete.show(container_id);
-                        } else {
-                            Autocomplete.hide(container_id);
-                        }
-                    }, function (response_text, status_code) {
-                        if (ac.options.ajaxErrorHandler !== null) {
-                            ac.options.ajaxErrorHandler(response_text, status_code);
-                        }
-                        Autocomplete.hide(container_id);
-                    }, ajax_headers);
-                }, ac.options.inputDelay);
+            timer = setTimeout(function () {
+                _this._handleDataLoad(container_id, data_handler, ajax_headers);
+            }, ac.options.inputDelay);
+        });
+
+        ac.input.addEventListener('change', function (e) {
+            // if value was reset by script
+            if (ac.input.value === '' && !e.isTrusted) {
+                Autocomplete.hide(container_id);
             }
         });
+    },
+    _handleDataLoad: function _handleDataLoad(container_id, data_handler, ajax_headers) {
+        var ac = Autocomplete.get(container_id);
+        if (ac.input.value.length >= ac.options.minCharLimit) {
+
+            var ajax_url = ac.ajaxUrl.replace('{search}', encodeURI(ac.input.value));
+            Ajax.get(ajax_url, function (data) {
+                var $data = data_handler(data);
+                if ($data.length !== 0) {
+                    Autocomplete.setItems(container_id, $data);
+                    Autocomplete.show(container_id);
+                } else {
+                    Autocomplete.hide(container_id);
+                }
+            }, function (response_text, status_code) {
+                if (ac.options.ajaxErrorHandler !== null) {
+                    ac.options.ajaxErrorHandler(response_text, status_code);
+                }
+                Autocomplete.hide(container_id);
+            }, ajax_headers);
+        } else {
+            // if dropdown already displayed and user deleted value, hide dropdown
+            Autocomplete.hide(container_id);
+        }
     },
     attachInputFocusEvent: function attachInputFocusEvent(container_id) {
         var ac = Autocomplete.get(container_id);
@@ -348,6 +357,7 @@ var AutocompleteController = {
                     }
                 } else if (c === 13) {
                     // Enter
+                    e.preventDefault();
                     if (ac._currentItemIndex !== null) {
                         self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
                     }
