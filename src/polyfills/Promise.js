@@ -1,2 +1,2 @@
 
-import 'promise-polyfill/promise';
+import 'es6-promise-polyfill/promise';

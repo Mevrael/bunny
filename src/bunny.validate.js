@@ -13,6 +13,7 @@ export var Validate = {
         tel: "Field '%s' is not a valid telephone number!",
         email: "Field '%s' should be a valid e-mail address!",
         image: "Uploaded file '%s' should be an image (jpeg, png, bmp, gif, or svg)",
+        fileMaxSize: 'Max file size must be < %maxsizeMB, uploaded file with %filesizeMB',
         maxlength: "Input '%s' length is too long, must be < '%maxlength'",
         minlength: "Input '%s' length is too short, must be > '%minlength'"
     },
@@ -111,6 +112,20 @@ export var Validate = {
                         return true;
                     }
                     return false;
+                }
+                return true;
+            }
+            return true;
+        },
+
+        fileMaxSize: function(input) {
+            if (input.getAttribute('type') === 'file' && input.hasAttribute('maxfilesize')) {
+                var max_file_size = input.getAttribute('maxfilesize') * 1000000; // in MB
+                if (input.files.length !== 0) {
+                    if (input.files[0].size < max_file_size) {
+                        return true;
+                    }
+                    return {maxsize: max_file_size, filesize: Math.round(input.files[0].size, 2)};
                 }
                 return true;
             }
