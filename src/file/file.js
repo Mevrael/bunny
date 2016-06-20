@@ -32,6 +32,45 @@ export const BunnyFile = {
     },
 
     /**
+     * Get File/Blob header (signature) to parse for MIME-type or any magic numbers
+     * @param {File|Blob} blob
+     * @returns {Promise} callback(str:signature)
+     */
+    getSignature(blob) {
+        return new Promise(callback => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const arr = (new Uint8Array(reader.result)).subarray(0, 4);
+                let signature = '';
+                for (let i = 0; i < arr.length; i++) {
+                    signature += arr[i].toString(16);
+                }
+                callback(signature);
+            };
+            reader.readAsArrayBuffer(blob);
+        });
+    },
+
+    /**
+     * Check if string is a valid signature for image/jpeg
+     * @param {String} signature
+     * @returns {boolean}
+     */
+    isJpeg(signature) {
+        const signatures = ['ffd8ffe0', 'ffd8ffe1', 'ffd8ffe2'];
+        return signatures.indexOf(signature) > -1;
+    },
+
+    /**
+     * Check if string is a valid signature for image/png
+     * @param {String} signature
+     * @returns {boolean}
+     */
+    isPng(signature) {
+        return signature === '89504e47';
+    },
+
+    /**
      * Convert base64 string to Blob object
      * @param {String} base64
      * @returns {Blob}
