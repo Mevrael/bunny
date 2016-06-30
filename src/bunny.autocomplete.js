@@ -73,6 +73,7 @@ export var Autocomplete = {
             dropdown: dropdown,
             dropdownItems: [],
             itemSelectHandlers: [],
+            itemSelectHandlersCustom: [],
             defaultValue: default_value,
             defaultHiddenValue: default_hidden_value,
             dataHandler: data_handler,
@@ -146,6 +147,10 @@ export var Autocomplete = {
 
     onItemSelect(container_id, handler) {
         this._autocompleteContainers[container_id].itemSelectHandlers.push(handler);
+    },
+
+    onCustomItemSelect(container_id, handler) {
+        this._autocompleteContainers[container_id].itemSelectHandlersCustom.push(handler);
     },
 
     restoreDefaultValue(container_id) {
