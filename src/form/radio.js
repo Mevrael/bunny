@@ -1,7 +1,12 @@
 
 export var Radio = {
     create(radio_container_id, custom_radio_class, checked_class) {
-        var container = document.getElementById(radio_container_id);
+        var container = null;
+        if (radio_container_id === null) {
+            container = document;
+        } else {
+            container = document.getElementById(radio_container_id);
+        }
         var custom_radios = container.getElementsByClassName(custom_radio_class);
         var inputs = container.getElementsByTagName('input');
 
