@@ -9,6 +9,7 @@ export var Autocomplete = {
     _options: {
         theme: 'bs4',
         minCharLimit: 2,
+        minCustomCharLimit: 3,
         inputDelay: 200,
         allowCustomInput: false,
         defaultCustomHiddenInputValue: '',

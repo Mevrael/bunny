@@ -168,8 +168,10 @@ export var AutocompleteController = {
 
     callCustomItemSelectHandlers(container_id) {
         var ac = Autocomplete.get(container_id);
-        for(let k = 0; k < ac.itemSelectHandlersCustom.length; k++) {
-            ac.itemSelectHandlersCustom[k](ac.input.value);
+        if (ac.input.value.length >= ac.options.minCustomCharLimit) {
+            for (let k = 0; k < ac.itemSelectHandlersCustom.length; k++) {
+                ac.itemSelectHandlersCustom[k](ac.input.value);
+            }
         }
     }
 
