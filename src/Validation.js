@@ -466,6 +466,10 @@ export const ValidationUI = {
         }
         for (let k = 0; k < inputGroups.length; k++) {
             const input = this.getInput(inputGroups[k]);
+            if (input === false) {
+                console.error(inputGroups[k]);
+                throw new Error('Bunny Validation: Input group has no input');
+            }
             if (resolving) {
                 inputs.inputs[k] = {
                     input: input,
