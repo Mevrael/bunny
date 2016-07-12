@@ -524,8 +524,8 @@ export const Validation = {
         });
     },
 
-    focusInput(input) {
-        BunnyElement.scrollTo(input, 500, -50);
+    focusInput(input, delay = 500, offset = -50) {
+        BunnyElement.scrollTo(input, delay, offset);
         input.focus();
         if (
             input.setSelectionRange !== undefined
