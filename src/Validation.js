@@ -485,21 +485,15 @@ export const Validation = {
             e.preventDefault();
             const submitBtn = form.querySelector('[type="submit"]');
             submitBtn.disabled = true;
-            this.validateSection(form).then(() => {
-                submitBtn.disabled = false;
-                form.submit();
-            }).catch(invalidInputs => {
-                const input = invalidInputs[0];
-                submitBtn.disabled = false;
-                BunnyElement.scrollTo(input, 500, -50);
-                input.focus();
-                if (
-                    input.setSelectionRange !== undefined
-                    && typeof input.setSelectionRange === 'function'
-                ) {
-                    input.setSelectionRange(input.value.length, input.value.length);
+            this.validateSection(form).then(result => {
+                if (result === true) {
+                    submitBtn.disabled = false;
+                    form.submit();
+                } else {
+                    submitBtn.disabled = false;
+                    this.focusInput(result[0]);
                 }
-            });
+            })
         })
     },
 
@@ -509,7 +503,7 @@ export const Validation = {
         } else {
             throw new Error('Bunny Validation: validation already in progress.');
         }
-        return new Promise((validSection, invalidSection) => {
+        return new Promise(resolve => {
             const resolvingInputs = this.ui.getInputsInSection(node, true);
             // run async validation for each input
             // when last async validation will be completed, call validSection or invalidSection
@@ -518,16 +512,27 @@ export const Validation = {
                 this.checkInput(input).then(() => {
                     this._addValidInput(resolvingInputs, input);
                     if (resolvingInputs.unresolvedLength === 0) {
-                        this._endSectionValidation(node, resolvingInputs, validSection, invalidSection);
+                        this._endSectionValidation(node, resolvingInputs, resolve);
                     }
                 }).catch(errorMessage => {
                     this._addInvalidInput(resolvingInputs, input);
                     if (resolvingInputs.unresolvedLength === 0) {
-                        this._endSectionValidation(node, resolvingInputs, validSection, invalidSection);
+                        this._endSectionValidation(node, resolvingInputs, resolve);
                     }
                 });
             }
         });
+    },
+
+    focusInput(input) {
+        BunnyElement.scrollTo(input, 500, -50);
+        input.focus();
+        if (
+            input.setSelectionRange !== undefined
+            && typeof input.setSelectionRange === 'function'
+        ) {
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
     },
 
     checkInput(input) {
@@ -559,19 +564,19 @@ export const Validation = {
         }
     },
 
-    _endSectionValidation(node, resolvingInputs, validSection, invalidSection) {
+    _endSectionValidation(node, resolvingInputs, resolve) {
         delete node.__bunny_validation_state;
 
         if (resolvingInputs.invalidLength === 0) {
             // form or section is valid
-            return validSection();
+            return resolve(true);
         } else {
             let invalidInputs = [];
             for(let k in resolvingInputs.invalidInputs) {
                 invalidInputs.push(resolvingInputs.invalidInputs[k]);
             }
             // form or section has invalid inputs
-            return invalidSection(invalidInputs);
+            return resolve(invalidInputs);
         }
     },
 
