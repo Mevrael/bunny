@@ -550,6 +550,11 @@ export const Validation = {
                     }
                 });
             }
+
+            if (resolvingInputs.length === 0) {
+                // nothing to validate, end
+                this._endSectionValidation(node, resolvingInputs, resolve);
+            }
         });
     },
 
