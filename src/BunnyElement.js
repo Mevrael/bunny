@@ -31,13 +31,28 @@ export const BunnyElement = {
      */
     scrollTo(target, duration = 500, offset = 0) {
         return new Promise(onAnimationEnd => {
+
+            let element;
+            if (typeof target === 'string') {
+                element = document.querySelector(target);
+            } else if (typeof target === 'object') {
+                element = target.getBoundingClientRect().top;
+            } else {
+                // number
+                element = null;
+            }
+
+            if (element !== null && element.offsetParent === null) {
+                // element is not visible, scroll to top of next element
+                element = element.nextElementSibling;
+            }
+
             const start = window.pageYOffset;
             let distance = 0;
-            if (typeof target === 'string') {
-                distance = document.querySelector(target).getBoundingClientRect().top;
-            } else if (typeof target === 'object') {
-                distance = target.getBoundingClientRect().top;
+            if (element !== null) {
+                distance = element.getBoundingClientRect().top;
             } else {
+                // number
                 distance = target;
             }
             distance = distance + offset;
