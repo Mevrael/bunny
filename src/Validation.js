@@ -208,7 +208,13 @@ export const ValidationValidators = {
 
     requiredFromList(input) {
         return new Promise((valid, invalid) => {
-            const srcInput = document.getElementById(input.name + '_id');
+            let id;
+            if (input.hasAttribute('requiredfromlist')) {
+                id = input.getAttribute('requiredfromlist')
+            } else {
+                id = input.name + '_id';
+            }
+            const srcInput = document.getElementById(id);
             if (srcInput) {
                 if (srcInput.value.length > 0) {
                     valid();
