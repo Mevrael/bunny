@@ -131,15 +131,17 @@ export const ValidationValidators = {
 
     maxFileSize(input) {
         return new Promise((valid, invalid) => {
-            if (input.getAttribute('type') === 'file' && input.hasAttribute('maxfilesize')) {
+            if (
+                input.getAttribute('type') === 'file'
+                && input.hasAttribute('maxfilesize')
+                && input.files.length !== 0
+            ) {
                 const maxFileSize = parseFloat(input.getAttribute('maxfilesize')); // in MB
-                if (input.files.length !== 0) {
-                    const fileSize = (input.files[0].size / 1000000).toFixed(2); // in MB
-                    if (fileSize <= maxFileSize) {
-                        valid(input);
-                    } else {
-                        invalid({maxFileSize, fileSize});
-                    }
+                const fileSize = (input.files[0].size / 1000000).toFixed(2); // in MB
+                if (fileSize <= maxFileSize) {
+                    valid(input);
+                } else {
+                    invalid({maxFileSize, fileSize});
                 }
             } else {
                 valid(input);
@@ -162,6 +164,8 @@ export const ValidationValidators = {
                     } else {
                         invalid({signature});
                     }
+                }).catch(e => {
+                    invalid(e);
                 });
             } else {
                 valid();
@@ -181,6 +185,8 @@ export const ValidationValidators = {
                     } else {
                         valid();
                     }
+                }).catch(e => {
+                    invalid(e);
                 });
             } else {
                 valid();
@@ -200,6 +206,8 @@ export const ValidationValidators = {
                     } else {
                         valid();
                     }
+                }).catch(e => {
+                    invalid(e);
                 });
             } else {
                 valid();
@@ -431,7 +439,7 @@ export const ValidationUI = {
     },
 
 
-    
+
     /**
      * Find inputs in section
      *
@@ -473,7 +481,7 @@ export const ValidationUI = {
     },
 
 
-    
+
     /**
      * Find label associated with input within input group
      *
@@ -484,7 +492,7 @@ export const ValidationUI = {
     getLabel(inputGroup) {
         return inputGroup.getElementsByTagName('label')[0] || false;
     },
-    
+
 
 
     /**
@@ -512,14 +520,17 @@ export const Validation = {
 
         form.addEventListener('submit', e => {
             e.preventDefault();
-            const submitBtn = form.querySelector('[type="submit"]');
-            submitBtn.disabled = true;
+            const submitBtns = form.querySelectorAll('[type="submit"]');
+            [].forEach.call(submitBtns, submitBtn => {
+                submitBtn.disabled = true;
+            });
             this.validateSection(form).then(result => {
-                if (result === true) {
+                [].forEach.call(submitBtns, submitBtn => {
                     submitBtn.disabled = false;
+                });
+                if (result === true) {
                     form.submit();
                 } else {
-                    submitBtn.disabled = false;
                     this.focusInput(result[0]);
                 }
             })
@@ -534,26 +545,44 @@ export const Validation = {
         }
         return new Promise(resolve => {
             const resolvingInputs = this.ui.getInputsInSection(node, true);
-            // run async validation for each input
-            // when last async validation will be completed, call validSection or invalidSection
-            for(let i = 0; i < resolvingInputs.length; i++) {
-                const input = resolvingInputs.inputs[i].input;
-                this.checkInput(input).then(() => {
-                    this._addValidInput(resolvingInputs, input);
-                    if (resolvingInputs.unresolvedLength === 0) {
-                        this._endSectionValidation(node, resolvingInputs, resolve);
-                    }
-                }).catch(errorMessage => {
-                    this._addInvalidInput(resolvingInputs, input);
-                    if (resolvingInputs.unresolvedLength === 0) {
-                        this._endSectionValidation(node, resolvingInputs, resolve);
-                    }
-                });
-            }
-
             if (resolvingInputs.length === 0) {
                 // nothing to validate, end
                 this._endSectionValidation(node, resolvingInputs, resolve);
+            } else {
+                // run async validation for each input
+                // when last async validation will be completed, call validSection or invalidSection
+                let promises = [];
+                for(let i = 0; i < resolvingInputs.length; i++) {
+                    const input = resolvingInputs.inputs[i].input;
+
+                    this.checkInput(input).then(() => {
+                        this._addValidInput(resolvingInputs, input);
+                        if (resolvingInputs.unresolvedLength === 0) {
+                            this._endSectionValidation(node, resolvingInputs, resolve);
+                        }
+                    }).catch(errorMessage => {
+                        this._addInvalidInput(resolvingInputs, input);
+                        if (resolvingInputs.unresolvedLength === 0) {
+                            this._endSectionValidation(node, resolvingInputs, resolve);
+                        }
+                    });
+                }
+
+                // if there are not resolved promises after 3s, terminate validation, mark pending inputs as invalid
+                setTimeout(() => {
+                    if (resolvingInputs.unresolvedLength > 0) {
+                        let unresolvedInputs = this._getUnresolvedInputs(resolvingInputs);
+                        for (let i = 0; i < unresolvedInputs.length; i++) {
+                            const input = unresolvedInputs[i];
+                            const inputGroup = this.ui.getInputGroup(input);
+                            this._addInvalidInput(resolvingInputs, input);
+                            this.ui.setErrorMessage(inputGroup, 'Validation terminated after 3s');
+                            if (resolvingInputs.unresolvedLength === 0) {
+                                this._endSectionValidation(node, resolvingInputs, resolve);
+                            }
+                        }
+                    }
+                }, 3000);
             }
         });
     },
@@ -596,6 +625,16 @@ export const Validation = {
                 break;
             }
         }
+    },
+
+    _getUnresolvedInputs(resolvingInputs) {
+        let unresolvedInputs = [];
+        for (let k in resolvingInputs.inputs) {
+            if (!resolvingInputs.inputs[k].isValid) {
+                unresolvedInputs.push(resolvingInputs.inputs[k].input);
+            }
+        }
+        return unresolvedInputs;
     },
 
     _endSectionValidation(node, resolvingInputs, resolve) {
