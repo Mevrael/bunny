@@ -29,12 +29,10 @@ function BunnyFormData(form) {
 }
 
 BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
-    if (input.tagName === 'TEXTAREA') {
-        input.type = 'textarea';
-    }
+    const type = this.getInputType(input);
 
     // check if parser for specific input type exists and call it instead
-    let method = input.type.toLowerCase();
+    let method = type.toLowerCase();
     method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
     method = '_formControlParser' + method;
     if (this[method] !== undefined) {
@@ -114,7 +112,12 @@ BunnyFormData.prototype.getInputs = function getInputs() {
 
 BunnyFormData.prototype.getNamedInputs = function getNamedInputs() {
     const elements = this.getInputs();
-    const keys = nonEnumKeys(elements);
+    // IE does not return correct enum keys, get keys manually
+    // non numbered keys will be named keys
+    //const keys = nonEnumKeys(elements);
+    //console.log(keys);
+    const keys = Object.getOwnPropertyNames(elements).filter(key => isNaN(key));
+
     let named_inputs = {};
     for (let k = 0; k < keys.length; k++) {
         let input_name = keys[k];
@@ -143,6 +146,26 @@ BunnyFormData.prototype.getRadioLists = function getRadioLists() {
         }
     }
     return radio_lists;
+};
+
+BunnyFormData.prototype.getInputType = function getInputType(name_or_el) {
+    let input = null;
+    if (typeof name_or_el === 'object') {
+        input = name_or_el;
+    } else {
+        input = this.getInput(name_or_el);
+    }
+
+    if (input.type !== undefined && input.type !== null && input.type !== '') {
+        return input.type;
+    }
+    if (input.tagName === 'TEXTAREA') {
+        return 'textarea';
+    } else if (this.isNodeList(input)) {
+        return 'radiolist';
+    } else {
+        return undefined;
+    }
 };
 
 BunnyFormData.prototype.getInput = function getInput(name) {
@@ -212,9 +235,10 @@ BunnyFormData.prototype.isArray = function isArray(input_name) {
     return Array.isArray(this._collection[input_name]);
 };
 
-BunnyFormData.prototype.isNodeList = function isNodeList(input_name) {
-    const input = this.getInput(input_name);
-    return input instanceof RadioNodeList;
+BunnyFormData.prototype.isNodeList = function isNodeList(input_name_or_el) {
+    const input = (typeof input_name_or_el === 'object') ? input_name_or_el : this.getInput(input_name_or_el);
+    // RadioNodeList is undefined in IE, Edge, it uses HTMLCollection instead
+    return input instanceof (typeof RadioNodeList !== 'undefined' ? RadioNodeList : HTMLCollection);
 };
 
 BunnyFormData.prototype.append = function append(input_name, value) {

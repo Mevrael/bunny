@@ -42,232 +42,303 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
 };
 
-(function (root) {
+(function (global) {
 
-  // Store setTimeout reference so promise-polyfill will be unaffected by
-  // other code modifying setTimeout (like sinon.useFakeTimers())
-  var setTimeoutFunc = setTimeout;
+  //
+  // Check for native Promise and it has correct interface
+  //
 
-  function noop() {}
-
-  // Use polyfill for setImmediate for performance gains
-  var asap = typeof setImmediate === 'function' && setImmediate || function (fn) {
-    setTimeoutFunc(fn, 0);
-  };
-
-  var onUnhandledRejection = function onUnhandledRejection(err) {
-    if (typeof console !== 'undefined' && console) {
-      console.warn('Possible Unhandled Promise Rejection:', err); // eslint-disable-line no-console
-    }
-  };
-
-  // Polyfill for Function.prototype.bind
-  function bind(fn, thisArg) {
-    return function () {
-      fn.apply(thisArg, arguments);
-    };
-  }
-
-  function Promise(fn) {
-    if (_typeof(this) !== 'object') throw new TypeError('Promises must be constructed via new');
-    if (typeof fn !== 'function') throw new TypeError('not a function');
-    this._state = 0;
-    this._handled = false;
-    this._value = undefined;
-    this._deferreds = [];
-
-    doResolve(fn, this);
-  }
-
-  function handle(self, deferred) {
-    while (self._state === 3) {
-      self = self._value;
-    }
-    if (self._state === 0) {
-      self._deferreds.push(deferred);
-      return;
-    }
-    self._handled = true;
-    asap(function () {
-      var cb = self._state === 1 ? deferred.onFulfilled : deferred.onRejected;
-      if (cb === null) {
-        (self._state === 1 ? resolve : reject)(deferred.promise, self._value);
-        return;
-      }
-      var ret;
-      try {
-        ret = cb(self._value);
-      } catch (e) {
-        reject(deferred.promise, e);
-        return;
-      }
-      resolve(deferred.promise, ret);
+  var NativePromise = global['Promise'];
+  var nativePromiseSupported = NativePromise &&
+  // Some of these methods are missing from
+  // Firefox/Chrome experimental implementations
+  'resolve' in NativePromise && 'reject' in NativePromise && 'all' in NativePromise && 'race' in NativePromise &&
+  // Older version of the spec had a resolver object
+  // as the arg rather than a function
+  function () {
+    var resolve;
+    new NativePromise(function (r) {
+      resolve = r;
     });
+    return typeof resolve === 'function';
+  }();
+
+  //
+  // export if necessary
+  //
+
+  if (typeof exports !== 'undefined' && exports) {
+    // node.js
+    exports.Promise = nativePromiseSupported ? NativePromise : Promise;
+    exports.Polyfill = Promise;
+  } else {
+    // AMD
+    if (typeof define == 'function' && define.amd) {
+      define(function () {
+        return nativePromiseSupported ? NativePromise : Promise;
+      });
+    } else {
+      // in browser add to global
+      if (!nativePromiseSupported) global['Promise'] = Promise;
+    }
   }
 
-  function resolve(self, newValue) {
+  //
+  // Polyfill
+  //
+
+  var PENDING = 'pending';
+  var SEALED = 'sealed';
+  var FULFILLED = 'fulfilled';
+  var REJECTED = 'rejected';
+  var NOOP = function NOOP() {};
+
+  function isArray(value) {
+    return Object.prototype.toString.call(value) === '[object Array]';
+  }
+
+  // async calls
+  var asyncSetTimer = typeof setImmediate !== 'undefined' ? setImmediate : setTimeout;
+  var asyncQueue = [];
+  var asyncTimer;
+
+  function asyncFlush() {
+    // run promise callbacks
+    for (var i = 0; i < asyncQueue.length; i++) {
+      asyncQueue[i][0](asyncQueue[i][1]);
+    } // reset async asyncQueue
+    asyncQueue = [];
+    asyncTimer = false;
+  }
+
+  function asyncCall(callback, arg) {
+    asyncQueue.push([callback, arg]);
+
+    if (!asyncTimer) {
+      asyncTimer = true;
+      asyncSetTimer(asyncFlush, 0);
+    }
+  }
+
+  function invokeResolver(resolver, promise) {
+    function resolvePromise(value) {
+      resolve(promise, value);
+    }
+
+    function rejectPromise(reason) {
+      reject(promise, reason);
+    }
+
     try {
-      // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
-      if (newValue === self) throw new TypeError('A promise cannot be resolved with itself.');
-      if (newValue && ((typeof newValue === 'undefined' ? 'undefined' : _typeof(newValue)) === 'object' || typeof newValue === 'function')) {
-        var then = newValue.then;
-        if (newValue instanceof Promise) {
-          self._state = 3;
-          self._value = newValue;
-          finale(self);
-          return;
-        } else if (typeof then === 'function') {
-          doResolve(bind(then, newValue), self);
-          return;
+      resolver(resolvePromise, rejectPromise);
+    } catch (e) {
+      rejectPromise(e);
+    }
+  }
+
+  function invokeCallback(subscriber) {
+    var owner = subscriber.owner;
+    var settled = owner.state_;
+    var value = owner.data_;
+    var callback = subscriber[settled];
+    var promise = subscriber.then;
+
+    if (typeof callback === 'function') {
+      settled = FULFILLED;
+      try {
+        value = callback(value);
+      } catch (e) {
+        reject(promise, e);
+      }
+    }
+
+    if (!handleThenable(promise, value)) {
+      if (settled === FULFILLED) resolve(promise, value);
+
+      if (settled === REJECTED) reject(promise, value);
+    }
+  }
+
+  function handleThenable(promise, value) {
+    var resolved;
+
+    try {
+      if (promise === value) throw new TypeError('A promises callback cannot return that same promise.');
+
+      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object')) {
+        var then = value.then; // then should be retrived only once
+
+        if (typeof then === 'function') {
+          then.call(value, function (val) {
+            if (!resolved) {
+              resolved = true;
+
+              if (value !== val) resolve(promise, val);else fulfill(promise, val);
+            }
+          }, function (reason) {
+            if (!resolved) {
+              resolved = true;
+
+              reject(promise, reason);
+            }
+          });
+
+          return true;
         }
       }
-      self._state = 1;
-      self._value = newValue;
-      finale(self);
     } catch (e) {
-      reject(self, e);
+      if (!resolved) reject(promise, e);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  function resolve(promise, value) {
+    if (promise === value || !handleThenable(promise, value)) fulfill(promise, value);
+  }
+
+  function fulfill(promise, value) {
+    if (promise.state_ === PENDING) {
+      promise.state_ = SEALED;
+      promise.data_ = value;
+
+      asyncCall(publishFulfillment, promise);
     }
   }
 
-  function reject(self, newValue) {
-    self._state = 2;
-    self._value = newValue;
-    finale(self);
+  function reject(promise, reason) {
+    if (promise.state_ === PENDING) {
+      promise.state_ = SEALED;
+      promise.data_ = reason;
+
+      asyncCall(publishRejection, promise);
+    }
   }
 
-  function finale(self) {
-    if (self._state === 2 && self._deferreds.length === 0) {
-      asap(function () {
-        if (!self._handled) {
-          onUnhandledRejection(self._value);
-        }
-      });
-    }
+  function publish(promise) {
+    var callbacks = promise.then_;
+    promise.then_ = undefined;
 
-    for (var i = 0, len = self._deferreds.length; i < len; i++) {
-      handle(self, self._deferreds[i]);
+    for (var i = 0; i < callbacks.length; i++) {
+      invokeCallback(callbacks[i]);
     }
-    self._deferreds = null;
   }
 
-  function Handler(onFulfilled, onRejected, promise) {
-    this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-    this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-    this.promise = promise;
+  function publishFulfillment(promise) {
+    promise.state_ = FULFILLED;
+    publish(promise);
+  }
+
+  function publishRejection(promise) {
+    promise.state_ = REJECTED;
+    publish(promise);
   }
 
   /**
-   * Take a potentially misbehaving resolver function and make sure
-   * onFulfilled and onRejected are only called once.
-   *
-   * Makes no guarantees about asynchrony.
-   */
-  function doResolve(fn, self) {
-    var done = false;
-    try {
-      fn(function (value) {
-        if (done) return;
-        done = true;
-        resolve(self, value);
-      }, function (reason) {
-        if (done) return;
-        done = true;
-        reject(self, reason);
-      });
-    } catch (ex) {
-      if (done) return;
-      done = true;
-      reject(self, ex);
-    }
+  * @class
+  */
+  function Promise(resolver) {
+    if (typeof resolver !== 'function') throw new TypeError('Promise constructor takes a function argument');
+
+    if (this instanceof Promise === false) throw new TypeError('Failed to construct \'Promise\': Please use the \'new\' operator, this object constructor cannot be called as a function.');
+
+    this.then_ = [];
+
+    invokeResolver(resolver, this);
   }
 
-  Promise.prototype['catch'] = function (onRejected) {
-    return this.then(null, onRejected);
-  };
+  Promise.prototype = {
+    constructor: Promise,
 
-  Promise.prototype.then = function (onFulfilled, onRejected) {
-    var prom = new this.constructor(noop);
+    state_: PENDING,
+    then_: null,
+    data_: undefined,
 
-    handle(this, new Handler(onFulfilled, onRejected, prom));
-    return prom;
-  };
+    then: function then(onFulfillment, onRejection) {
+      var subscriber = {
+        owner: this,
+        then: new this.constructor(NOOP),
+        fulfilled: onFulfillment,
+        rejected: onRejection
+      };
 
-  Promise.all = function (arr) {
-    var args = Array.prototype.slice.call(arr);
-
-    return new Promise(function (resolve, reject) {
-      if (args.length === 0) return resolve([]);
-      var remaining = args.length;
-
-      function res(i, val) {
-        try {
-          if (val && ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' || typeof val === 'function')) {
-            var then = val.then;
-            if (typeof then === 'function') {
-              then.call(val, function (val) {
-                res(i, val);
-              }, reject);
-              return;
-            }
-          }
-          args[i] = val;
-          if (--remaining === 0) {
-            resolve(args);
-          }
-        } catch (ex) {
-          reject(ex);
-        }
+      if (this.state_ === FULFILLED || this.state_ === REJECTED) {
+        // already resolved, call callback async
+        asyncCall(invokeCallback, subscriber);
+      } else {
+        // subscribe
+        this.then_.push(subscriber);
       }
 
-      for (var i = 0; i < args.length; i++) {
-        res(i, args[i]);
+      return subscriber.then;
+    },
+
+    'catch': function _catch(onRejection) {
+      return this.then(null, onRejection);
+    }
+  };
+
+  Promise.all = function (promises) {
+    var Class = this;
+
+    if (!isArray(promises)) throw new TypeError('You must pass an array to Promise.all().');
+
+    return new Class(function (resolve, reject) {
+      var results = [];
+      var remaining = 0;
+
+      function resolver(index) {
+        remaining++;
+        return function (value) {
+          results[index] = value;
+          if (! --remaining) resolve(results);
+        };
+      }
+
+      for (var i = 0, promise; i < promises.length; i++) {
+        promise = promises[i];
+
+        if (promise && typeof promise.then === 'function') promise.then(resolver(i), reject);else results[i] = promise;
+      }
+
+      if (!remaining) resolve(results);
+    });
+  };
+
+  Promise.race = function (promises) {
+    var Class = this;
+
+    if (!isArray(promises)) throw new TypeError('You must pass an array to Promise.race().');
+
+    return new Class(function (resolve, reject) {
+      for (var i = 0, promise; i < promises.length; i++) {
+        promise = promises[i];
+
+        if (promise && typeof promise.then === 'function') promise.then(resolve, reject);else resolve(promise);
       }
     });
   };
 
   Promise.resolve = function (value) {
-    if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.constructor === Promise) {
-      return value;
-    }
+    var Class = this;
 
-    return new Promise(function (resolve) {
+    if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.constructor === Class) return value;
+
+    return new Class(function (resolve) {
       resolve(value);
     });
   };
 
-  Promise.reject = function (value) {
-    return new Promise(function (resolve, reject) {
-      reject(value);
+  Promise.reject = function (reason) {
+    var Class = this;
+
+    return new Class(function (resolve, reject) {
+      reject(reason);
     });
   };
-
-  Promise.race = function (values) {
-    return new Promise(function (resolve, reject) {
-      for (var i = 0, len = values.length; i < len; i++) {
-        values[i].then(resolve, reject);
-      }
-    });
-  };
-
-  /**
-   * Set the immediate function to execute callbacks
-   * @param fn {function} Function to execute
-   * @private
-   */
-  Promise._setImmediateFn = function _setImmediateFn(fn) {
-    asap = fn;
-  };
-
-  Promise._setUnhandledRejectionFn = function _setUnhandledRejectionFn(fn) {
-    onUnhandledRejection = fn;
-  };
-
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Promise;
-  } else if (!root.Promise) {
-    root.Promise = Promise;
-  }
-})(this);
+})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : undefined);
 
 /**
  * FormData wrapper for browsers supporting only FormData constructor and append()
@@ -297,12 +368,10 @@ function BunnyFormData(form) {
 }
 
 BunnyFormData.prototype._initSingleInput = function _initSingleInput(input) {
-    if (input.tagName === 'TEXTAREA') {
-        input.type = 'textarea';
-    }
+    var type = this.getInputType(input);
 
     // check if parser for specific input type exists and call it instead
-    var method = input.type.toLowerCase();
+    var method = type.toLowerCase();
     method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
     method = '_formControlParser' + method;
     if (this[method] !== undefined) {
@@ -410,6 +479,26 @@ BunnyFormData.prototype.getRadioLists = function getRadioLists() {
     return radio_lists;
 };
 
+BunnyFormData.prototype.getInputType = function getInputType(name_or_el) {
+    var input = null;
+    if ((typeof name_or_el === 'undefined' ? 'undefined' : _typeof(name_or_el)) === 'object') {
+        input = name_or_el;
+    } else {
+        input = this.getInput(name_or_el);
+    }
+
+    if (input.type !== undefined && input.type !== null && input.type !== '') {
+        return input.type;
+    }
+    if (input.tagName === 'TEXTAREA') {
+        return 'textarea';
+    } else if (this.isNodeList(input)) {
+        return 'radiolist';
+    } else {
+        return undefined;
+    }
+};
+
 BunnyFormData.prototype.getInput = function getInput(name) {
     return Object.getOwnPropertyDescriptor(this._form.constructor.prototype, 'elements').get.call(this._form)[name];
 };
@@ -478,8 +567,7 @@ BunnyFormData.prototype.isArray = function isArray(input_name) {
 };
 
 BunnyFormData.prototype.isNodeList = function isNodeList(input_name_or_el) {
-    //const input = (typeof input_name_or_el === 'object') ? input_name_or_el : this.getInput(input_name);
-    var input = this.getInput(input_name_or_el);
+    var input = (typeof input_name_or_el === 'undefined' ? 'undefined' : _typeof(input_name_or_el)) === 'object' ? input_name_or_el : this.getInput(input_name_or_el);
     // RadioNodeList is undefined in IE, Edge, it uses HTMLCollection instead
     return input instanceof (typeof RadioNodeList !== 'undefined' ? RadioNodeList : HTMLCollection);
 };
@@ -642,8 +730,8 @@ var Form$1 = Form = {
         }
         this._collection[form_id] = new BunnyFormData(form);
         this._attachChangeAndDefaultFileEvent(form_id);
-        //this._attachRadioListChangeEvent(form_id);
-        //this._attachDOMChangeEvent(form_id);
+        this._attachRadioListChangeEvent(form_id);
+        this._attachDOMChangeEvent(form_id);
     },
     isInitiated: function isInitiated(form_id) {
         return this._collection[form_id] !== undefined;
@@ -665,11 +753,11 @@ var Form$1 = Form = {
 
         var elements = this._collection[form_id].getInputs();
         [].forEach.call(elements, function (form_control) {
-            console.log(form_control);
 
             _this.__attachSingleChangeEvent(form_id, form_control);
-            _this.__observeSingleValueChange(form_id, form_control, form_control.name);
+            _this.__observeSingleValueChange(form_id, form_control);
 
+            // set default file input value
             if (form_control.type === 'file' && form_control.hasAttribute('value')) {
                 var url = form_control.getAttribute('value');
                 if (url !== '') {
@@ -682,7 +770,7 @@ var Form$1 = Form = {
         var radio_lists = this._collection[form_id].getRadioLists();
         for (var radio_group_name in radio_lists) {
             var single_radio_list = radio_lists[radio_group_name];
-            this.__observeSingleValueChange(form_id, single_radio_list, radio_group_name);
+            this.__observeSingleValueChange(form_id, single_radio_list);
         }
     },
     __attachSingleChangeEvent: function __attachSingleChangeEvent(form_id, form_control) {
@@ -696,7 +784,7 @@ var Form$1 = Form = {
                 form_control.value = form_control.files[0];
                 _this2._valueSetFromEvent = false;
             } else {
-                _this2._parseFormControl(form_id, form_control, form_control.name, form_control.value);
+                _this2._parseFormControl(form_id, form_control, form_control.value);
             }
 
             // update mirror if mirrored
@@ -713,18 +801,15 @@ var Form$1 = Form = {
     // with 4th argument - setter
     // without 4th argument - getter
     // called from .value property observer
-    _parseFormControl: function _parseFormControl(form_id, form_control, form_control_name) {
-        var value = arguments.length <= 3 || arguments[3] === undefined ? undefined : arguments[3];
+    _parseFormControl: function _parseFormControl(form_id, form_control) {
+        var value = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
 
-        if (form_control.tagName === 'TEXTAREA') {
-            form_control.type = 'textarea';
-        } else if (this._collection[form_id].isNodeList(form_control_name)) {
-            form_control.type = 'radiolist';
-            form_control.name = form_control_name;
-        }
+        var type = this._collection[form_id].getInputType(form_control);
+
+        console.log(type);
 
         // check if parser for specific input type exists and call it instead
-        var method = form_control.type.toLowerCase();
+        var method = type.toLowerCase();
         method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
         method = '_parseFormControl' + method;
 
@@ -753,8 +838,9 @@ var Form$1 = Form = {
     },
     _parseFormControlRadiolist: function _parseFormControlRadiolist(form_id, form_control, value) {
         var found = false;
-        for (var k = 0; k < form_control.length; k++) {
-            var radio_input = form_control[k];
+        var radio_list = form_control;
+        for (var k = 0; k < radio_list.length; k++) {
+            var radio_input = radio_list[k];
             if (radio_input.value === value) {
                 this._collection[form_id].set(radio_input.name, value);
                 found = true;
@@ -785,12 +871,13 @@ var Form$1 = Form = {
         // return Blob or File object or empty string if no file set
         return this.get(form_id, form_control.name);
     },
-    __observeSingleValueChange: function __observeSingleValueChange(form_id, form_control, form_control_name) {
+    __observeSingleValueChange: function __observeSingleValueChange(form_id, form_control) {
         var _this3 = this;
 
         Object.defineProperty(form_control, 'value', {
+            configurable: true,
             get: function get() {
-                return _this3._parseFormControl(form_id, form_control, form_control_name);
+                return _this3._parseFormControl(form_id, form_control);
             },
             set: function set(value) {
                 console.log('setting to');
@@ -801,9 +888,10 @@ var Form$1 = Form = {
                     Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').set.call(form_control, value);
                 }
 
-                _this3._parseFormControl(form_id, form_control, form_control_name, value);
-                if (!_this3._collection[form_id].isNodeList(form_control_name)) {
+                //this._parseFormControl(form_id, form_control, value);
+                if (!_this3._collection[form_id].isNodeList(form_control)) {
                     if (!_this3._valueSetFromEvent) {
+                        console.log('firing event');
                         var event = new CustomEvent('change');
                         form_control.dispatchEvent(event);
                     }
@@ -814,7 +902,7 @@ var Form$1 = Form = {
                         var radio_input = form_control[k];
                         if (radio_input.getAttribute('value') === value) {
                             if (!_this3._valueSetFromEvent) {
-                                console.log('firing event');
+                                console.log('firing radio event');
                                 var _event = new CustomEvent('change');
                                 radio_input.dispatchEvent(_event);
                                 break;
@@ -934,6 +1022,56 @@ var Form$1 = Form = {
 
 
     /**
+     * Fill form data with object values. Object property name/value => form input name/value
+     * @param form_id
+     * @param data
+     */
+    fill: function fill(form_id, data) {
+        this._checkInit(form_id);
+        for (var input_name in data) {
+            if (this._collection[form_id].has(input_name)) {
+                this.set(form_id, input_name, data[input_name]);
+            }
+        }
+    },
+    fillOrAppend: function fillOrAppend(form_id, data) {
+        this._checkInit(form_id);
+        for (var input_name in data) {
+            if (this._collection[form_id].has(input_name)) {
+                this.set(form_id, input_name, data[input_name]);
+            } else {
+                this.append(form_id, input_name, data[input_name]);
+            }
+        }
+    },
+    observe: function observe(form_id, data_object) {
+        var _this6 = this;
+
+        var new_data_object = Object.create(data_object);
+
+        var _loop = function _loop(input_name) {
+            Object.defineProperty(new_data_object, input_name, {
+                set: function set(value) {
+                    _this6.set(form_id, input_name, value);
+                },
+                get: function get() {
+                    return _this6.get(form_id, input_name);
+                }
+            });
+        };
+
+        for (var input_name in new_data_object) {
+            _loop(input_name);
+        }
+        return new_data_object;
+    },
+    fillAndObserve: function fillAndObserve(form_id, data_object) {
+        this.fill(form_id, data_object);
+        this.observe(form_id, data_object);
+    },
+
+
+    /**
      * Get value of real DOM input or virtual input
      *
      * @param {string} form_id
@@ -944,6 +1082,9 @@ var Form$1 = Form = {
     get: function get(form_id, input_name) {
         this._checkInit(form_id);
         return this._collection[form_id].get(input_name);
+    },
+    getObservableModel: function getObservableModel(form_id) {
+        return this.observe(form_id, this.getAll(form_id));
     },
 
 
@@ -1014,7 +1155,7 @@ var Form$1 = Form = {
      * @param {string} input_name
      */
     mirror: function mirror(form_id, input_name) {
-        var _this6 = this;
+        var _this7 = this;
 
         this._checkInit(form_id);
         var input = this._collection[form_id].getInput(input_name);
@@ -1030,7 +1171,7 @@ var Form$1 = Form = {
         //const input = document.forms[form_id].elements[input_name];
         this.setMirrors(form_id, input_name);
         input.addEventListener('change', function () {
-            _this6.setMirrors(form_id, input_name);
+            _this7.setMirrors(form_id, input_name);
         });
     },
 
@@ -1042,14 +1183,14 @@ var Form$1 = Form = {
      * @param form_id
      */
     mirrorAll: function mirrorAll(form_id) {
-        var _this7 = this;
+        var _this8 = this;
 
         this._checkInit(form_id);
         var inputs = this._collection[form_id].getInputs();
         [].forEach.call(inputs, function (input) {
             if (input instanceof HTMLInputElement && input.type !== 'checkbox' && input.type !== 'radio') {
                 // make sure it is normal input and not RadioNodeList or other interfaces which don't have addEventListener
-                _this7.mirror(form_id, input.name);
+                _this8.mirror(form_id, input.name);
             }
         });
     },
@@ -1058,7 +1199,7 @@ var Form$1 = Form = {
         return document.querySelectorAll('[data-mirror="' + form_id + '.' + input_name + '"]');
     },
     setMirrors: function setMirrors(form_id, input_name) {
-        var _this8 = this;
+        var _this9 = this;
 
         this._checkInit(form_id);
         var mirrors = this.getMirrors(form_id, input_name);
@@ -1066,11 +1207,11 @@ var Form$1 = Form = {
         //const input = document.forms[form_id].elements[input_name];
         [].forEach.call(mirrors, function (mirror) {
             if (mirror.tagName === 'IMG') {
-                var data = _this8.get(form_id, input_name);
+                var data = _this9.get(form_id, input_name);
                 if (data === '') {
                     mirror.src = '';
                 } else if (data.size !== 0) {
-                    mirror.src = URL.createObjectURL(_this8.get(form_id, input_name));
+                    mirror.src = URL.createObjectURL(_this9.get(form_id, input_name));
                 }
             } else {
                 mirror.textContent = input.value;
@@ -1138,14 +1279,14 @@ var Form$1 = Form = {
     file methods
      */
     setFileFromUrl: function setFileFromUrl(form_id, input_name, url) {
-        var _this9 = this;
+        var _this10 = this;
 
         var request = new XMLHttpRequest();
         var p = new Promise(function (success, fail) {
             request.onload = function () {
                 if (request.status === 200) {
                     var blob = request.response;
-                    _this9.set(form_id, input_name, blob);
+                    _this10.set(form_id, input_name, blob);
                     success(blob);
                 } else {
                     fail(request);
@@ -1198,6 +1339,278 @@ var Form$1 = Form = {
     }
 };
 
+var BunnyFile = {
+
+    /**
+     * Download file from URL via AJAX and make Blob object or return base64 string if 2nd argument is false
+     * Only files from CORS-enabled domains can be downloaded or AJAX will get security error
+     *
+     * @param {String} URL
+     * @param {Boolean} convert_to_blob = true
+     * @returns {Promise}: success(Blob object), fail(response XHR object)
+     */
+
+    download: function download(URL) {
+        var convert_to_blob = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+        var request = new XMLHttpRequest();
+        var p = new Promise(function (success, fail) {
+            request.onload = function () {
+                if (request.status === 200) {
+                    var blob = request.response;
+                    success(blob);
+                } else {
+                    fail(request);
+                }
+            };
+        });
+
+        request.open('GET', URL, true);
+        if (convert_to_blob) {
+            request.responseType = 'blob';
+        }
+        request.send();
+
+        return p;
+    },
+
+
+    /**
+     * Get File/Blob header (signature) to parse for MIME-type or any magic numbers
+     * @param {File|Blob} blob
+     * @returns {Promise} callback(str:signature)
+     */
+    getSignature: function getSignature(blob) {
+        return new Promise(function (callback) {
+            var reader = new FileReader();
+            reader.onloadend = function () {
+                var arr = new Uint8Array(reader.result).subarray(0, 4);
+                var signature = '';
+                for (var i = 0; i < arr.length; i++) {
+                    signature += arr[i].toString(16);
+                }
+                callback(signature);
+            };
+            reader.readAsArrayBuffer(blob);
+        });
+    },
+
+
+    /**
+     * Check if string is a valid signature for image/jpeg
+     * @param {String} signature
+     * @returns {boolean}
+     */
+    isJpeg: function isJpeg(signature) {
+        var signatures = ['ffd8ffe0', 'ffd8ffe1', 'ffd8ffe2'];
+        return signatures.indexOf(signature) > -1;
+    },
+
+
+    /**
+     * Check if string is a valid signature for image/png
+     * @param {String} signature
+     * @returns {boolean}
+     */
+    isPng: function isPng(signature) {
+        return signature === '89504e47';
+    },
+
+
+    /**
+     * Convert base64 string to Blob object
+     * @param {String} base64
+     * @returns {Blob}
+     */
+    base64ToBlob: function base64ToBlob(base64) {
+        // convert base64 to raw binary data held in a string
+        // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+        var byteString = atob(base64.split(',')[1]);
+
+        // separate out the mime component
+        var mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+
+        // write the bytes of the string to an ArrayBuffer
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        // write the ArrayBuffer to a blob, and you're done
+        return new Blob([ab], { type: mimeString });
+    },
+
+
+    /**
+     * Convert Blob object to base64string
+     * @param {Blob} blob
+     * @returns {Promise} success(base64 string), fail(error)
+     */
+    blobToBase64: function blobToBase64(blob) {
+        var reader = new FileReader();
+        var p = new Promise(function (success, fail) {
+            reader.onloadend = function () {
+                var base64 = reader.result;
+                success(base64);
+            };
+            reader.onerror = function (e) {
+                fail(e);
+            };
+        });
+
+        reader.readAsDataURL(blob);
+
+        return p;
+    },
+
+
+    /**
+     * Get local browser object URL which can be used in img.src for example
+     * @param {Blob} blob
+     * @returns {String}
+     */
+    getBlobLocalURL: function getBlobLocalURL(blob) {
+        if (!(blob instanceof Blob || blob instanceof File)) {
+            throw new TypeError('Argument in BunnyFile.getBlobLocalURL() is not a Blob or File object');
+        }
+        return URL.createObjectURL(blob);
+    }
+};
+
+/**
+ * @component BunnyImage
+ * Wrapper for Image object representing <img> tag, uses Canvas and BunnyFile
+ *
+ */
+var BunnyImage = {
+
+    // SECTION: get Image object via different sources
+
+    /**
+     * Downloads image by any URL, should work also for non-CORS domains
+     *
+     * @param {String} URL
+     * @returns {Promise} success(Image object), fail(error)
+     */
+
+    getImageByURL: function getImageByURL(URL) {
+        return this._toImagePromise(URL);
+    },
+    _toImagePromise: function _toImagePromise(src) {
+        var img = new Image();
+        var p = new Promise(function (ok, fail) {
+            img.onload = function () {
+                ok(img);
+            };
+            img.onerror = function (e) {
+                fail(e);
+            };
+        });
+        img.crossOrigin = 'Anonymous';
+        img.src = src;
+        return p;
+    },
+    getImageByBlob: function getImageByBlob(blob) {
+        var url = BunnyFile.getBlobLocalURL(blob);
+        return this._toImagePromise(url);
+    },
+    getImageByBase64: function getImageByBase64(base64) {
+        var url = base64;
+        return this._toImagePromise(url);
+    },
+    getImageByCanvas: function getImageByCanvas(canvas) {
+        var url = canvas.toDataURL();
+        return this._toImagePromise(url);
+    },
+
+
+    // SECTION:: create different sources from Image object
+
+    imageToCanvas: function imageToCanvas(img) {
+        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        if (!img.complete) {
+            throw new Error('Can not create canvas from Image. Image is not loaded yet.');
+        }
+        var canvas = document.createElement("canvas");
+        if (width === null && height === null) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext("2d").drawImage(img, 0, 0);
+        } else {
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        }
+        return canvas;
+    },
+    imageToBase64: function imageToBase64(img) {
+        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        return this.imageToCanvas(img, width, height).toDataURL();
+    },
+    imageToBlob: function imageToBlob(img) {
+        return BunnyFile.base64ToBlob(this.imageToBase64(img));
+    },
+
+
+    // SECTION: basic Image statistics and info functions
+
+    getImageURL: function getImageURL(img) {
+        return img.src;
+    },
+    getImageWidth: function getImageWidth(img) {
+        if (!img.complete) {
+            throw new Error('Can not get Image.width. Image is not loaded yet.');
+        }
+        return img.width;
+    },
+    getImageHeight: function getImageHeight(img) {
+        if (!img.complete) {
+            throw new Error('Can not get Image.height. Image is not loaded yet.');
+        }
+        return img.height;
+    },
+
+
+    // SECTION: basic Image data math functions
+
+    getImageNewAspectSizes: function getImageNewAspectSizes(img, max_width, max_height) {
+        var img_width = this.getImageWidth(img);
+        var img_height = this.getImageHeight(img);
+        if (img_width === 0 || img_height === 0) {
+            throw new Error('Image width or height is 0 in BunnyImage.getImageNewAspectSizes().');
+        }
+        var ratio = Math.min(max_width / img_width, max_height / img_height);
+
+        return {
+            width: Math.floor(img_width * ratio),
+            height: Math.floor(img_height * ratio)
+        };
+    },
+
+
+    // SECTION: basic Image manipulation
+
+    /**
+     * Resize image
+     * @param {Image} img
+     * @param {Number} max_width
+     * @param {Number} max_height
+     * @returns {Promise} success(Image), fail(error)
+     */
+    resizeImage: function resizeImage(img, max_width, max_height) {
+        var sizes = this.getImageNewAspectSizes(img, max_width, max_height);
+        var width = sizes.width;
+        var height = sizes.height;
+        var canvas = this.imageToCanvas(img, width, height);
+        return this.getImageByCanvas(canvas);
+    }
+};
+
 Form$1.initAll();
 
 document.forms.form1.elements.name.addEventListener('change', function () {
@@ -1214,53 +1627,52 @@ for (var k = 0; k < gender.length; k++) {
     });
 }
 
-/*Form.mirrorAll('form1');
+Form$1.mirrorAll('form1');
 //Form.calcMirrorAll('form2');
 
-const link = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png';
+var link = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png';
 
 var image = null;
 
-BunnyImage.getImageByURL(link).then( (img) => {
+BunnyImage.getImageByURL(link).then(function (img) {
     image = img;
 });
 
-document.forms.form1.addEventListener('submit', (e) => {
+document.forms.form1.addEventListener('submit', function (e) {
     e.preventDefault();
-    Form.submit(document.forms[0].id).then((responseData) => {
+    Form$1.submit(document.forms[0].id).then(function (responseData) {
         console.log('ajax submit ok');
-    }).catch((response) => {
+    }).catch(function (response) {
         console.log('ajax fail');
     });
 });
 
-document.getElementById('set_photo').addEventListener('click', (e) => {
+document.getElementById('set_photo').addEventListener('click', function (e) {
     document.getElementById('form1_submit').setAttribute('disabled', 'disabled');
-    Form.setFileFromUrl('form1', 'photo', link).then( (blob) => {
+    Form$1.setFileFromUrl('form1', 'photo', link).then(function (blob) {
         document.getElementById('form1_submit').removeAttribute('disabled');
         console.log(blob);
-    }).catch((e) => {
+    }).catch(function (e) {
         console.log(e);
     });
 });
 
-let counter = 1;
+var counter = 1;
 
-document.getElementById('add').addEventListener('click', () => {
-    const input = document.createElement('input');
+document.getElementById('add').addEventListener('click', function () {
+    var input = document.createElement('input');
     input.type = 'text';
     input.name = 'custom_input';
     input.value = counter++;
-    const close = document.createElement('a');
+    var close = document.createElement('a');
     close.classList.add('btn');
     close.classList.add('btn-danger');
     close.textContent = 'Delete';
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.appendChild(input);
     div.appendChild(close);
-    close.addEventListener('click', function() {
+    close.addEventListener('click', function () {
         document.forms.form1.removeChild(div);
     });
     document.forms.form1.appendChild(div);
 });
-*/

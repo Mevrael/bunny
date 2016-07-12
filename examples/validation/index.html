@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BunnyJS Validation example</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="http://v4-alpha.getbootstrap.com/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container p-t-3">
+
+    <h1>BunnyJS Validation component</h1>
+
+    <div class="card p-a-3">
+
+        <form id="form1" method="POST">
+
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" name="name" id="name" class="form-control" placeholder="Name" required minlength="6">
+                <input type="hidden" name="name_id" id="name_id">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Password" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="password_confirmation">Confirm Password</label>
+                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Password again" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="E-mail" required data-ajax="https://bunnyjs.com/api/users/email-exists/?q={value}">
+            </div>
+
+            <div class="form-group">
+                <label for="select">Select</label>
+                <select name="select" id="select" class="c-select form-control" required>
+                    <option value="" selected>Select option</option>
+                    <option value="1">One</option>
+                    <option value="2">Two</option>
+                    <option value="3">Three</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="photo">Photo</label>
+                <input type="file" name="photo" accept="image/jpeg, image/png" id="photo" class="form-control" placeholder="Photo" required maxfilesize="1" mindimensions="500x500">
+            </div>
+
+            <div class="form-group">
+                <label for="about">About</label>
+                <textarea name="about" id="about" class="form-control"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="c-input c-radio">
+                    <input name="agree" type="radio" value="1" required>
+                    <span class="c-indicator"></span>
+                    I agree with Terms of Service
+                </label>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" name="form1_submit" id="form1_submit" class="btn btn-primary" value="Submit">
+            </div>
+
+        </form>
+
+    </div>
+
+
+</div>
+
+<script src="dist/index.js"></script>
+</body>
+</html>

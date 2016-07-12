@@ -1,10 +1,11 @@
 {
   "name": "bunnyjs",
-  "version": "0.9.23",
+  "version": "0.9.24",
   "description": "Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, validation, ajax, datatables, calendar, datepicker, autocomplete, pagination, url) and next generation front-end framework.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.js"
   },
   "repository": {
     "type": "git",
@@ -49,10 +50,11 @@
   "devDependencies": {
     "babel-preset-es2015-rollup": "^1.1.1",
     "gulp": "^3.9.0",
-    "gulp-rollup": "^1.7.0",
     "gulp-sass": "^2.2.0",
-    "rollup-plugin-babel": "^2.3.9",
-    "rollup-plugin-node-resolve": "^1.5.0"
+    "rollup": "^0.33.0",
+    "rollup-plugin-babel": "^2.6.1",
+    "rollup-plugin-node-resolve": "^1.5.0",
+    "rollup-plugin-uglify": "^1.0.1"
   },
   "dependencies": {
     "es6-promise-polyfill": "^1.2.0"

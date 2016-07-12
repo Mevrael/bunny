@@ -22,7 +22,7 @@ for (let k = 0 ; k < gender.length; k++) {
     });
 }
 
-/*Form.mirrorAll('form1');
+Form.mirrorAll('form1');
 //Form.calcMirrorAll('form2');
 
 const link = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/400px-Google_2015_logo.svg.png';
@@ -71,4 +71,4 @@ document.getElementById('add').addEventListener('click', () => {
     });
     document.forms.form1.appendChild(div);
 });
-*/
+

@@ -7,6 +7,36 @@ import BunnyFormData from '../polyfills/BunnyFormData';
  * and adds custom methods to make form processing, including AJAX submit, file uploads and date/times, easier
  * works only with real forms and elements in DOM
  * Whenever new input is added or removed from DOM - Form data is updated
+ *
+ * IE11+
+ *
+ * It should:
+ * 1. RadioNodeList
+ * 1.1. Setting .value of RadioNodeList for radio buttons is allowed only to one of values from all radio buttons within this RadioNodeList,
+ * 1.2. If invalid value passed Error should be thrown
+ * 1.3. If invalid value passed old value should be returned by .value getter, new value should not be saved
+ * 1.4. Setting .value of RadioNodeList should redraw (update) radio buttons setting old unchecked and new checked
+ * 1.5. Setting .value of RadioNodeList should save new value and getting .value should return same new value
+ * 1.6. Setting .value of RadioNodeList should call 'change' event on related radio button
+ *
+ * 2. File input
+ * 2.1. .value of file input should return first File object if file uploaded by user from native UI
+ * 2.2. .value of file input should return Blob object if file was set by .value = blob
+ * 2.3. value attribute can contain a string - URL to selected object, .value should return this file's Blob
+ * 2.4. Only blob should be allowed to be assigned to setter .value
+ * 2.5. URL (including rel path) can be assigned to .value (todo)
+ * 2.6. File processing should be allowed to be delegated to a custom method, for example, to send file to cropper before storing it (todo)
+ * 2.7. Setting .value should call 'change' event on file input
+ * 2.8. After refresh if there is file uploaded by user via native UI file should be stored in .value (todo)
+ *
+ * 3. Common inputs
+ * 3.1. Setting .value to any input should call 'change' event
+ * 3.2. Setting .value to any input should redraw changes
+ * 3.3.
+ *
+ * 4. DOM mutations, new inputs added to DOM or removed from DOM
+ * 4.1. Whenever new input added to DOM inside form, it should be initiated and work as common input
+ * 4.2. Whenever input is removed from DOM inside form, it should be also removed with all events from Form collection
  */
 export default Form = {
 
@@ -79,6 +109,7 @@ export default Form = {
             this.__attachSingleChangeEvent(form_id, form_control);
             this.__observeSingleValueChange(form_id, form_control);
 
+            // set default file input value
             if (form_control.type === 'file' && form_control.hasAttribute('value')) {
                 const url = form_control.getAttribute('value');
                 if (url !== '') {
@@ -118,18 +149,16 @@ export default Form = {
     },
 
     // handlers for different input types
-    // with 3rd argument - setter
-    // without 3rd argument - getter
+    // with 4th argument - setter
+    // without 4th argument - getter
     // called from .value property observer
     _parseFormControl(form_id, form_control, value = undefined) {
-        if (form_control.tagName === 'TEXTAREA') {
-            form_control.type = 'textarea';
-        } else if (form_control instanceof RadioNodeList) {
-            form_control.type = 'radiolist';
-        }
+        const type = this._collection[form_id].getInputType(form_control);
+
+        console.log(type);
 
         // check if parser for specific input type exists and call it instead
-        let method = form_control.type.toLowerCase();
+        let method = type.toLowerCase();
         method = method.charAt(0).toUpperCase() + method.slice(1); // upper case first char
         method = '_parseFormControl' + method;
 
@@ -161,8 +190,9 @@ export default Form = {
 
     _parseFormControlRadiolist(form_id, form_control, value) {
         let found = false;
-        for (let k = 0; k < form_control.length; k++) {
-            let radio_input = form_control[k];
+        const radio_list = form_control;
+        for (let k = 0; k < radio_list.length; k++) {
+            let radio_input = radio_list[k];
             if (radio_input.value === value) {
                 this._collection[form_id].set(radio_input.name, value);
                 found = true;
@@ -198,31 +228,38 @@ export default Form = {
     },
 
     __observeSingleValueChange(form_id, form_control) {
-        const self = this;
-
         Object.defineProperty(form_control, 'value', {
-            get: function() {
-                return self._parseFormControl(form_id, form_control);
+            configurable: true,
+            get: () => {
+                return this._parseFormControl(form_id, form_control);
             },
-            set: function (value) {
+            set: (value) => {
+                console.log('setting to');
+                console.log(value);
+                console.log(form_control);
                 // call parent setter to redraw changes in UI, update checked etc.
                 if (form_control.type !== 'file') {
                     Object.getOwnPropertyDescriptor(form_control.constructor.prototype, 'value').set.call(form_control, value);
                 }
 
-                self._parseFormControl(form_id, form_control, value);
-                if (!(form_control instanceof RadioNodeList)) {
+
+
+                //this._parseFormControl(form_id, form_control, value);
+                if (!(this._collection[form_id].isNodeList(form_control))) {
                     if (!this._valueSetFromEvent) {
+                        console.log('firing event');
                         const event = new CustomEvent('change');
                         form_control.dispatchEvent(event);
 
                     }
                 } else {
+
                     // For radio - call change event on changed input
                     for (let k = 0; k < form_control.length; k++) {
                         let radio_input = form_control[k];
                         if (radio_input.getAttribute('value') === value) {
                             if (!this._valueSetFromEvent) {
+                                console.log('firing radio event');
                                 const event = new CustomEvent('change');
                                 radio_input.dispatchEvent(event);
                                 break;
@@ -243,7 +280,7 @@ export default Form = {
         this._checkInit(form_id);
         this._collection[form_id]._initSingleInput(input);
         this.__attachSingleChangeEvent(form_id, input);
-        this.__observeSingleValueChange(form_id, input);
+        this.__observeSingleValueChange(form_id, input, input.name);
     },
 
     _attachDOMChangeEvent(form_id) {
@@ -343,6 +380,50 @@ export default Form = {
         input.value = input_value;
     },
 
+
+    /**
+     * Fill form data with object values. Object property name/value => form input name/value
+     * @param form_id
+     * @param data
+     */
+    fill(form_id, data) {
+        this._checkInit(form_id);
+        for (let input_name in data) {
+            if (this._collection[form_id].has(input_name)) {
+                this.set(form_id, input_name, data[input_name]);
+            }
+        }
+    },
+
+    fillOrAppend(form_id, data) {
+        this._checkInit(form_id);
+        for (let input_name in data) {
+            if (this._collection[form_id].has(input_name)) {
+                this.set(form_id, input_name, data[input_name]);
+            } else {
+                this.append(form_id, input_name, data[input_name]);
+            }
+        }
+    },
+
+    observe(form_id, data_object) {
+        let new_data_object = Object.create(data_object);
+        for (let input_name in new_data_object) {
+            Object.defineProperty(new_data_object, input_name, {
+                set: (value) => {
+                    this.set(form_id, input_name, value);
+                },
+                get: () => this.get(form_id, input_name)
+            });
+        }
+        return new_data_object;
+    },
+
+    fillAndObserve(form_id, data_object) {
+        this.fill(form_id, data_object);
+        this.observe(form_id, data_object);
+    },
+
     /**
      * Get value of real DOM input or virtual input
      *
@@ -354,6 +435,10 @@ export default Form = {
     get(form_id, input_name) {
         this._checkInit(form_id);
         return this._collection[form_id].get(input_name);
+    },
+
+    getObservableModel(form_id) {
+        return this.observe(form_id, this.getAll(form_id));
     },
 
     /**
