@@ -132,6 +132,9 @@ export var AutocompleteController = {
                     e.preventDefault();
                     if (ac._currentItemIndex !== null) {
                         self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
+                    } else {
+                        // pick first item from list
+                        self.selectItem(container_id, ac.dropdownItems[0]);
                     }
                 } else if (c === 27) { // Esc
                     Autocomplete.restoreDefaultValue(container_id);
@@ -157,8 +160,19 @@ export var AutocompleteController = {
                         }
                     }
                 }
+            } else if (c === 13) { // Enter
+                self.callCustomItemSelectHandlers(container_id);
             }
         });
+    },
+
+    callCustomItemSelectHandlers(container_id) {
+        var ac = Autocomplete.get(container_id);
+        if (ac.input.value.length >= ac.options.minCustomCharLimit) {
+            for (let k = 0; k < ac.itemSelectHandlersCustom.length; k++) {
+                ac.itemSelectHandlersCustom[k](ac.input.value);
+            }
+        }
     }
 
 };
