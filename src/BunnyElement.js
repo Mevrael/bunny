@@ -36,7 +36,7 @@ export const BunnyElement = {
             if (typeof target === 'string') {
                 element = document.querySelector(target);
             } else if (typeof target === 'object') {
-                element = target.getBoundingClientRect().top;
+                element = target;
             } else {
                 // number
                 element = null;
