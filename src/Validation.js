@@ -44,7 +44,8 @@ export const ValidationLang = {
     minImageDimensions: "'{label}' must be > {minWidth}x{minHeight}, uploaded {width}x{height}",
     maxImageDimensions: "'{label}' must be < {maxWidth}x{maxHeight}, uploaded {width}x{height}",
     requiredFromList: "Select '{label}' from list",
-    confirmation: "'{label}' is not equal to '{originalLabel}'"
+    confirmation: "'{label}' is not equal to '{originalLabel}'",
+    minOptions: "Please select at least {minOptionsCount} options"
 
 };
 
@@ -225,6 +226,29 @@ export const ValidationValidators = {
                 valid();
             }
         });
+    },
+
+    minOptions(input) {
+        return new Promise((valid, invalid) => {
+            if (input.hasAttribute('minoptions')) {
+                const minOptionsCount = parseInt(input.getAttribute('minoptions'));
+                const inputGroup = ValidationUI.getInputGroup(input);
+                const hiddenInputs = inputGroup.getElementsByTagName('input');
+                let selectedOptionsCount = 0;
+                [].forEach.call(hiddenInputs, hiddenInput => {
+                    if (hiddenInput !== input && hiddenInput.value !== '') {
+                        selectedOptionsCount++
+                    }
+                });
+                if (selectedOptionsCount < minOptionsCount) {
+                    invalid({minOptionsCount});
+                } else {
+                    valid();
+                }
+            } else {
+                valid();
+            }
+        })
     },
 
     confirmation(input) {
