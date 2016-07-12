@@ -255,7 +255,6 @@ export const ValidationValidators = {
         return new Promise((valid, invalid) => {
             if (input.name.indexOf('_confirmation') > -1) {
                 const originalInputId = input.name.substr(0, input.name.length - 13);
-                console.log(originalInputId);
                 const originalInput = document.getElementById(originalInputId);
                 if (originalInput.value == input.value) {
                     valid();
@@ -653,8 +652,10 @@ export const Validation = {
         // replace params in error message
         if (label !== false) {
             message = message.replace('{label}', label.textContent);
+        } else if (input.placeholder && input.placeholder !== '') {
+            message = message.replace('{label}', input.placeholder);
         } else {
-            message = message.replace('{label}', input.name)
+            message = message.replace('{label}', '');
         }
 
         for (let paramName in data) {
