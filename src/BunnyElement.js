@@ -43,8 +43,8 @@ export const BunnyElement = {
             }
 
             if (element !== null && element.offsetParent === null) {
-                // element is not visible, scroll to top of next element
-                element = element.nextElementSibling;
+                // element is not visible, scroll to top of parent element
+                element = element.parentNode;
             }
 
             const start = window.pageYOffset;
