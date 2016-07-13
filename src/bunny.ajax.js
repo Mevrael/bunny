@@ -67,10 +67,16 @@ export var Ajax = {
         }
 
         var str_data = '';
-        for(var name in this.data) {
-            str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
+
+        if (this.data instanceof FormData) {
+            this.request.send(data);
+        } else {
+            for(var name in this.data) {
+                str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
+            }
+            this.request.send(str_data);
         }
-        this.request.send(str_data);
+
     },
 
     /**
