@@ -17,10 +17,10 @@ export const BunnyImage = {
      * @returns {Promise} success(Image object), fail(error)
      */
     getImageByURL(URL) {
-        return this._toImagePromise(URL);
+        return this._toImagePromise(URL, true);
     },
 
-    _toImagePromise(src) {
+    _toImagePromise(src, crossOrigin = false) {
         const img = new Image;
         const p = new Promise( (ok, fail) => {
             img.onload = () => {
@@ -30,7 +30,9 @@ export const BunnyImage = {
                 fail(e);
             }
         });
-        img.crossOrigin = 'Anonymous';
+        if (crossOrigin) {
+            img.crossOrigin = 'Anonymous';
+        }
         img.src = src;
         return p;
     },
