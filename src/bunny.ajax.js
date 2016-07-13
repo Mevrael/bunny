@@ -69,7 +69,7 @@ export var Ajax = {
         var str_data = '';
 
         if (this.data instanceof FormData) {
-            this.request.send(data);
+            this.request.send(this.data);
         } else {
             for(var name in this.data) {
                 str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
