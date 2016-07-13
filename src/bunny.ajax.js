@@ -118,7 +118,7 @@ export var Ajax = {
         this.create('GET', url, {}, on_success, on_error, headers, true);
     },
 
-    post: function(url, data, on_success, on_error = null, headers =) {
+    post: function(url, data, on_success, on_error = null, headers = {'X-Requested-With': 'XMLHttpRequest'}) {
         this.create('POST', url, data, on_success, on_error, headers, true);
     }
 
