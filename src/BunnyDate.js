@@ -7,6 +7,7 @@
  * Instead of new Date() use BunnyDate.create() which returns false for invalid dates
  * Create Date from SQL or convert Date to SQL string
  * Currently works only for Dates and not DateTimes
+ * Using local timezone
  */
 export const BunnyDate = {
 
@@ -58,12 +59,12 @@ export const BunnyDate = {
      */
     getMeta(date) {
         return {
-            year: date.getUTCFullYear(),
-            monthIndex: date.getUTCMonth(),
-            month: date.getUTCMonth() + 1,
-            monthStr: this._twoDigits(date.getUTCMonth() + 1),
-            day: date.getUTCDate(),
-            dayStr: this._twoDigits(date.getUTCDate())
+            year: date.getFullYear(),
+            monthIndex: date.getMonth(),
+            month: date.getMonth() + 1,
+            monthStr: this._twoDigits(date.getMonth() + 1),
+            day: date.getDate(),
+            dayStr: this._twoDigits(date.getDate())
         }
     },
 
