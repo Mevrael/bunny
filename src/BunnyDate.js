@@ -23,9 +23,9 @@ export const BunnyDate = {
      * @returns {Date|boolean}
      */
     create(year, month, day) {
-        const day = parseInt(day);
-        const month = parseInt(month);
-        const year = parseInt(year);
+        day = parseInt(day);
+        month = parseInt(month);
+        year = parseInt(year);
         const date = new Date(year, month - 1, day);
         if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
             return date
