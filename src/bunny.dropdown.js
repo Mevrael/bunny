@@ -116,6 +116,6 @@ export const Dropdown = {
 
 };
 
-document.getElementsByClassName('dropdown').forEach((dropdown) => {
+[].forEach.call(document.getElementsByClassName('dropdown'), dropdown => {
     Dropdown.init(dropdown);
 });

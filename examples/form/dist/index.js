@@ -1495,9 +1495,11 @@ var BunnyImage = {
      */
 
     getImageByURL: function getImageByURL(URL) {
-        return this._toImagePromise(URL);
+        return this._toImagePromise(URL, true);
     },
     _toImagePromise: function _toImagePromise(src) {
+        var crossOrigin = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
         var img = new Image();
         var p = new Promise(function (ok, fail) {
             img.onload = function () {
@@ -1507,7 +1509,9 @@ var BunnyImage = {
                 fail(e);
             };
         });
-        img.crossOrigin = 'Anonymous';
+        if (crossOrigin) {
+            img.crossOrigin = 'Anonymous';
+        }
         img.src = src;
         return p;
     },

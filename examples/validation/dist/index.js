@@ -496,9 +496,11 @@ var BunnyImage = {
      */
 
     getImageByURL: function getImageByURL(URL) {
-        return this._toImagePromise(URL);
+        return this._toImagePromise(URL, true);
     },
     _toImagePromise: function _toImagePromise(src) {
+        var crossOrigin = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
         var img = new Image();
         var p = new Promise(function (ok, fail) {
             img.onload = function () {
@@ -508,7 +510,9 @@ var BunnyImage = {
                 fail(e);
             };
         });
-        img.crossOrigin = 'Anonymous';
+        if (crossOrigin) {
+            img.crossOrigin = 'Anonymous';
+        }
         img.src = src;
         return p;
     },
@@ -686,10 +690,15 @@ var Ajax = {
         }
 
         var str_data = '';
-        for (var name in this.data) {
-            str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
+
+        if (this.data instanceof FormData) {
+            this.request.send(this.data);
+        } else {
+            for (var name in this.data) {
+                str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
+            }
+            this.request.send(str_data);
         }
-        this.request.send(str_data);
     },
 
 
@@ -747,6 +756,13 @@ var Ajax = {
         var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[3];
 
         this.create('GET', url, {}, on_success, on_error, headers, true);
+    },
+
+    post: function post(url, data, on_success) {
+        var on_error = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+        var headers = arguments.length <= 4 || arguments[4] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[4];
+
+        this.create('POST', url, data, on_success, on_error, headers, true);
     }
 
 };
@@ -785,13 +801,28 @@ var BunnyElement = {
         var offset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
 
         return new Promise(function (onAnimationEnd) {
+
+            var element = void 0;
+            if (typeof target === 'string') {
+                element = document.querySelector(target);
+            } else if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) === 'object') {
+                element = target;
+            } else {
+                // number
+                element = null;
+            }
+
+            if (element !== null && element.offsetParent === null) {
+                // element is not visible, scroll to top of parent element
+                element = element.parentNode;
+            }
+
             var start = window.pageYOffset;
             var distance = 0;
-            if (typeof target === 'string') {
-                distance = document.querySelector(target).getBoundingClientRect().top;
-            } else if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) === 'object') {
-                distance = target.getBoundingClientRect().top;
+            if (element !== null) {
+                distance = element.getBoundingClientRect().top;
             } else {
+                // number
                 distance = target;
             }
             distance = distance + offset;
@@ -874,7 +905,8 @@ var ValidationLang = {
     minImageDimensions: "'{label}' must be > {minWidth}x{minHeight}, uploaded {width}x{height}",
     maxImageDimensions: "'{label}' must be < {maxWidth}x{maxHeight}, uploaded {width}x{height}",
     requiredFromList: "Select '{label}' from list",
-    confirmation: "'{label}' is not equal to '{originalLabel}'"
+    confirmation: "'{label}' is not equal to '{originalLabel}'",
+    minOptions: "Please select at least {minOptionsCount} options"
 
 };
 
@@ -952,15 +984,13 @@ var ValidationValidators = {
     },
     maxFileSize: function maxFileSize(input) {
         return new Promise(function (valid, invalid) {
-            if (input.getAttribute('type') === 'file' && input.hasAttribute('maxfilesize')) {
+            if (input.getAttribute('type') === 'file' && input.hasAttribute('maxfilesize') && input.files.length !== 0) {
                 var maxFileSize = parseFloat(input.getAttribute('maxfilesize')); // in MB
-                if (input.files.length !== 0) {
-                    var fileSize = (input.files[0].size / 1000000).toFixed(2); // in MB
-                    if (fileSize <= maxFileSize) {
-                        valid(input);
-                    } else {
-                        invalid({ maxFileSize: maxFileSize, fileSize: fileSize });
-                    }
+                var fileSize = (input.files[0].size / 1000000).toFixed(2); // in MB
+                if (fileSize <= maxFileSize) {
+                    valid(input);
+                } else {
+                    invalid({ maxFileSize: maxFileSize, fileSize: fileSize });
                 }
             } else {
                 valid(input);
@@ -980,6 +1010,8 @@ var ValidationValidators = {
                     } else {
                         invalid({ signature: signature });
                     }
+                }).catch(function (e) {
+                    invalid(e);
                 });
             } else {
                 valid();
@@ -1005,6 +1037,8 @@ var ValidationValidators = {
                         } else {
                             valid();
                         }
+                    }).catch(function (e) {
+                        invalid(e);
                     });
                 })();
             } else {
@@ -1031,6 +1065,8 @@ var ValidationValidators = {
                         } else {
                             valid();
                         }
+                    }).catch(function (e) {
+                        invalid(e);
                     });
                 })();
             } else {
@@ -1040,7 +1076,13 @@ var ValidationValidators = {
     },
     requiredFromList: function requiredFromList(input) {
         return new Promise(function (valid, invalid) {
-            var srcInput = document.getElementById(input.name + '_id');
+            var id = void 0;
+            if (input.hasAttribute('requiredfromlist')) {
+                id = input.getAttribute('requiredfromlist');
+            } else {
+                id = input.name + '_id';
+            }
+            var srcInput = document.getElementById(id);
             if (srcInput) {
                 if (srcInput.value.length > 0) {
                     valid();
@@ -1052,11 +1094,34 @@ var ValidationValidators = {
             }
         });
     },
+    minOptions: function minOptions(input) {
+        return new Promise(function (valid, invalid) {
+            if (input.hasAttribute('minoptions')) {
+                (function () {
+                    var minOptionsCount = parseInt(input.getAttribute('minoptions'));
+                    var inputGroup = ValidationUI.getInputGroup(input);
+                    var hiddenInputs = inputGroup.getElementsByTagName('input');
+                    var selectedOptionsCount = 0;
+                    [].forEach.call(hiddenInputs, function (hiddenInput) {
+                        if (hiddenInput !== input && hiddenInput.value !== '') {
+                            selectedOptionsCount++;
+                        }
+                    });
+                    if (selectedOptionsCount < minOptionsCount) {
+                        invalid({ minOptionsCount: minOptionsCount });
+                    } else {
+                        valid();
+                    }
+                })();
+            } else {
+                valid();
+            }
+        });
+    },
     confirmation: function confirmation(input) {
         return new Promise(function (valid, invalid) {
             if (input.name.indexOf('_confirmation') > -1) {
                 var originalInputId = input.name.substr(0, input.name.length - 13);
-                console.log(originalInputId);
                 var originalInput = document.getElementById(originalInputId);
                 if (originalInput.value == input.value) {
                     valid();
@@ -1254,6 +1319,10 @@ var ValidationUI = {
         }
         for (var k = 0; k < inputGroups.length; k++) {
             var input = this.getInput(inputGroups[k]);
+            if (input === false) {
+                console.error(inputGroups[k]);
+                throw new Error('Bunny Validation: Input group has no input');
+            }
             if (resolving) {
                 inputs.inputs[k] = {
                     input: input,
@@ -1302,65 +1371,114 @@ var Validation = {
     init: function init(form) {
         var _this = this;
 
+        var inline = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
         // disable browser built-in validation
         form.setAttribute('novalidate', '');
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var submitBtn = form.querySelector('[type="submit"]');
-            submitBtn.disabled = true;
-            _this.validateSection(form).then(function () {
-                submitBtn.disabled = false;
-                form.submit();
-            }).catch(function (invalidInputs) {
-                var input = invalidInputs[0];
-                submitBtn.disabled = false;
-                BunnyElement.scrollTo(input, 500, -50);
-                input.focus();
-                if (input.setSelectionRange !== undefined && typeof input.setSelectionRange === 'function') {
-                    input.setSelectionRange(input.value.length, input.value.length);
+            var submitBtns = form.querySelectorAll('[type="submit"]');
+            [].forEach.call(submitBtns, function (submitBtn) {
+                submitBtn.disabled = true;
+            });
+            _this.validateSection(form).then(function (result) {
+                [].forEach.call(submitBtns, function (submitBtn) {
+                    submitBtn.disabled = false;
+                });
+                if (result === true) {
+                    form.submit();
+                } else {
+                    _this.focusInput(result[0]);
                 }
+            });
+        });
+
+        if (inline) {
+            this.initInline(form);
+        }
+    },
+    initInline: function initInline(node) {
+        var _this2 = this;
+
+        var inputs = this.ui.getInputsInSection(node);
+        inputs.forEach(function (input) {
+            input.addEventListener('change', function () {
+                _this2.checkInput(input).catch(function (e) {});
             });
         });
     },
     validateSection: function validateSection(node) {
-        var _this2 = this;
+        var _this3 = this;
 
         if (node.__bunny_validation_state === undefined) {
             node.__bunny_validation_state = true;
         } else {
             throw new Error('Bunny Validation: validation already in progress.');
         }
-        return new Promise(function (validSection, invalidSection) {
-            var resolvingInputs = _this2.ui.getInputsInSection(node, true);
-            // run async validation for each input
-            // when last async validation will be completed, call validSection or invalidSection
+        return new Promise(function (resolve) {
+            var resolvingInputs = _this3.ui.getInputsInSection(node, true);
+            if (resolvingInputs.length === 0) {
+                // nothing to validate, end
+                _this3._endSectionValidation(node, resolvingInputs, resolve);
+            } else {
+                // run async validation for each input
+                // when last async validation will be completed, call validSection or invalidSection
+                var promises = [];
 
-            var _loop = function _loop(i) {
-                var input = resolvingInputs.inputs[i].input;
-                _this2.checkInput(input).then(function () {
-                    _this2._addValidInput(resolvingInputs, input);
-                    if (resolvingInputs.unresolvedLength === 0) {
-                        _this2._endSectionValidation(node, resolvingInputs, validSection, invalidSection);
-                    }
-                }).catch(function (errorMessage) {
-                    _this2._addInvalidInput(resolvingInputs, input);
-                    if (resolvingInputs.unresolvedLength === 0) {
-                        _this2._endSectionValidation(node, resolvingInputs, validSection, invalidSection);
-                    }
-                });
-            };
+                var _loop = function _loop(i) {
+                    var input = resolvingInputs.inputs[i].input;
 
-            for (var i = 0; i < resolvingInputs.length; i++) {
-                _loop(i);
+                    _this3.checkInput(input).then(function () {
+                        _this3._addValidInput(resolvingInputs, input);
+                        if (resolvingInputs.unresolvedLength === 0) {
+                            _this3._endSectionValidation(node, resolvingInputs, resolve);
+                        }
+                    }).catch(function (errorMessage) {
+                        _this3._addInvalidInput(resolvingInputs, input);
+                        if (resolvingInputs.unresolvedLength === 0) {
+                            _this3._endSectionValidation(node, resolvingInputs, resolve);
+                        }
+                    });
+                };
+
+                for (var i = 0; i < resolvingInputs.length; i++) {
+                    _loop(i);
+                }
+
+                // if there are not resolved promises after 3s, terminate validation, mark pending inputs as invalid
+                setTimeout(function () {
+                    if (resolvingInputs.unresolvedLength > 0) {
+                        var unresolvedInputs = _this3._getUnresolvedInputs(resolvingInputs);
+                        for (var _i = 0; _i < unresolvedInputs.length; _i++) {
+                            var _input = unresolvedInputs[_i];
+                            var inputGroup = _this3.ui.getInputGroup(_input);
+                            _this3._addInvalidInput(resolvingInputs, _input);
+                            _this3.ui.setErrorMessage(inputGroup, 'Validation terminated after 3s');
+                            if (resolvingInputs.unresolvedLength === 0) {
+                                _this3._endSectionValidation(node, resolvingInputs, resolve);
+                            }
+                        }
+                    }
+                }, 3000);
             }
         });
     },
+    focusInput: function focusInput(input) {
+        var delay = arguments.length <= 1 || arguments[1] === undefined ? 500 : arguments[1];
+        var offset = arguments.length <= 2 || arguments[2] === undefined ? -50 : arguments[2];
+
+        BunnyElement.scrollTo(input, delay, offset);
+        input.focus();
+        if (input.setSelectionRange !== undefined && typeof input.setSelectionRange === 'function') {
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
+    },
     checkInput: function checkInput(input) {
-        var _this3 = this;
+        var _this4 = this;
 
         return new Promise(function (valid, invalid) {
-            _this3._checkInput(input, 0, valid, invalid);
+            _this4._checkInput(input, 0, valid, invalid);
         });
     },
     _addValidInput: function _addValidInput(resolvingInputs, input) {
@@ -1383,23 +1501,32 @@ var Validation = {
             }
         }
     },
-    _endSectionValidation: function _endSectionValidation(node, resolvingInputs, validSection, invalidSection) {
+    _getUnresolvedInputs: function _getUnresolvedInputs(resolvingInputs) {
+        var unresolvedInputs = [];
+        for (var k in resolvingInputs.inputs) {
+            if (!resolvingInputs.inputs[k].isValid) {
+                unresolvedInputs.push(resolvingInputs.inputs[k].input);
+            }
+        }
+        return unresolvedInputs;
+    },
+    _endSectionValidation: function _endSectionValidation(node, resolvingInputs, resolve) {
         delete node.__bunny_validation_state;
 
         if (resolvingInputs.invalidLength === 0) {
             // form or section is valid
-            return validSection();
+            return resolve(true);
         } else {
             var invalidInputs = [];
             for (var k in resolvingInputs.invalidInputs) {
                 invalidInputs.push(resolvingInputs.invalidInputs[k]);
             }
             // form or section has invalid inputs
-            return invalidSection(invalidInputs);
+            return resolve(invalidInputs);
         }
     },
     _checkInput: function _checkInput(input, index, valid, invalid) {
-        var _this4 = this;
+        var _this5 = this;
 
         var validators = Object.keys(this.validators);
         var currentValidatorName = validators[index];
@@ -1407,23 +1534,23 @@ var Validation = {
         currentValidator(input).then(function () {
             index++;
             if (validators[index] !== undefined) {
-                _this4._checkInput(input, index, valid, invalid);
+                _this5._checkInput(input, index, valid, invalid);
             } else {
                 // if has error message, remove it
-                _this4.ui.removeErrorNode(_this4.ui.getInputGroup(input));
+                _this5.ui.removeErrorNode(_this5.ui.getInputGroup(input));
 
                 valid();
             }
         }).catch(function (data) {
             // get input group and label
-            var inputGroup = _this4.ui.getInputGroup(input);
-            var label = _this4.ui.getLabel(inputGroup);
+            var inputGroup = _this5.ui.getInputGroup(input);
+            var label = _this5.ui.getLabel(inputGroup);
 
             // get error message
-            var errorMessage = _this4._getErrorMessage(currentValidatorName, input, label, data);
+            var errorMessage = _this5._getErrorMessage(currentValidatorName, input, label, data);
 
             // set error message
-            _this4.ui.setErrorMessage(inputGroup, errorMessage);
+            _this5.ui.setErrorMessage(inputGroup, errorMessage);
             invalid(errorMessage);
         });
     },
@@ -1442,8 +1569,10 @@ var Validation = {
         // replace params in error message
         if (label !== false) {
             message = message.replace('{label}', label.textContent);
+        } else if (input.placeholder && input.placeholder !== '') {
+            message = message.replace('{label}', input.placeholder);
         } else {
-            message = message.replace('{label}', input.name);
+            message = message.replace('{label}', '');
         }
 
         for (var paramName in data) {
@@ -1453,4 +1582,4 @@ var Validation = {
     }
 };
 
-Validation.init(document.forms[0]);
+Validation.init(document.forms[0], true);

@@ -18,23 +18,23 @@
 
             <div class="form-group">
                 <label for="name">Name</label>
-                <input type="text" name="name" id="name" class="form-control" placeholder="Name" required minlength="6">
-                <input type="hidden" name="name_id" id="name_id">
+                <input type="text" name="name" id="name" class="form-control" placeholder="Name" required minlength="6" maxlength="18">
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password" class="form-control" placeholder="Password" required minlength="6">
+                <input type="password" name="password" id="password" class="form-control" placeholder="Password" required minlength="6" maxlength="18">
             </div>
 
             <div class="form-group">
                 <label for="password_confirmation">Confirm Password</label>
-                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Password again" required minlength="6">
+                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Password again" required minlength="6" maxlength="18">
             </div>
 
             <div class="form-group">
                 <label for="email">E-mail</label>
-                <input type="email" name="email" id="email" class="form-control" placeholder="E-mail" required data-ajax="https://bunnyjs.com/api/users/email-exists/?q={value}">
+                <input type="email" name="email" id="email" class="form-control" placeholder="E-mail" required maxlength="18" data-ajax="https://bunnyjs.com/api/users/email-exists/?q={value}">
+                <small>Try <i>user@user.com</i> for ajax validation</small>
             </div>
 
             <div class="form-group">
@@ -50,6 +50,11 @@
             <div class="form-group">
                 <label for="photo">Photo</label>
                 <input type="file" name="photo" accept="image/jpeg, image/png" id="photo" class="form-control" placeholder="Photo" required maxfilesize="1" mindimensions="500x500">
+                <small><ul>
+                    <li>Try uploading non-images even if they have .png/.jpg extension</li>
+                    <li>Images < 500x500px will be invalid</li>
+                    <li>And try uploading images larger then 1MB</li>
+                </ul></small>
             </div>
 
             <div class="form-group">
@@ -65,9 +70,7 @@
                 </label>
             </div>
 
-            <div class="form-group">
-                <input type="submit" name="form1_submit" id="form1_submit" class="btn btn-primary" value="Submit">
-            </div>
+            <input type="submit" name="form1_submit" id="form1_submit" class="btn btn-primary" value="Submit">
 
         </form>
 

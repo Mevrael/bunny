@@ -518,7 +518,7 @@ export const Validation = {
     lang: ValidationLang,
     ui: ValidationUI,
 
-    init(form) {
+    init(form, inline = false) {
         // disable browser built-in validation
         form.setAttribute('novalidate', '');
 
@@ -537,6 +537,19 @@ export const Validation = {
                 } else {
                     this.focusInput(result[0]);
                 }
+            })
+        });
+
+        if (inline) {
+            this.initInline(form);
+        }
+    },
+
+    initInline(node) {
+        const inputs = this.ui.getInputsInSection(node);
+        inputs.forEach(input => {
+            input.addEventListener('change', () => {
+                this.checkInput(input).catch(e => {});
             })
         })
     },

@@ -166,10 +166,15 @@ var Ajax = {
         }
 
         var str_data = '';
-        for (var name in this.data) {
-            str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
+
+        if (this.data instanceof FormData) {
+            this.request.send(this.data);
+        } else {
+            for (var name in this.data) {
+                str_data = str_data + name + '=' + encodeURIComponent(this.data[name]) + '&';
+            }
+            this.request.send(str_data);
         }
-        this.request.send(str_data);
     },
 
 
@@ -227,6 +232,13 @@ var Ajax = {
         var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[3];
 
         this.create('GET', url, {}, on_success, on_error, headers, true);
+    },
+
+    post: function post(url, data, on_success) {
+        var on_error = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+        var headers = arguments.length <= 4 || arguments[4] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[4];
+
+        this.create('POST', url, data, on_success, on_error, headers, true);
     }
 
 };
@@ -360,6 +372,9 @@ var AutocompleteController = {
                     e.preventDefault();
                     if (ac._currentItemIndex !== null) {
                         self.selectItem(container_id, ac.dropdownItems[ac._currentItemIndex]);
+                    } else {
+                        // pick first item from list
+                        self.selectItem(container_id, ac.dropdownItems[0]);
                     }
                 } else if (c === 27) {
                     // Esc
@@ -388,8 +403,19 @@ var AutocompleteController = {
                         }
                     }
                 }
+            } else if (c === 13) {
+                // Enter
+                self.callCustomItemSelectHandlers(container_id);
             }
         });
+    },
+    callCustomItemSelectHandlers: function callCustomItemSelectHandlers(container_id) {
+        var ac = Autocomplete.get(container_id);
+        if (ac.input.value.length >= ac.options.minCustomCharLimit) {
+            for (var k = 0; k < ac.itemSelectHandlersCustom.length; k++) {
+                ac.itemSelectHandlersCustom[k](ac.input.value);
+            }
+        }
     }
 };
 
@@ -399,6 +425,7 @@ var Autocomplete = {
     _options: {
         theme: 'bs4',
         minCharLimit: 2,
+        minCustomCharLimit: 3,
         inputDelay: 200,
         allowCustomInput: false,
         defaultCustomHiddenInputValue: '',
@@ -465,6 +492,7 @@ var Autocomplete = {
             dropdown: dropdown,
             dropdownItems: [],
             itemSelectHandlers: [],
+            itemSelectHandlersCustom: [],
             defaultValue: default_value,
             defaultHiddenValue: default_hidden_value,
             dataHandler: data_handler,
@@ -528,6 +556,9 @@ var Autocomplete = {
     },
     onItemSelect: function onItemSelect(container_id, handler) {
         this._autocompleteContainers[container_id].itemSelectHandlers.push(handler);
+    },
+    onCustomItemSelect: function onCustomItemSelect(container_id, handler) {
+        this._autocompleteContainers[container_id].itemSelectHandlersCustom.push(handler);
     },
     restoreDefaultValue: function restoreDefaultValue(container_id) {
         var ac = this.get(container_id);

@@ -1,4 +1,4 @@
-# BunnyJS v 0.9.46
+# BunnyJS v 0.9.47
 
 ## ES6 browser framework
 
@@ -13,15 +13,28 @@ Lightweight native JavaScript and ECMAScript 6 library and next generation front
 
 1. Powerful native lightweight JavaScript Form processing with native API, AJAX submit, file upload, image preview, data binding and more.
 2. Powerful native lightweight JavaScript HTML5 validation
-3. Native lightweight javascript Routing
-4. Native lightweight javascript Template engine
-5. Native lightweight javascript Ajax
-6. Native lightweight javascript DataTable
-7. Native lightweight javascript Calendar
-8. Native lightweight javascript DatePicker
-9. Native lightweight javascript Autocomplete, Dropdown
-10. Native lightweight javascript Element, positions, coordinates, smooth scrolling
-11. Native lightweight javascript [Inversion of control](http://www.wikiwand.com/en/Inversion_of_control)
+3. DOM utils, ready()
+4. Libraries for Date, URL, File, Image
+5. Ajax
+6. Routing
+7. Template engine
+8. DataTable and Pagination
+9. Calendar and DatePicker
+10. Autocomplete, Dropdown
+11. Element, positions, coordinates, smooth scrolling
+12. Dependency Injection, Inversion of control
+
+Architecture:
+
+1. Separation of concerns, loose coupling, modularity
+2. Functional programming
+3. ES6 import/exports, Promises
+4. Native Browser API, polyfills were needed
+5. Object literal notation, no prototypes, "classes" , "new"
+6. Object composition over inheritance
+7. Dependency injection
+
+Browser Support: IE9+, last 2 versions of Chrome, Firefox, Safari, Android 4.4+, iOS 9+
 
 Designed in mind for best compatibility with Laravel 5 and Bootstrap 4, however can be used anywhere.
 
