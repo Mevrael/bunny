@@ -34,7 +34,7 @@ export const ValidationConfig = {
  */
 export const ValidationLang = {
 
-    required: "'{label}' ir required!",
+    required: "'{label}' is required!",
     email: "'{label}' should be a valid e-mail address!",
     tel: "'{label}' is not a valid telephone number!",
     maxLength: "'{label}' length must be < '{maxLength}'",
