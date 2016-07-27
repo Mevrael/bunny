@@ -92,6 +92,63 @@ export const BunnyElement = {
                 return -c / 2 * (t * (t - 2) - 1) + b;
             }
         });
+    },
+
+    hide(element) {
+        return new Promise(resolve => {
+            element.style.opacity = 0;
+            element.style.overflow = 'hidden';
+            const steps = 40;
+            const step_delay_ms = 10;
+            const height = element.offsetHeight;
+            const height_per_step = Math.round(height / steps);
+            element._originalHeight = height;
+            for (let k = 1; k <= steps; k++) {
+                if (k === steps) {
+                    setTimeout(() => {
+                        element.style.display = 'none';
+                        element.style.height = '0px';
+                        resolve();
+                    }, step_delay_ms * k)
+                } else {
+                    setTimeout(() => {
+                        element.style.height = height_per_step * (steps - k) + 'px';
+                    }, step_delay_ms * k);
+                }
+            }
+        })
+    },
+
+    show(element) {
+        if (element._originalHeight === undefined) {
+            throw new Error('element._originalHeight is undefined. Save original height when hiding element or use BunnyElement.hide()');
+        }
+        return new Promise(resolve => {
+            element.style.display = '';
+            const steps = 40;
+            const step_delay_ms = 10;
+            const height = element._originalHeight;
+            const height_per_step = Math.round(height / steps);
+            delete element._originalHeight;
+            for (let k = 1; k <= steps; k++) {
+                if (k === steps) {
+                    setTimeout(() => {
+                        element.style.opacity = 1;
+                        element.style.height = '';
+                        element.style.overflow = '';
+                        resolve();
+                    }, step_delay_ms * k)
+                } else {
+                    setTimeout(() => {
+                        element.style.height = height_per_step * k + 'px';
+                    }, step_delay_ms * k);
+                }
+            }
+        })
+    },
+
+    remove(element) {
+        element.parentNode.removeChild(element);
     }
 
 };
