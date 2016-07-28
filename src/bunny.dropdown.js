@@ -5,6 +5,12 @@ export const Dropdown = {
 
     init(dropdown) {
         dropdown = this._elOrId(dropdown);
+        if (dropdown._dropdown === undefined) {
+            dropdown._dropdown = true;
+        } else {
+            return false;
+        }
+        
         if (dropdown.id !== undefined) {
             this._collection[dropdown.id] = dropdown;
         }
@@ -14,6 +20,7 @@ export const Dropdown = {
             this._attachToggleClickEvent(dropdown);
             this._attachToggleBtnMethods(dropdown);
         }
+        return true;
     },
 
     _elOrId(dropdown) {
