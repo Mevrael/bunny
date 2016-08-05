@@ -21,13 +21,32 @@ export const BunnyURL = {
         return this.getParams(url)[get_param];
     },
 
+
+
+    /**
+     * Get URL query string (after ?) or false if there are no query string
+     * @param {String?} url
+     * @returns {String|undefined}
+     */
     getQueryString(url = window.location.href) {
-        return decodeURI(url.slice(url.indexOf('?') + 1));
+        const pos = url.indexOf('?');
+        return pos > -1 ? decodeURI(url.slice(pos + 1)) : undefined;
     },
 
+
+
+    /**
+     * Get URL params as object (name => value) or undefined if there are no query string
+     * @param {String?} url
+     * @returns {Object|undefined}
+     */
     getParams(url = window.location.href) {
+        const query = this.getQueryString(url);
+        if (query === undefined) {
+            return undefined;
+        }
         const params = {};
-        var hashes = this.getQueryString(url).split('&');
+        const hashes = query.split('&');
         for(let i = 0; i < hashes.length; i++) {
             let hash = hashes[i].split('=');
             if (hash[0].indexOf('[]') !== -1) {
