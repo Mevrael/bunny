@@ -18,7 +18,11 @@ export const BunnyURL = {
      * @return {String|Array|undefined}             The GET param value or undefined
      */
     getParam(get_param, url = window.location.href) {
-        return this.getParams(url)[get_param];
+        const params = this.getParams(url);
+        if (params === undefined) {
+            return undefined;
+        }
+        return params[get_param];
     },
 
 
