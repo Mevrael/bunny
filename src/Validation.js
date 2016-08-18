@@ -50,6 +50,25 @@ export const ValidationLang = {
 };
 
 /**
+ * Bunny Validation helper - get file to validate
+ * @param {HTMLInputElement} input
+ * @returns {File|Blob|boolean} - If no file uploaded - returns false
+ * @private
+ */
+const _bn_getFile = (input) => {
+    // if there is custom file upload logic, for example, images are resized client-side
+    // generated Blobs should be assigned to fileInput._file
+    // and can be sent via ajax with FormData
+
+    // Bunny Validation detects if there is custom Blob assigned to file input
+    // and uses this file for validation instead of original read-only input.files[]
+    if (input._file !== undefined) {
+        return input._file;
+    }
+    return input.files[0] || false;
+};
+
+/**
  * Bunny Form Validation Validators
  *
  * Each validator is a separate method
@@ -63,9 +82,10 @@ export const ValidationValidators = {
         return new Promise((valid, invalid) => {
             if (input.hasAttribute('required')) {
                 // input is required, check value
-                if (input.value === ''
+                if (
+                    input.getAttribute('type') !== 'file' && input.value === ''
                     || ((input.type === 'radio' || input.type === 'checkbox') && !input.checked)
-                    || input.getAttribute('type') === 'file' && input.files.length === 0) {
+                    || input.getAttribute('type') === 'file' && _bn_getFile(input) === false) {
                     // input is empty or file is not uploaded
                     invalid();
                 } else {
@@ -134,10 +154,10 @@ export const ValidationValidators = {
             if (
                 input.getAttribute('type') === 'file'
                 && input.hasAttribute('maxfilesize')
-                && input.files.length !== 0
+                && _bn_getFile(input) !== false
             ) {
                 const maxFileSize = parseFloat(input.getAttribute('maxfilesize')); // in MB
-                const fileSize = (input.files[0].size / 1000000).toFixed(2); // in MB
+                const fileSize = (_bn_getFile(input).size / 1000000).toFixed(2); // in MB
                 if (fileSize <= maxFileSize) {
                     valid(input);
                 } else {
@@ -156,9 +176,9 @@ export const ValidationValidators = {
             if (
                 input.getAttribute('type') === 'file'
                 && input.getAttribute('accept').indexOf('image') > -1
-                && input.files.length !== 0
+                && _bn_getFile(input) !== false
             ) {
-                BunnyFile.getSignature(input.files[0]).then(signature => {
+                BunnyFile.getSignature(_bn_getFile(input)).then(signature => {
                     if (BunnyFile.isJpeg(signature) || BunnyFile.isPng(signature)) {
                         valid();
                     } else {
@@ -175,9 +195,9 @@ export const ValidationValidators = {
 
     minImageDimensions(input) {
         return new Promise((valid, invalid) => {
-            if (input.hasAttribute('mindimensions') && input.files.length !== 0) {
+            if (input.hasAttribute('mindimensions') && _bn_getFile(input) !== false) {
                 const [minWidth, minHeight] = input.getAttribute('mindimensions').split('x');
-                BunnyImage.getImageByBlob(input.files[0]).then(img => {
+                BunnyImage.getImageByBlob(_bn_getFile(input)).then(img => {
                     const width = BunnyImage.getImageWidth(img);
                     const height = BunnyImage.getImageHeight(img);
                     if (width < minWidth || height < minHeight) {
@@ -196,9 +216,9 @@ export const ValidationValidators = {
 
     maxImageDimensions(input) {
         return new Promise((valid, invalid) => {
-            if (input.hasAttribute('maxdimensions') && input.files.length !== 0) {
+            if (input.hasAttribute('maxdimensions') && _bn_getFile(input) !== false) {
                 const [maxWidth, maxHeight] = input.getAttribute('maxdimensions').split('x');
-                BunnyImage.getImageByBlob(input.files[0]).then(img => {
+                BunnyImage.getImageByBlob(_bn_getFile(input)).then(img => {
                     const width = BunnyImage.getImageWidth(img);
                     const height = BunnyImage.getImageHeight(img);
                     if (width > maxWidth || height > maxHeight) {
