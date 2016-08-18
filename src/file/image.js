@@ -8,7 +8,24 @@ import { BunnyFile } from './file';
  */
 export const BunnyImage = {
 
+    IMG_CONVERT_TYPE: 'image/jpeg',
+    IMG_QUALITY: 0.7,
+
     // SECTION: get Image object via different sources
+
+    /**
+     * Downloads image by any URL or converts from Blob, should work also for non-CORS domains
+     *
+     * @param {String|Blob} urlOrBlob
+     * @returns {Promise} success(Image object), fail(error)
+     */
+    getImage(urlOrBlob) {
+        if (typeof urlOrBlob === 'string') {
+            return this.getImageByURL(urlOrBlob);
+        } else {
+            return this.getImageByBlob(urlOrBlob);
+        }
+    },
 
     /**
      * Downloads image by any URL, should work also for non-CORS domains
@@ -48,7 +65,7 @@ export const BunnyImage = {
     },
 
     getImageByCanvas(canvas) {
-        const url = canvas.toDataURL();
+        const url = canvas.toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
         return this._toImagePromise(url);
     },
 
@@ -75,7 +92,7 @@ export const BunnyImage = {
     },
 
     imageToBase64(img, width = null, height = null) {
-        return this.imageToCanvas(img, width, height).toDataURL();
+        return this.imageToCanvas(img, width, height).toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
     },
 
     imageToBlob(img) {

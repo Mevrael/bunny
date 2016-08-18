@@ -1,4 +1,7 @@
 
+//  /!\ DEPRECATED AND WILL BE REMOVED IN 1.0 - USE src/Validation INSTEAD
+//  Examples available on bunnyjs.com
+
 export var Validate = {
 
     /* public properties */
