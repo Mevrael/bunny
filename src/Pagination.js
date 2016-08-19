@@ -196,6 +196,11 @@ export const Pagination = {
         return this._dataCollection[this._getIndex(pagination)];
     },
 
+    hasPages(pagination) {
+        const data = this.getData(pagination);
+        return data.total > data.perPage;
+    },
+
     getCount(pagination) {
         return this.getData(pagination).count;
     },
@@ -280,6 +285,10 @@ export const Pagination = {
     },
 
     redraw(pagination) {
+        if (!this.hasPages(pagination)) {
+            return false;
+        }
+
         this.removeItems(pagination);
 
         const isOuter = this.isOuter(pagination);
@@ -288,6 +297,9 @@ export const Pagination = {
         const currentPage = this.getCurrentPage(pagination);
 
         var f = document.createDocumentFragment();
+
+        this.getData(pagination);
+
         if (isOuter) {
             f.appendChild(this.createFirstItem(pagination));
         }
@@ -314,6 +326,8 @@ export const Pagination = {
         }
 
         pagination.appendChild(f);
+
+        return true;
     },
 
 

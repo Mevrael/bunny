@@ -34,9 +34,10 @@ export const ValidationConfig = {
  */
 export const ValidationLang = {
 
-    required: "'{label}' is required!",
-    email: "'{label}' should be a valid e-mail address!",
-    tel: "'{label}' is not a valid telephone number!",
+    required: "'{label}' is required",
+    email: "'{label}' should be a valid e-mail address",
+    url: "{label} should be a valid website URL",
+    tel: "'{label}' is not a valid telephone number",
     maxLength: "'{label}' length must be < '{maxLength}'",
     minLength: "'{label}' length must be > '{minLength}'",
     maxFileSize: "Max file size must be < {maxFileSize}MB, uploaded {fileSize}MB",
@@ -102,6 +103,22 @@ export const ValidationValidators = {
             if (input.value.length > 0 && input.getAttribute('type') === 'email') {
                 // input is email, parse string to match email regexp
                 const Regex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+                if (Regex.test(input.value)) {
+                    valid();
+                } else {
+                    invalid();
+                }
+            } else {
+                valid();
+            }
+        });
+    },
+
+    url(input){
+        return new Promise((valid, invalid) => {
+            if (input.value.length > 0 && input.getAttribute('type') === 'url') {
+                // input is URL, parse string to match website URL regexp
+                const Regex = /(^|\s)((https?:\/\/)?[\w-]+(\.[\w-]+)+\.?(:\d+)?(\/\S*)?)/gi;
                 if (Regex.test(input.value)) {
                     valid();
                 } else {
