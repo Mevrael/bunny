@@ -170,6 +170,9 @@ export const Pagination = {
     },
 
     getStats(pagination) {
+        if (!this.hasPages(pagination)) {
+            return '';
+        }
         let str = this._config.langStats;
         const data = this.getData(pagination);
         for (let key in data) {
