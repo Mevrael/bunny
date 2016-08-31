@@ -40,6 +40,14 @@ export const DropdownUI = {
         return this._getElement(dropdown, 'Menu');
     },
 
+    getMenuItems(dropdown) {
+        const menu = this.getMenu(dropdown);
+        if (this.config.useTagNames) {
+            return menu.getElementsByTagName(this.config.tagNameItem);
+        }
+        return menu.getElementsByClassName(this.config.classNameItem);
+    },
+
     getDropdownByToggleBtn(btn) {
         return btn.parentNode;
     },
@@ -127,6 +135,10 @@ export const Dropdown = {
         return dropdown.hasAttribute('dropdown-hover');
     },
 
+    isClosableOnItemClick(dropdown) {
+        return !dropdown.hasAttribute('dropdown-keep-inside');
+    },
+
 
 
 
@@ -139,11 +151,15 @@ export const Dropdown = {
                 document.addEventListener('touchstart', this._getUniqueClickOutsideHandler(dropdown));
             }, 100);
 
-            dropdown.dispatchEvent(this._getOpenEvent(dropdown));
-
             const btn = this.ui.getToggleBtn(dropdown);
             btn.removeEventListener('click', dropdown.__bunny_dropdown_toggle_handler);
             delete dropdown.__bunny_dropdown_toggle_handler;
+
+            if (this.isClosableOnItemClick(dropdown)) {
+                this._addItemClickEvents(dropdown);
+            }
+
+            dropdown.dispatchEvent(this._getOpenEvent(dropdown));
         }
     },
 
@@ -153,10 +169,14 @@ export const Dropdown = {
             document.removeEventListener('touchstart', dropdown.__bunny_dropdown_outside_handler);
             delete dropdown.__bunny_dropdown_outside_handler;
 
-            dropdown.dispatchEvent(this._getCloseEvent(dropdown));
-
             const btn = this.ui.getToggleBtn(dropdown);
             btn.addEventListener('click', this._getUniqueClickToggleBtnHandler(dropdown));
+
+            if (this.isClosableOnItemClick(dropdown)) {
+                this._removeItemClickEvents(dropdown);
+            }
+
+            dropdown.dispatchEvent(this._getCloseEvent(dropdown));
         }
     },
 
@@ -212,7 +232,54 @@ export const Dropdown = {
                 }, 500);
             }
         }
+
+
     },
+
+
+
+
+    _addItemClickEvents(dropdown) {
+        const menuItems = this.ui.getMenuItems(dropdown);
+        const handler = this._getUniqueClickItemHandler(dropdown);
+        [].forEach.call(menuItems, menuItem => {
+            menuItem.addEventListener('click', handler);
+        });
+    },
+
+    _removeItemClickEvents(dropdown) {
+        const menuItems = this.ui.getMenuItems(dropdown);
+        [].forEach.call(menuItems, menuItem => {
+            menuItem.removeEventListener('click', dropdown.__bunny_dropdown_item_handler);
+        });
+        delete dropdown.__bunny_dropdown_item_handler;
+    },
+
+
+
+
+    _getUniqueClickItemHandler(dropdown) {
+        if (dropdown.__bunny_dropdown_item_handler === undefined) {
+            const data = {
+                self: this,
+                dropdown: dropdown
+            };
+            dropdown.__bunny_dropdown_item_handler = this._clickItemHandler.bind(data);
+        }
+        return dropdown.__bunny_dropdown_item_handler;
+    },
+
+    _clickItemHandler(event) {
+        const data = this;
+        const BunnyDropdown = data.self;
+        const dropdown = data.dropdown;
+
+        setTimeout(() => {
+            BunnyDropdown.close(dropdown);
+        }, 100);
+    },
+
+
 
 
 
