@@ -49,6 +49,21 @@ export const BunnyDate = {
         return this.create(year, monthStr, dayStr);
     },
 
+    /**
+     * Creates Date object from European Date string, for example, '14.07.2016'
+     *
+     * @param {String} euDate
+     *
+     * @returns {Date|boolean}
+     */
+    createFromEu(euDate) {
+        const parts = sqlDate.split('-');
+        const dayStr = parts[0];
+        const monthStr = parts[1];
+        const year = parts[2];
+        return this.create(year, monthStr, dayStr);
+    },
+
     // Helpers
 
     /**
@@ -71,13 +86,23 @@ export const BunnyDate = {
     // Date object to date string converters
 
     /**
-     * Get SQL Date string from Date object
-     * @param date
+     * Get SQL Date string from Date object (YYYY-MM-DD)
+     * @param {Date} date
      * @returns {string}
      */
     toSqlDate(date) {
         const meta = this.getMeta(date);
         return meta.year + '-' + meta.monthStr + '-' + meta.dayStr;
+    },
+
+    /**
+     * Get European Date string from Date object (DD.MM.YYYY)
+     * @param {Date} date
+     * @returns {string}
+     */
+    toEuDate(date) {
+        const meta = this.getMeta(date);
+        return meta.dayStr + '.' + meta.monthStr + '.' + meta.year;
     },
 
     // private
