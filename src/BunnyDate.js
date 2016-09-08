@@ -57,7 +57,7 @@ export const BunnyDate = {
      * @returns {Date|boolean}
      */
     createFromEu(euDate) {
-        const parts = sqlDate.split('-');
+        const parts = euDate.split('-');
         const dayStr = parts[0];
         const monthStr = parts[1];
         const year = parts[2];
