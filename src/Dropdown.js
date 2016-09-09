@@ -251,7 +251,9 @@ export const Dropdown = {
         }
 
         const menu = this.ui.getMenu(dropdown);
-        menu.setAttribute('role', 'menu');
+        if (menu) {
+            menu.setAttribute('role', 'menu');
+        }
 
         const menuitems = this.ui.getMenuItems(dropdown);
         [].forEach.call(menuitems, menuitem => {
