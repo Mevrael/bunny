@@ -42,6 +42,9 @@ export const DropdownUI = {
 
     getMenuItems(dropdown) {
         const menu = this.getMenu(dropdown);
+        if (!menu) {
+            return [];
+        }
         let queryStr = '';
         if (this.config.useTagNames) {
             queryStr += this.config.tagNameItem;
