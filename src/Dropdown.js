@@ -6,6 +6,8 @@ export const DropdownConfig = {
     useTagNames: false,
     useHiddenAttribute: false, // true - use 'hidden' HTML5 attr; false - use classNameOpened instead
 
+    attrItem: 'data-dropdown-item',
+
     tagName: 'dropdown',
     tagNameToggleBtn: 'dropdownbutton',
     tagNameMenu: 'dropdownmenu',
@@ -42,10 +44,14 @@ export const DropdownUI = {
 
     getMenuItems(dropdown) {
         const menu = this.getMenu(dropdown);
+        let queryStr = '';
         if (this.config.useTagNames) {
-            return menu.getElementsByTagName(this.config.tagNameItem);
+            queryStr += this.config.tagNameItem;
+        } else {
+            queryStr += this.config.classNameItem;
         }
-        return menu.getElementsByClassName(this.config.classNameItem);
+        queryStr += ', ' + this.config.attrItem;
+        return menu.querySelectorAll(queryStr);
     },
 
     getDropdownByToggleBtn(btn) {
