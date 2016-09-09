@@ -6,8 +6,6 @@ export const DropdownConfig = {
     useTagNames: false,
     useHiddenAttribute: false, // true - use 'hidden' HTML5 attr; false - use classNameOpened instead
 
-    attrItem: 'data-dropdown-item',
-
     tagName: 'dropdown',
     tagNameToggleBtn: 'dropdownbutton',
     tagNameMenu: 'dropdownmenu',
@@ -50,7 +48,7 @@ export const DropdownUI = {
         } else {
             queryStr += this.config.classNameItem;
         }
-        queryStr += ', ' + this.config.attrItem;
+        queryStr += ', [role="menuitem"]';
         return menu.querySelectorAll(queryStr);
     },
 
@@ -123,6 +121,7 @@ export const Dropdown = {
         }
         dropdown.__bunny_dropdown = {};
         this._addEvents(dropdown);
+        this._setARIA(dropdown);
 
         return true;
     },
@@ -240,6 +239,25 @@ export const Dropdown = {
         }
 
 
+    },
+
+
+
+
+    _setARIA(dropdown) {
+        const btn = this.ui.getToggleBtn(dropdown);
+        btn.setAttribute('aria-haspopup', 'true');
+
+        const menu = this.ui.getMenu(dropdown);
+        menu.setAttribute('role', 'menu');
+
+        const menuitems = this.ui.getMenuItems(dropdown);
+        [].forEach.call(menuitems, menuitem => {
+            menuitem.setAttribute('role', 'menuitem');
+            if (!menuitem.hasAttribute('tabindex')) {
+                menuitem.setAttribute('tabindex', '0');
+            }
+        })
     },
 
 
