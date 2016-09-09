@@ -246,7 +246,9 @@ export const Dropdown = {
 
     _setARIA(dropdown) {
         const btn = this.ui.getToggleBtn(dropdown);
-        btn.setAttribute('aria-haspopup', 'true');
+        if (btn) {
+            btn.setAttribute('aria-haspopup', 'true');
+        }
 
         const menu = this.ui.getMenu(dropdown);
         menu.setAttribute('role', 'menu');
