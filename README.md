@@ -30,7 +30,7 @@ For help & ideas - [DM me on Twitter](https://twitter.com/Mevrael)
 * Become a contributor of a fast growing open source project
 * Share your ideas to the world
 * Help yourself and millions of developers around the world solving JavaScript fatigue and modern overendineered problem
-* Help building a tool which will provide a best user experience, performance, security, durability and load time for billions of the Internet users with smart usage of Computer's and Mobile device's resources usage
+* Help building a tool which will provide a best user experience, performance, security, durability and load time for billions of the Internet users with smart usage of Computer's and Mobile device's resources
 
 ## Browser support
 
