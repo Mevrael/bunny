@@ -49,7 +49,7 @@ export const DropdownUI = {
         if (this.config.useTagNames) {
             queryStr += this.config.tagNameItem;
         } else {
-            queryStr += this.config.classNameItem;
+            queryStr += '.' + this.config.classNameItem;
         }
         queryStr += ', [role="menuitem"]';
         return menu.querySelectorAll(queryStr);
@@ -307,7 +307,7 @@ export const Dropdown = {
 
         setTimeout(() => {
             BunnyDropdown.close(dropdown);
-        }, 100);
+        }, 50);
     },
 
 
