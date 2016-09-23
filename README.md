@@ -3,7 +3,7 @@
     <img src="https://bunnyjs.com/img/bunnyjs-logo.png" alt="BunnyJS Logo">
 </p>
 
-# BunnyJS v 0.10.1 (Alpha)
+# BunnyJS v 0.10.2 (Alpha)
 
 [Website](https://bunnyjs.com) [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) 
 
