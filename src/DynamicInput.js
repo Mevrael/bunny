@@ -69,6 +69,17 @@ export const DynamicInput = {
         return input;
     },
 
+    clear(dynamicinput) {
+        const inputs = this.getInputs(dynamicinput);
+        for (let k = 0; k < inputs.length; k++) {
+            if (k === 0) {
+                inputs[k].value = '';
+            } else {
+                this.removeInput(dynamicinput, inputs[k]);
+            }
+        }
+    }
+
 };
 
 document.addEventListener('DOMContentLoaded', () => {

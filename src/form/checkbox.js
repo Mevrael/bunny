@@ -1,5 +1,5 @@
 
-export var Checkbox = {
+export const Checkbox = {
 
     create(container_class, custom_checkbox_class, checked_class) {
         document.getElementsByClassName(container_class).forEach((container) => {
@@ -28,6 +28,15 @@ export var Checkbox = {
                 });
             }
         });
+    },
+
+    uncheck(node, custom_checkbox_class, checked_class) {
+        const customCheckboxes = node.getElementsByClassName(custom_checkbox_class);
+        [].forEach.call(customCheckboxes, checkbox => {
+            const input = checkbox.getElementsByTagName('input')[0];
+            input.checked = false;
+            checkbox.classList.remove(checked_class);
+        })
     }
 
 };
