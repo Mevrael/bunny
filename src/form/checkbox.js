@@ -30,11 +30,13 @@ export const Checkbox = {
         });
     },
 
-    uncheck(node, custom_checkbox_class, checked_class) {
-        const customCheckboxes = node.getElementsByClassName(custom_checkbox_class);
-        [].forEach.call(customCheckboxes, checkbox => {
-            const input = checkbox.getElementsByTagName('input')[0];
+    uncheck(node, container_class, custom_checkbox_class, checked_class) {
+        const customCheckboxContainers = node.getElementsByClassName(container_class);
+        [].forEach.call(customCheckboxContainers, checkboxContainer => {
+            const input = checkboxContainer.getElementsByTagName('input')[0];
             input.checked = false;
+            checkboxContainer.classList.remove(checked_class);
+            const checkbox = checkboxContainer.getElementsByClassName(custom_checkbox_class)[0];
             checkbox.classList.remove(checked_class);
         })
     }
