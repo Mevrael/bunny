@@ -80,8 +80,8 @@ export const BunnyImage = {
         }
         const canvas = document.createElement("canvas");
         if (width === null && height === null) {
-            canvas.width = img.width;
-            canvas.height = img.height;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
             canvas.getContext("2d").drawImage(img, 0, 0);
         } else {
             canvas.width = width;
@@ -91,12 +91,26 @@ export const BunnyImage = {
         return canvas;
     },
 
+    /**
+     *
+     * @param {Image|HTMLImageElement} img
+     * @param {Number?} width
+     * @param {Number?} height
+     * @returns {string}
+     */
     imageToBase64(img, width = null, height = null) {
         return this.imageToCanvas(img, width, height).toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
     },
 
-    imageToBlob(img) {
-        return BunnyFile.base64ToBlob(this.imageToBase64(img));
+    /**
+     *
+     * @param {Image|HTMLImageElement} img
+     * @param {Number?} width
+     * @param {Number?} height
+     * @returns {Blob}
+     */
+    imageToBlob(img, width = null, height = null) {
+        return BunnyFile.base64ToBlob(this.imageToBase64(img, width, height));
     },
 
 

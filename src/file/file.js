@@ -7,7 +7,7 @@ export const BunnyFile = {
      *
      * @param {String} URL
      * @param {Boolean} convert_to_blob = true
-     * @returns {Promise}: success(Blob object), fail(response XHR object)
+     * @returns {Promise}: success(Blob object | base64 string), fail(response XHR object)
      */
     download(URL, convert_to_blob = true) {
         var request = new XMLHttpRequest();
