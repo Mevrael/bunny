@@ -61,9 +61,15 @@ const _bn_getFile = (input) => {
     // generated Blobs should be assigned to fileInput._file
     // and can be sent via ajax with FormData
 
+    // if file was deleted, custom field can be set to an empty string
+
     // Bunny Validation detects if there is custom Blob assigned to file input
     // and uses this file for validation instead of original read-only input.files[]
-    if (input._file !== undefined) {
+    if (input._file !== undefined && input._file !== '') {
+        if (input._file instanceof Blob === false) {
+            console.error(`Custom file for input ${input.name} is not an instance of Blob`);
+            return false;
+        }
         return input._file;
     }
     return input.files[0] || false;
