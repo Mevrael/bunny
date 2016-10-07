@@ -64,6 +64,18 @@ export const BunnyURL = {
             }
         }
         return params;
+    },
+
+
+    /**
+     * Check if GET param is in URL even if it has no value
+     *
+     * @param {String} param
+     * @param {String?} url
+     * @returns {Boolean}
+     */
+    hasParam(param, url = window.location.href) {
+        return this.getParam(param, url) !== undefined;
     }
 
 };
