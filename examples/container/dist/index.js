@@ -75,18 +75,18 @@ var RouteServiceProvider = {};
 
 // somewhere we are defining and bootstrapping our custom app
 var App = {};
-App.config = {};
+App.Config = {};
 
 // and finally somewhere we having our config for injecting our dependencies
-App.config.serviceProviders = {
+App.Config.serviceProviders = {
     'app': AppServiceProvider,
     'app.locale': LocaleServiceProvider,
     'app.route': RouteServiceProvider
 };
 
 // so there is only final step for our custom app to do automatically
-for (var service in App.config.serviceProviders) {
-    Container.bind(service, App.config.serviceProviders[service]);
+for (var service in App.Config.serviceProviders) {
+    Container.bind(service, App.Config.serviceProviders[service]);
 }
 
 // let's check that we have all app bindings in container

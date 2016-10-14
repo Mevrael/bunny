@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Autocomplete 2 example</title>
+    <link rel="stylesheet" href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
+</head>
+<body>
+
+<div class="container p-t-3">
+
+    <form>
+
+        <p>Default <a href="http://v4-alpha.getbootstrap.com/components/dropdowns">Bootstrap 4 dropdown</a> styles are used for autocomplete.</p>
+        <p>Free online country REST API <a href="https://restcountries.eu">https://restcountries.eu/</a> is used in this example to get data via AJAX.</p>
+        <p>AJAX url should contain {search} string in URL.</p>
+        <p>input must be inside a <a href=http://v4-alpha.getbootstrap.com/components/dropdowns/#example">dropdown position: relative container</a> with the same ID + "_autocomplete"</p>
+        <p>
+            Open this example's <a href="https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.html">HTML</a>
+            and <a href="https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.js">JS source</a>
+        </p>
+
+        <!--<h1>BunnyJS Autocomplete 2 example</h1>-->
+
+        <!--<fieldset class="form-group">
+            <label for="country">Country</label>
+            <div id="country_autocomplete" class="dropdown">
+                <input type="text" class="form-control" id="country" name="country">
+            </div>
+            <small class="text-muted">Start typing country to get autocomplete.</small>
+        </fieldset>
+        <input type="text" id="country_id" name="country"><br>
+        This input should be hidden and will be automatically filled with country ID when item picked from autocomplete.<br>
+        This value can be used to store data in database and to work with relationships.<br>-->
+
+        <fieldset class="form-group">
+
+            <label for="country">Country</label>
+            <autocomplete class="dropdown" action="Country.search" custom>
+                <input name="country" id="country" class="form-control" autocomplete="off">
+                <input type="hidden" name="country_id" id="country_id">
+            </autocomplete>
+
+        </fieldset>
+
+        <p>Current hidden input value: <span id="current"></span></p>
+
+    </form>
+
+</div>
+
+
+<style>
+    autocomplete {
+        display: block;
+    }
+</style>
+
+<script src="dist/index.js"></script>
+</body>
+</html>

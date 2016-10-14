@@ -1,20 +1,40 @@
 
+import {
+    addEvent,
+    removeEvent,
+    addEventOnce,
+    isEventCursorInside,
+    onClickOutside,
+    removeClickOutside
+} from './utils/DOM/events';
+
+
+
 export const DropdownConfig = {
 
-    // true - use tag names to determine component elements instead of class names;
-    // false - use class names
+    // true - use tag names to determine component elements instead of div . class names;
+    // false - use class names. Elements with class names must have <div> tag name
     useTagNames: false,
+
+    // when using DropdownUI to create new elements
+    // true - add class names to new elements
+    // false - do not add classes
+    factoryAddClassNames: true,
+    factoryAltClassNameMenu: 'w-100',
+
     useHiddenAttribute: false, // true - use 'hidden' HTML5 attr; false - use classNameOpened instead
 
     tagName: 'dropdown',
-    tagNameToggleBtn: 'dropdownbutton',
-    tagNameMenu: 'dropdownmenu',
-    tagNameItem: 'dropdownitem',
+    tagNameToggleBtn: 'toggle',
+    tagNameMenu: 'menu',
+    tagNameItem: 'button',
 
     className: 'dropdown',
     classNameToggleBtn: 'dropdown-toggle',
     classNameMenu: 'dropdown-menu',
     classNameItem: 'dropdown-item',
+
+    additionalClassNameMenu: 'w-100',
 
     classNameOpened: 'open',
     applyOpenedClassToDropdown: true // false - apply to menu
@@ -23,13 +43,30 @@ export const DropdownConfig = {
 
 export const DropdownUI = {
 
-    config: DropdownConfig,
+    Config: DropdownConfig,
 
     _getElement(dropdown, name) {
-        if (this.config.useTagNames) {
-            return dropdown.getElementsByTagName(this.config['tagName' + name])[0] || false;
+        if (this.Config.useTagNames) {
+            return dropdown.getElementsByTagName(this.Config['tagName' + name])[0] || false;
         }
-        return dropdown.getElementsByClassName(this.config['className' + name])[0] || false;
+        return dropdown.querySelector(`div.${this.Config['className' + name]}`) || false;
+    },
+
+    _createElement(name) {
+        let el = null;
+        if (this.Config.useTagNames) {
+            el = document.createElement(this.Config['tagName' + name]);
+            // if element is a <button>, add type="button" to avoid form submit if dropdown inside a <form>
+            if (this.Config['tagName' + name] === 'button') {
+                el.setAttribute('type', 'button');
+            }
+        } else {
+            el = document.createElement('div');
+        }
+        if (this.Config.factoryAddClassNames) {
+            el.classList.add(this.Config['className' + name]);
+        }
+        return el;
     },
 
     getToggleBtn(dropdown) {
@@ -40,19 +77,62 @@ export const DropdownUI = {
         return this._getElement(dropdown, 'Menu');
     },
 
+    createMenu() {
+        const menu = this._createElement('Menu');
+        if (this.Config.factoryAltClassNameMenu) {
+            menu.classList.add(this.Config.factoryAltClassNameMenu);
+        }
+        return menu;
+    },
+
+    removeMenu(dropdown) {
+        const menu = this.getMenu(dropdown);
+        if (menu) {
+            menu.parentNode.removeChild(menu);
+        }
+    },
+
     getMenuItems(dropdown) {
         const menu = this.getMenu(dropdown);
         if (!menu) {
             return [];
         }
         let queryStr = '';
-        if (this.config.useTagNames) {
-            queryStr += this.config.tagNameItem;
+        if (this.Config.useTagNames) {
+            queryStr += this.Config.tagNameItem;
         } else {
-            queryStr += '.' + this.config.classNameItem;
+            queryStr += 'div.' + this.Config.classNameItem;
         }
         queryStr += ', [role="menuitem"]';
         return menu.querySelectorAll(queryStr);
+    },
+
+    setMenuItems(dropdown, newItems) {
+        let menu = this.getMenu(dropdown);
+        if (!menu) {
+            menu = this.createMenu();
+            dropdown.appendChild(menu);
+        } else {
+            //while (menu.firstChild) menu.removeChild(menu.firstChild);
+            menu.innerHTML = '';
+        }
+
+        menu.appendChild(newItems);
+    },
+
+    createMenuItems(items, callback = null) {
+        const f = document.createDocumentFragment();
+        for (let id in items) {
+            const i = this._createElement('Item');
+            if (callback !== null) {
+                f.appendChild(callback(i, items[id]));
+            } else {
+                i.dataset.value = id;
+                i.textContent = items[id];
+                f.appendChild(i);
+            }
+        }
+        return f;
     },
 
     getDropdownByToggleBtn(btn) {
@@ -60,24 +140,24 @@ export const DropdownUI = {
     },
 
     getAllDropdowns() {
-        if (this.config.useTagNames) {
-            return document.getElementsByTagName(this.config.tagName);
+        if (this.Config.useTagNames) {
+            return document.getElementsByTagName(this.Config.tagName);
         }
-        return document.getElementsByClassName(this.config.className);
+        return document.getElementsByClassName(`div.${this.Config.className}`);
     },
 
     show(dropdown) {
         const menu = this.getMenu(dropdown);
-        if (this.config.useHiddenAttribute) {
+        if (this.Config.useHiddenAttribute) {
             if (menu.hasAttribute('hidden')) {
                 menu.removeAttribute('hidden');
                 return true;
             }
             return false;
         } else {
-            const target = this.config.applyOpenedClassToDropdown ? dropdown : menu;
-            if (!target.classList.contains(this.config.classNameOpened)) {
-                target.classList.add(this.config.classNameOpened);
+            const target = this.Config.applyOpenedClassToDropdown ? dropdown : menu;
+            if (!target.classList.contains(this.Config.classNameOpened)) {
+                target.classList.add(this.Config.classNameOpened);
                 return true;
             }
             return false;
@@ -86,16 +166,16 @@ export const DropdownUI = {
 
     hide(dropdown) {
         const menu = this.getMenu(dropdown);
-        if (this.config.useHiddenAttribute) {
+        if (this.Config.useHiddenAttribute) {
             if (!menu.hasAttribute('hidden')) {
                 menu.setAttribute('hidden', '');
                 return true;
             }
             return false;
         } else {
-            const target = this.config.applyOpenedClassToDropdown ? dropdown : menu;
-            if (target.classList.contains(this.config.classNameOpened)) {
-                target.classList.remove(this.config.classNameOpened);
+            const target = this.Config.applyOpenedClassToDropdown ? dropdown : menu;
+            if (target.classList.contains(this.Config.classNameOpened)) {
+                target.classList.remove(this.Config.classNameOpened);
                 return true;
             }
             return false;
@@ -104,11 +184,11 @@ export const DropdownUI = {
 
     isOpened(dropdown) {
         const menu = this.getMenu(dropdown);
-        if (this.config.useHiddenAttribute) {
+        if (this.Config.useHiddenAttribute) {
             return !menu.hasAttribute('hidden');
         } else {
-            const target = this.config.applyOpenedClassToDropdown ? dropdown : menu;
-            return target.classList.contains(this.config.classNameOpened);
+            const target = this.Config.applyOpenedClassToDropdown ? dropdown : menu;
+            return target.classList.contains(this.Config.classNameOpened);
         }
     }
 
@@ -116,7 +196,7 @@ export const DropdownUI = {
 
 export const Dropdown = {
 
-    ui: DropdownUI,
+    UI: DropdownUI,
 
     init(dropdown) {
         if (dropdown.__bunny_dropdown !== undefined) {
@@ -130,7 +210,7 @@ export const Dropdown = {
     },
 
     initAll() {
-        const dropdowns = this.ui.getAllDropdowns();
+        const dropdowns = this.UI.getAllDropdowns();
         [].forEach.call(dropdowns, dropdown => {
             this.init(dropdown);
         })
@@ -151,17 +231,22 @@ export const Dropdown = {
 
 
     open(dropdown) {
-        if (this.ui.show(dropdown)) {
+        if (this.UI.show(dropdown)) {
             // add small delay so this handler wouldn't be attached and called immediately
             // with toggle btn click event handler and instantly close dropdown menu
             setTimeout(() => {
-                document.addEventListener('click', this._getUniqueClickOutsideHandler(dropdown));
-                document.addEventListener('touchstart', this._getUniqueClickOutsideHandler(dropdown));
+                dropdown.__bunny_dropdown_outside = onClickOutside(dropdown, () => {
+                    this.close(dropdown);
+                });
+                //document.addEventListener('click', this._getUniqueClickOutsideHandler(dropdown));
+                //document.addEventListener('touchstart', this._getUniqueClickOutsideHandler(dropdown));
             }, 100);
 
-            const btn = this.ui.getToggleBtn(dropdown);
-            btn.removeEventListener('click', dropdown.__bunny_dropdown_toggle_handler);
-            delete dropdown.__bunny_dropdown_toggle_handler;
+            const btn = this.UI.getToggleBtn(dropdown);
+            if (btn) {
+                btn.removeEventListener('click', dropdown.__bunny_dropdown_toggle_handler);
+                delete dropdown.__bunny_dropdown_toggle_handler;
+            }
 
             if (this.isClosableOnItemClick(dropdown)) {
                 this._addItemClickEvents(dropdown);
@@ -172,13 +257,19 @@ export const Dropdown = {
     },
 
     close(dropdown) {
-        if (this.ui.hide(dropdown)) {
-            document.removeEventListener('click', dropdown.__bunny_dropdown_outside_handler);
-            document.removeEventListener('touchstart', dropdown.__bunny_dropdown_outside_handler);
-            delete dropdown.__bunny_dropdown_outside_handler;
+        if (this.UI.hide(dropdown)) {
 
-            const btn = this.ui.getToggleBtn(dropdown);
-            btn.addEventListener('click', this._getUniqueClickToggleBtnHandler(dropdown));
+            removeClickOutside(dropdown, dropdown.__bunny_dropdown_outside);
+            delete dropdown.__bunny_dropdown_outside;
+
+            //document.removeEventListener('click', dropdown.__bunny_dropdown_outside_handler);
+            //document.removeEventListener('touchstart', dropdown.__bunny_dropdown_outside_handler);
+            //delete dropdown.__bunny_dropdown_outside_handler;
+
+            const btn = this.UI.getToggleBtn(dropdown);
+            if (btn) {
+                btn.addEventListener('click', this._getUniqueClickToggleBtnHandler(dropdown));
+            }
 
             if (this.isClosableOnItemClick(dropdown)) {
                 this._removeItemClickEvents(dropdown);
@@ -193,85 +284,53 @@ export const Dropdown = {
 
     _addEvents(dropdown) {
         // open dropdown on toggle btn click or hover
-        const btn = this.ui.getToggleBtn(dropdown);
+        const btn = this.UI.getToggleBtn(dropdown);
         if (btn) {
             btn.addEventListener('click', this._getUniqueClickToggleBtnHandler(dropdown));
 
             if (this.isHoverable(dropdown)) {
-                function once(el, event, cb, delay = 500) {
-                    let timeout = 0;
-                    el.addEventListener(event, (e) => {
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => {
-                            cb(e);
-                        }, delay)
-                    });
-                }
-
-                once(dropdown, 'mouseover', (e) => {
-                    //console.log(e.clientX, e.clientY);
-                    const bounds = dropdown.getBoundingClientRect();
-                    const menu = this.ui.getMenu(dropdown);
-                    const menuBounds = menu.getBoundingClientRect();
-                    //console.log(bounds)
-                    if (e.clientX > bounds.left && e.clientX < bounds.right
-                        && e.clientY > bounds.top && e.clientY < bounds.bottom ||
-                        e.clientX > menuBounds.left && e.clientX < menuBounds.right
-                        && e.clientY > menuBounds.top && e.clientY < menuBounds.bottom
-                    ) {
+                addEventOnce(dropdown, 'mouseover', (e) => {
+                    if (isEventCursorInside(e, dropdown, this.UI.getMenu(dropdown))) {
                         // cursor is inside toggle btn or menu => open menu if required
                         this.open(dropdown);
                     }
                 }, 100);
 
-                once(dropdown, 'mouseout', (e) => {
-                    const bounds = dropdown.getBoundingClientRect();
-                    const menu = this.ui.getMenu(dropdown);
-                    const menuBounds = menu.getBoundingClientRect();
-                    //console.log(bounds)
-                    if (!(e.clientX > bounds.left && e.clientX < bounds.right
-                        && e.clientY > bounds.top && e.clientY < bounds.bottom ||
-                        e.clientX > menuBounds.left && e.clientX < menuBounds.right
-                        && e.clientY > menuBounds.top && e.clientY < menuBounds.bottom)) {
+                addEventOnce(dropdown, 'mouseout', (e) => {
+                    if (!isEventCursorInside(e, dropdown, this.UI.getMenu(dropdown))) {
                         // cursor is outside toggle btn and menu => close menu if required
                         this.close(dropdown);
                     }
-
                 }, 500);
             }
         }
-
-
     },
 
 
 
 
     _setARIA(dropdown) {
-        const btn = this.ui.getToggleBtn(dropdown);
+        const btn = this.UI.getToggleBtn(dropdown);
         if (btn) {
             btn.setAttribute('aria-haspopup', 'true');
         }
 
-        const menu = this.ui.getMenu(dropdown);
+        /*const menu = this.UI.getMenu(dropdown);
         if (menu) {
             menu.setAttribute('role', 'menu');
         }
 
-        const menuitems = this.ui.getMenuItems(dropdown);
+        const menuitems = this.UI.getMenuItems(dropdown);
         [].forEach.call(menuitems, menuitem => {
             menuitem.setAttribute('role', 'menuitem');
-            if (!menuitem.hasAttribute('tabindex')) {
-                menuitem.setAttribute('tabindex', '0');
-            }
-        })
+        })*/
     },
 
 
 
 
     _addItemClickEvents(dropdown) {
-        const menuItems = this.ui.getMenuItems(dropdown);
+        const menuItems = this.UI.getMenuItems(dropdown);
         const handler = this._getUniqueClickItemHandler(dropdown);
         [].forEach.call(menuItems, menuItem => {
             menuItem.addEventListener('click', handler);
@@ -279,7 +338,7 @@ export const Dropdown = {
     },
 
     _removeItemClickEvents(dropdown) {
-        const menuItems = this.ui.getMenuItems(dropdown);
+        const menuItems = this.UI.getMenuItems(dropdown);
         [].forEach.call(menuItems, menuItem => {
             menuItem.removeEventListener('click', dropdown.__bunny_dropdown_item_handler);
         });
@@ -330,7 +389,7 @@ export const Dropdown = {
         const BunnyDropdown = data.self;
         const dropdown = data.dropdown;
 
-        if (BunnyDropdown.ui.isOpened(dropdown)) {
+        if (BunnyDropdown.UI.isOpened(dropdown)) {
             BunnyDropdown.close(dropdown);
         } else {
             BunnyDropdown.open(dropdown);
@@ -354,7 +413,7 @@ export const Dropdown = {
         const data = this;
         const BunnyDropdown = data.self;
         const dropdown = data.dropdown;
-        const menu = BunnyDropdown.ui.getMenu(dropdown);
+        const menu = BunnyDropdown.UI.getMenu(dropdown);
         if (!(event.target === menu || menu.contains(event.target))) {
             // clicked outside of menu => close menu
             BunnyDropdown.close(dropdown);

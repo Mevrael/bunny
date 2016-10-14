@@ -96,3 +96,68 @@ export function addEventOnce(element, eventName, eventListener, delay = 500) {
         }, delay)
     });
 }
+
+export function isEventCursorInside(e, parent, child) {
+    const bounds = parent.getBoundingClientRect();
+    const childBounds = child.getBoundingClientRect();
+    return (e.clientX > bounds.left && e.clientX < bounds.right
+        && e.clientY > bounds.top && e.clientY < bounds.bottom ||
+        e.clientX > childBounds.left && e.clientX < childBounds.right
+        && e.clientY > childBounds.top && e.clientY < childBounds.bottom
+    );
+}
+
+export function onClickOutside(element, callback) {
+
+    if (document.__bunny_core_outside_callbacks === undefined) {
+        document.__bunny_core_outside_callbacks = [];
+    }
+
+    const handler = (event) => {
+        if (!(event.target === element || element.contains(event.target))) {
+            callback(event);
+        }
+    };
+
+    if (element.__bunny_core_outside_callbacks === undefined) {
+        element.__bunny_core_outside_callbacks = [];
+    }
+
+    element.__bunny_core_outside_callbacks.push(handler);
+
+
+    document.__bunny_core_outside_callbacks.push(handler);
+
+    if (document.__bunny_core_outside_handler === undefined) {
+        document.__bunny_core_outside_handler = (event) => {
+            document.__bunny_core_outside_callbacks.forEach(callback => {
+                callback(event);
+            })
+        };
+        document.addEventListener('click', document.__bunny_core_outside_handler);
+        document.addEventListener('touchstart', document.__bunny_core_outside_handler);
+    }
+
+    return handler;
+}
+
+export function removeClickOutside(element, callback) {
+    if (document.__bunny_core_outside_callbacks !== undefined) {
+        const index = document.__bunny_core_outside_callbacks.indexOf(callback);
+        if (index !== -1) {
+            document.__bunny_core_outside_callbacks.splice(index, 1);
+            if (document.__bunny_core_outside_callbacks.length === 0) {
+                document.removeEventListener('click', document.__bunny_core_outside_handler);
+                document.removeEventListener('touchstart', document.__bunny_core_outside_handler);
+                delete document.__bunny_core_outside_handler;
+            }
+        }
+    }
+
+    if (element.__bunny_core_outside_callbacks !== undefined) {
+        const index = element.__bunny_core_outside_callbacks.indexOf(callback);
+        if (index !== -1) {
+            element.__bunny_core_outside_callbacks.splice(index, 1);
+        }
+    }
+}

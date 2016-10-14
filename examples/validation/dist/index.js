@@ -1,10 +1,11 @@
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+var babelHelpers = {};
+babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
   return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
 };
 
-var slicedToArray = function () {
+babelHelpers.slicedToArray = function () {
   function sliceIterator(arr, i) {
     var _arr = [];
     var _n = true;
@@ -41,6 +42,8 @@ var slicedToArray = function () {
     }
   };
 }();
+
+babelHelpers;
 
 (function (global) {
 
@@ -165,7 +168,7 @@ var slicedToArray = function () {
     try {
       if (promise === value) throw new TypeError('A promises callback cannot return that same promise.');
 
-      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object')) {
+      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object')) {
         var then = value.then; // then should be retrived only once
 
         if (typeof then === 'function') {
@@ -324,7 +327,7 @@ var slicedToArray = function () {
   Promise.resolve = function (value) {
     var Class = this;
 
-    if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.constructor === Class) return value;
+    if (value && (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object' && value.constructor === Class) return value;
 
     return new Class(function (resolve) {
       resolve(value);
@@ -338,7 +341,7 @@ var slicedToArray = function () {
       reject(reason);
     });
   };
-})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : undefined);
+})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : this);
 
 var BunnyFile = {
 
@@ -348,7 +351,7 @@ var BunnyFile = {
      *
      * @param {String} URL
      * @param {Boolean} convert_to_blob = true
-     * @returns {Promise}: success(Blob object), fail(response XHR object)
+     * @returns {Promise}: success(Blob object | base64 string), fail(response XHR object)
      */
 
     download: function download(URL) {
@@ -486,7 +489,25 @@ var BunnyFile = {
  */
 var BunnyImage = {
 
+    IMG_CONVERT_TYPE: 'image/jpeg',
+    IMG_QUALITY: 0.7,
+
     // SECTION: get Image object via different sources
+
+    /**
+     * Downloads image by any URL or converts from Blob, should work also for non-CORS domains
+     *
+     * @param {String|Blob} urlOrBlob
+     * @returns {Promise} success(Image object), fail(error)
+     */
+    getImage: function getImage(urlOrBlob) {
+        if (typeof urlOrBlob === 'string') {
+            return this.getImageByURL(urlOrBlob);
+        } else {
+            return this.getImageByBlob(urlOrBlob);
+        }
+    },
+
 
     /**
      * Downloads image by any URL, should work also for non-CORS domains
@@ -494,7 +515,6 @@ var BunnyImage = {
      * @param {String} URL
      * @returns {Promise} success(Image object), fail(error)
      */
-
     getImageByURL: function getImageByURL(URL) {
         return this._toImagePromise(URL, true);
     },
@@ -525,7 +545,7 @@ var BunnyImage = {
         return this._toImagePromise(url);
     },
     getImageByCanvas: function getImageByCanvas(canvas) {
-        var url = canvas.toDataURL();
+        var url = canvas.toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
         return this._toImagePromise(url);
     },
 
@@ -541,8 +561,8 @@ var BunnyImage = {
         }
         var canvas = document.createElement("canvas");
         if (width === null && height === null) {
-            canvas.width = img.width;
-            canvas.height = img.height;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
             canvas.getContext("2d").drawImage(img, 0, 0);
         } else {
             canvas.width = width;
@@ -551,14 +571,35 @@ var BunnyImage = {
         }
         return canvas;
     },
+
+
+    /**
+     *
+     * @param {Image|HTMLImageElement} img
+     * @param {Number?} width
+     * @param {Number?} height
+     * @returns {string}
+     */
     imageToBase64: function imageToBase64(img) {
         var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
         var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
-        return this.imageToCanvas(img, width, height).toDataURL();
+        return this.imageToCanvas(img, width, height).toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
     },
+
+
+    /**
+     *
+     * @param {Image|HTMLImageElement} img
+     * @param {Number?} width
+     * @param {Number?} height
+     * @returns {Blob}
+     */
     imageToBlob: function imageToBlob(img) {
-        return BunnyFile.base64ToBlob(this.imageToBase64(img));
+        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        return BunnyFile.base64ToBlob(this.imageToBase64(img, width, height));
     },
 
 
@@ -802,10 +843,10 @@ var BunnyElement = {
 
         return new Promise(function (onAnimationEnd) {
 
-            var element = void 0;
+            var element = undefined;
             if (typeof target === 'string') {
                 element = document.querySelector(target);
-            } else if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) === 'object') {
+            } else if ((typeof target === 'undefined' ? 'undefined' : babelHelpers.typeof(target)) === 'object') {
                 element = target;
             } else {
                 // number
@@ -862,6 +903,70 @@ var BunnyElement = {
                 return -c / 2 * (t * (t - 2) - 1) + b;
             }
         });
+    },
+    hide: function hide(element) {
+        return new Promise(function (resolve) {
+            element.style.opacity = 0;
+            element.style.overflow = 'hidden';
+            var steps = 40;
+            var step_delay_ms = 10;
+            var height = element.offsetHeight;
+            var height_per_step = Math.round(height / steps);
+            element._originalHeight = height;
+
+            var _loop = function _loop(k) {
+                if (k === steps) {
+                    setTimeout(function () {
+                        element.style.display = 'none';
+                        element.style.height = '0px';
+                        resolve();
+                    }, step_delay_ms * k);
+                } else {
+                    setTimeout(function () {
+                        element.style.height = height_per_step * (steps - k) + 'px';
+                    }, step_delay_ms * k);
+                }
+            };
+
+            for (var k = 1; k <= steps; k++) {
+                _loop(k);
+            }
+        });
+    },
+    show: function show(element) {
+        if (element._originalHeight === undefined) {
+            throw new Error('element._originalHeight is undefined. Save original height when hiding element or use BunnyElement.hide()');
+        }
+        return new Promise(function (resolve) {
+            element.style.display = '';
+            var steps = 40;
+            var step_delay_ms = 10;
+            var height = element._originalHeight;
+            var height_per_step = Math.round(height / steps);
+            delete element._originalHeight;
+
+            var _loop2 = function _loop2(k) {
+                if (k === steps) {
+                    setTimeout(function () {
+                        element.style.opacity = 1;
+                        element.style.height = '';
+                        element.style.overflow = '';
+                        resolve();
+                    }, step_delay_ms * k);
+                } else {
+                    setTimeout(function () {
+                        element.style.height = height_per_step * k + 'px';
+                    }, step_delay_ms * k);
+                }
+            };
+
+            for (var k = 1; k <= steps; k++) {
+                _loop2(k);
+            }
+        });
+    },
+    remove: function remove(element) {
+        element.parentNode.removeChild(element);
     }
 };
 
@@ -895,9 +1000,10 @@ var ValidationConfig = {
  */
 var ValidationLang = {
 
-    required: "'{label}' ir required!",
-    email: "'{label}' should be a valid e-mail address!",
-    tel: "'{label}' is not a valid telephone number!",
+    required: "'{label}' is required",
+    email: "'{label}' should be a valid e-mail address",
+    url: "{label} should be a valid website URL",
+    tel: "'{label}' is not a valid telephone number",
     maxLength: "'{label}' length must be < '{maxLength}'",
     minLength: "'{label}' length must be > '{minLength}'",
     maxFileSize: "Max file size must be < {maxFileSize}MB, uploaded {fileSize}MB",
@@ -908,6 +1014,31 @@ var ValidationLang = {
     confirmation: "'{label}' is not equal to '{originalLabel}'",
     minOptions: "Please select at least {minOptionsCount} options"
 
+};
+
+/**
+ * Bunny Validation helper - get file to validate
+ * @param {HTMLInputElement} input
+ * @returns {File|Blob|boolean} - If no file uploaded - returns false
+ * @private
+ */
+var _bn_getFile = function _bn_getFile(input) {
+    // if there is custom file upload logic, for example, images are resized client-side
+    // generated Blobs should be assigned to fileInput._file
+    // and can be sent via ajax with FormData
+
+    // if file was deleted, custom field can be set to an empty string
+
+    // Bunny Validation detects if there is custom Blob assigned to file input
+    // and uses this file for validation instead of original read-only input.files[]
+    if (input._file !== undefined && input._file !== '') {
+        if (input._file instanceof Blob === false) {
+            console.error("Custom file for input " + input.name + " is not an instance of Blob");
+            return false;
+        }
+        return input._file;
+    }
+    return input.files[0] || false;
 };
 
 /**
@@ -923,7 +1054,7 @@ var ValidationValidators = {
         return new Promise(function (valid, invalid) {
             if (input.hasAttribute('required')) {
                 // input is required, check value
-                if (input.value === '' || (input.type === 'radio' || input.type === 'checkbox') && !input.checked || input.getAttribute('type') === 'file' && input.files.length === 0) {
+                if (input.getAttribute('type') !== 'file' && input.value === '' || (input.type === 'radio' || input.type === 'checkbox') && !input.checked || input.getAttribute('type') === 'file' && _bn_getFile(input) === false) {
                     // input is empty or file is not uploaded
                     invalid();
                 } else {
@@ -939,6 +1070,21 @@ var ValidationValidators = {
             if (input.value.length > 0 && input.getAttribute('type') === 'email') {
                 // input is email, parse string to match email regexp
                 var Regex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+                if (Regex.test(input.value)) {
+                    valid();
+                } else {
+                    invalid();
+                }
+            } else {
+                valid();
+            }
+        });
+    },
+    url: function url(input) {
+        return new Promise(function (valid, invalid) {
+            if (input.value.length > 0 && input.getAttribute('type') === 'url') {
+                // input is URL, parse string to match website URL regexp
+                var Regex = /(^|\s)((https?:\/\/)?[\w-]+(\.[\w-]+)+\.?(:\d+)?(\/\S*)?)/gi;
                 if (Regex.test(input.value)) {
                     valid();
                 } else {
@@ -984,9 +1130,9 @@ var ValidationValidators = {
     },
     maxFileSize: function maxFileSize(input) {
         return new Promise(function (valid, invalid) {
-            if (input.getAttribute('type') === 'file' && input.hasAttribute('maxfilesize') && input.files.length !== 0) {
+            if (input.getAttribute('type') === 'file' && input.hasAttribute('maxfilesize') && _bn_getFile(input) !== false) {
                 var maxFileSize = parseFloat(input.getAttribute('maxfilesize')); // in MB
-                var fileSize = (input.files[0].size / 1000000).toFixed(2); // in MB
+                var fileSize = (_bn_getFile(input).size / 1000000).toFixed(2); // in MB
                 if (fileSize <= maxFileSize) {
                     valid(input);
                 } else {
@@ -1003,8 +1149,8 @@ var ValidationValidators = {
     // then check if uploaded file is a JPG or PNG
     image: function image(input) {
         return new Promise(function (valid, invalid) {
-            if (input.getAttribute('type') === 'file' && input.getAttribute('accept').indexOf('image') > -1 && input.files.length !== 0) {
-                BunnyFile.getSignature(input.files[0]).then(function (signature) {
+            if (input.getAttribute('type') === 'file' && input.getAttribute('accept').indexOf('image') > -1 && _bn_getFile(input) !== false) {
+                BunnyFile.getSignature(_bn_getFile(input)).then(function (signature) {
                     if (BunnyFile.isJpeg(signature) || BunnyFile.isPng(signature)) {
                         valid();
                     } else {
@@ -1020,16 +1166,16 @@ var ValidationValidators = {
     },
     minImageDimensions: function minImageDimensions(input) {
         return new Promise(function (valid, invalid) {
-            if (input.hasAttribute('mindimensions') && input.files.length !== 0) {
+            if (input.hasAttribute('mindimensions') && _bn_getFile(input) !== false) {
                 (function () {
                     var _input$getAttribute$s = input.getAttribute('mindimensions').split('x');
 
-                    var _input$getAttribute$s2 = slicedToArray(_input$getAttribute$s, 2);
+                    var _input$getAttribute$s2 = babelHelpers.slicedToArray(_input$getAttribute$s, 2);
 
                     var minWidth = _input$getAttribute$s2[0];
                     var minHeight = _input$getAttribute$s2[1];
 
-                    BunnyImage.getImageByBlob(input.files[0]).then(function (img) {
+                    BunnyImage.getImageByBlob(_bn_getFile(input)).then(function (img) {
                         var width = BunnyImage.getImageWidth(img);
                         var height = BunnyImage.getImageHeight(img);
                         if (width < minWidth || height < minHeight) {
@@ -1048,16 +1194,16 @@ var ValidationValidators = {
     },
     maxImageDimensions: function maxImageDimensions(input) {
         return new Promise(function (valid, invalid) {
-            if (input.hasAttribute('maxdimensions') && input.files.length !== 0) {
+            if (input.hasAttribute('maxdimensions') && _bn_getFile(input) !== false) {
                 (function () {
                     var _input$getAttribute$s3 = input.getAttribute('maxdimensions').split('x');
 
-                    var _input$getAttribute$s4 = slicedToArray(_input$getAttribute$s3, 2);
+                    var _input$getAttribute$s4 = babelHelpers.slicedToArray(_input$getAttribute$s3, 2);
 
                     var maxWidth = _input$getAttribute$s4[0];
                     var maxHeight = _input$getAttribute$s4[1];
 
-                    BunnyImage.getImageByBlob(input.files[0]).then(function (img) {
+                    BunnyImage.getImageByBlob(_bn_getFile(input)).then(function (img) {
                         var width = BunnyImage.getImageWidth(img);
                         var height = BunnyImage.getImageHeight(img);
                         if (width > maxWidth || height > maxHeight) {
@@ -1076,7 +1222,7 @@ var ValidationValidators = {
     },
     requiredFromList: function requiredFromList(input) {
         return new Promise(function (valid, invalid) {
-            var id = void 0;
+            var id = undefined;
             if (input.hasAttribute('requiredfromlist')) {
                 id = input.getAttribute('requiredfromlist');
             } else {
@@ -1305,7 +1451,7 @@ var ValidationUI = {
         var resolving = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
         var inputGroups = this.getInputGroupsInSection(node);
-        var inputs = void 0;
+        var inputs = undefined;
         if (resolving) {
             inputs = {
                 inputs: {},
@@ -1450,8 +1596,8 @@ var Validation = {
                 setTimeout(function () {
                     if (resolvingInputs.unresolvedLength > 0) {
                         var unresolvedInputs = _this3._getUnresolvedInputs(resolvingInputs);
-                        for (var _i = 0; _i < unresolvedInputs.length; _i++) {
-                            var _input = unresolvedInputs[_i];
+                        for (var i = 0; i < unresolvedInputs.length; i++) {
+                            var _input = unresolvedInputs[i];
                             var inputGroup = _this3.ui.getInputGroup(_input);
                             _this3._addInvalidInput(resolvingInputs, _input);
                             _this3.ui.setErrorMessage(inputGroup, 'Validation terminated after 3s');
@@ -1470,7 +1616,7 @@ var Validation = {
 
         BunnyElement.scrollTo(input, delay, offset);
         input.focus();
-        if (input.setSelectionRange !== undefined && typeof input.setSelectionRange === 'function') {
+        if (input.offsetParent !== null && input.setSelectionRange !== undefined && typeof input.setSelectionRange === 'function') {
             input.setSelectionRange(input.value.length, input.value.length);
         }
     },

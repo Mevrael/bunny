@@ -1,3 +1,11 @@
+var babelHelpers = {};
+babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+};
+babelHelpers;
+
 /**
  * Hack in support for Function.name for browsers that don't support it.
  * IE, I'm looking at you.
@@ -35,12 +43,6 @@
 
     window.CustomEvent = CustomEvent;
 })();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-};
 
 (function (global) {
 
@@ -165,7 +167,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     try {
       if (promise === value) throw new TypeError('A promises callback cannot return that same promise.');
 
-      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object')) {
+      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object')) {
         var then = value.then; // then should be retrived only once
 
         if (typeof then === 'function') {
@@ -324,7 +326,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   Promise.resolve = function (value) {
     var Class = this;
 
-    if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.constructor === Class) return value;
+    if (value && (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object' && value.constructor === Class) return value;
 
     return new Class(function (resolve) {
       resolve(value);
@@ -338,7 +340,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       reject(reason);
     });
   };
-})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : undefined);
+})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : this);
 
 /**
  * FormData wrapper for browsers supporting only FormData constructor and append()
@@ -481,7 +483,7 @@ BunnyFormData.prototype.getRadioLists = function getRadioLists() {
 
 BunnyFormData.prototype.getInputType = function getInputType(name_or_el) {
     var input = null;
-    if ((typeof name_or_el === 'undefined' ? 'undefined' : _typeof(name_or_el)) === 'object') {
+    if ((typeof name_or_el === 'undefined' ? 'undefined' : babelHelpers.typeof(name_or_el)) === 'object') {
         input = name_or_el;
     } else {
         input = this.getInput(name_or_el);
@@ -567,7 +569,7 @@ BunnyFormData.prototype.isArray = function isArray(input_name) {
 };
 
 BunnyFormData.prototype.isNodeList = function isNodeList(input_name_or_el) {
-    var input = (typeof input_name_or_el === 'undefined' ? 'undefined' : _typeof(input_name_or_el)) === 'object' ? input_name_or_el : this.getInput(input_name_or_el);
+    var input = (typeof input_name_or_el === 'undefined' ? 'undefined' : babelHelpers.typeof(input_name_or_el)) === 'object' ? input_name_or_el : this.getInput(input_name_or_el);
     // RadioNodeList is undefined in IE, Edge, it uses HTMLCollection instead
     return input instanceof (typeof RadioNodeList !== 'undefined' ? RadioNodeList : HTMLCollection);
 };
@@ -903,8 +905,8 @@ var Form$1 = Form = {
                         if (radio_input.getAttribute('value') === value) {
                             if (!_this3._valueSetFromEvent) {
                                 console.log('firing radio event');
-                                var _event = new CustomEvent('change');
-                                radio_input.dispatchEvent(_event);
+                                var event = new CustomEvent('change');
+                                radio_input.dispatchEvent(event);
                                 break;
                             }
                         }
@@ -965,8 +967,8 @@ var Form$1 = Form = {
                 var inputs = node.getElementsByTagName('input');
                 if (inputs.length > 0) {
                     for (var k2 = 0; k2 < inputs.length; k2++) {
-                        var _input = inputs[k2];
-                        this._collection[form_id].remove(_input.name, _input.value);
+                        var input = inputs[k2];
+                        this._collection[form_id].remove(input.name, input.value);
                     }
                 }
             }
@@ -1227,19 +1229,19 @@ var Form$1 = Form = {
         this._checkInit(form_id);
         return document.querySelectorAll(`[data-mirror="${form_id}"]`);
     },
-      _getCalcMirrorFunction(calc_mirror_el) {
+     _getCalcMirrorFunction(calc_mirror_el) {
         return calc_mirror_el.getAttribute('data-mirror-function');
     },
-      _calcMirror(form_id, calc_mirror, calc_mirror_function) {
+     _calcMirror(form_id, calc_mirror, calc_mirror_function) {
         // parse function
         const input_names = calc_mirror_function.split('*');
         console.log(input_names);
         // get arguments (inputs)
         const input1 = document.forms[form_id].elements[input_names[0]];
         const input2 = document.forms[form_id].elements[input_names[1]];
-          const value1 = (input1.value === '') ? 0 : input1.value;
+         const value1 = (input1.value === '') ? 0 : input1.value;
         const value2 = (input2.value === '') ? 0 : input2.value;
-          // update collection
+         // update collection
         if (this._calcMirrorCollection[form_id] === undefined) {
             this._calcMirrorCollection[form_id] = {};
         }
@@ -1251,9 +1253,9 @@ var Form$1 = Form = {
         }
         this._calcMirrorCollection[form_id][input1.name][input2.name] = calc_mirror;
         this._calcMirrorCollection[form_id][input2.name][input1.name] = calc_mirror;
-          // set initial value
+         // set initial value
         calc_mirror.textContent = value1 * value2;
-          // set new value when input value changed
+         // set new value when input value changed
         input1.addEventListener('change', () => {
             calc_mirror.textContent = input1.value * document.forms[form_id].elements[input2.name].value;
         });
@@ -1261,7 +1263,7 @@ var Form$1 = Form = {
             calc_mirror.textContent = input2.value * document.forms[form_id].elements[input1.name].value;
         });
     },
-      calcMirrorAll(form_id) {
+     calcMirrorAll(form_id) {
         this._checkInit(form_id);
         const calc_mirrors = this._getCalcMirrors(form_id);
         for(let calc_mirror of calc_mirrors) {
@@ -1347,7 +1349,7 @@ var BunnyFile = {
      *
      * @param {String} URL
      * @param {Boolean} convert_to_blob = true
-     * @returns {Promise}: success(Blob object), fail(response XHR object)
+     * @returns {Promise}: success(Blob object | base64 string), fail(response XHR object)
      */
 
     download: function download(URL) {
@@ -1485,7 +1487,25 @@ var BunnyFile = {
  */
 var BunnyImage = {
 
+    IMG_CONVERT_TYPE: 'image/jpeg',
+    IMG_QUALITY: 0.7,
+
     // SECTION: get Image object via different sources
+
+    /**
+     * Downloads image by any URL or converts from Blob, should work also for non-CORS domains
+     *
+     * @param {String|Blob} urlOrBlob
+     * @returns {Promise} success(Image object), fail(error)
+     */
+    getImage: function getImage(urlOrBlob) {
+        if (typeof urlOrBlob === 'string') {
+            return this.getImageByURL(urlOrBlob);
+        } else {
+            return this.getImageByBlob(urlOrBlob);
+        }
+    },
+
 
     /**
      * Downloads image by any URL, should work also for non-CORS domains
@@ -1493,7 +1513,6 @@ var BunnyImage = {
      * @param {String} URL
      * @returns {Promise} success(Image object), fail(error)
      */
-
     getImageByURL: function getImageByURL(URL) {
         return this._toImagePromise(URL, true);
     },
@@ -1524,7 +1543,7 @@ var BunnyImage = {
         return this._toImagePromise(url);
     },
     getImageByCanvas: function getImageByCanvas(canvas) {
-        var url = canvas.toDataURL();
+        var url = canvas.toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
         return this._toImagePromise(url);
     },
 
@@ -1540,8 +1559,8 @@ var BunnyImage = {
         }
         var canvas = document.createElement("canvas");
         if (width === null && height === null) {
-            canvas.width = img.width;
-            canvas.height = img.height;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
             canvas.getContext("2d").drawImage(img, 0, 0);
         } else {
             canvas.width = width;
@@ -1550,14 +1569,35 @@ var BunnyImage = {
         }
         return canvas;
     },
+
+
+    /**
+     *
+     * @param {Image|HTMLImageElement} img
+     * @param {Number?} width
+     * @param {Number?} height
+     * @returns {string}
+     */
     imageToBase64: function imageToBase64(img) {
         var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
         var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
-        return this.imageToCanvas(img, width, height).toDataURL();
+        return this.imageToCanvas(img, width, height).toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
     },
+
+
+    /**
+     *
+     * @param {Image|HTMLImageElement} img
+     * @param {Number?} width
+     * @param {Number?} height
+     * @returns {Blob}
+     */
     imageToBlob: function imageToBlob(img) {
-        return BunnyFile.base64ToBlob(this.imageToBase64(img));
+        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        return BunnyFile.base64ToBlob(this.imageToBase64(img, width, height));
     },
 
 
