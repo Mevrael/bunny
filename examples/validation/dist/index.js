@@ -1,11 +1,288 @@
 var babelHelpers = {};
-babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
   return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
 };
 
-babelHelpers.slicedToArray = function () {
+var jsx = function () {
+  var REACT_ELEMENT_TYPE = typeof Symbol === "function" && Symbol.for && Symbol.for("react.element") || 0xeac7;
+  return function createRawReactElement(type, props, key, children) {
+    var defaultProps = type && type.defaultProps;
+    var childrenLength = arguments.length - 3;
+
+    if (!props && childrenLength !== 0) {
+      props = {};
+    }
+
+    if (props && defaultProps) {
+      for (var propName in defaultProps) {
+        if (props[propName] === void 0) {
+          props[propName] = defaultProps[propName];
+        }
+      }
+    } else if (!props) {
+      props = defaultProps || {};
+    }
+
+    if (childrenLength === 1) {
+      props.children = children;
+    } else if (childrenLength > 1) {
+      var childArray = Array(childrenLength);
+
+      for (var i = 0; i < childrenLength; i++) {
+        childArray[i] = arguments[i + 3];
+      }
+
+      props.children = childArray;
+    }
+
+    return {
+      $$typeof: REACT_ELEMENT_TYPE,
+      type: type,
+      key: key === undefined ? null : '' + key,
+      ref: null,
+      props: props,
+      _owner: null
+    };
+  };
+}();
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            return step("next", value);
+          }, function (err) {
+            return step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
+    });
+  };
+};
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+var defineEnumerableProperties = function (obj, descs) {
+  for (var key in descs) {
+    var desc = descs[key];
+    desc.configurable = desc.enumerable = true;
+    if ("value" in desc) desc.writable = true;
+    Object.defineProperty(obj, key, desc);
+  }
+
+  return obj;
+};
+
+var defaults = function (obj, defaults) {
+  var keys = Object.getOwnPropertyNames(defaults);
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var value = Object.getOwnPropertyDescriptor(defaults, key);
+
+    if (value && value.configurable && obj[key] === undefined) {
+      Object.defineProperty(obj, key, value);
+    }
+  }
+
+  return obj;
+};
+
+var defineProperty = function (obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var get$1 = function get$1(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get$1(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+var _instanceof = function (left, right) {
+  if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) {
+    return right[Symbol.hasInstance](left);
+  } else {
+    return left instanceof right;
+  }
+};
+
+var interopRequireDefault = function (obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
+};
+
+var interopRequireWildcard = function (obj) {
+  if (obj && obj.__esModule) {
+    return obj;
+  } else {
+    var newObj = {};
+
+    if (obj != null) {
+      for (var key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+      }
+    }
+
+    newObj.default = obj;
+    return newObj;
+  }
+};
+
+var newArrowCheck = function (innerThis, boundThis) {
+  if (innerThis !== boundThis) {
+    throw new TypeError("Cannot instantiate an arrow function");
+  }
+};
+
+var objectDestructuringEmpty = function (obj) {
+  if (obj == null) throw new TypeError("Cannot destructure undefined");
+};
+
+var objectWithoutProperties = function (obj, keys) {
+  var target = {};
+
+  for (var i in obj) {
+    if (keys.indexOf(i) >= 0) continue;
+    if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
+    target[i] = obj[i];
+  }
+
+  return target;
+};
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+var selfGlobal = typeof global === "undefined" ? self : global;
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
+  }
+
+  return value;
+};
+
+var slicedToArray = function () {
   function sliceIterator(arr, i) {
     var _arr = [];
     var _n = true;
@@ -42,6 +319,61 @@ babelHelpers.slicedToArray = function () {
     }
   };
 }();
+
+var slicedToArrayLoose = function (arr, i) {
+  if (Array.isArray(arr)) {
+    return arr;
+  } else if (Symbol.iterator in Object(arr)) {
+    var _arr = [];
+
+    for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+      _arr.push(_step.value);
+
+      if (i && _arr.length === i) break;
+    }
+
+    return _arr;
+  } else {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  }
+};
+
+var taggedTemplateLiteral = function (strings, raw) {
+  return Object.freeze(Object.defineProperties(strings, {
+    raw: {
+      value: Object.freeze(raw)
+    }
+  }));
+};
+
+var taggedTemplateLiteralLoose = function (strings, raw) {
+  strings.raw = raw;
+  return strings;
+};
+
+var temporalRef = function (val, name, undef) {
+  if (val === undef) {
+    throw new ReferenceError(name + " is not defined - temporal dead zone");
+  } else {
+    return val;
+  }
+};
+
+var temporalUndefined = {};
+
+var toArray = function (arr) {
+  return Array.isArray(arr) ? arr : Array.from(arr);
+};
+
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
 
 babelHelpers;
 
@@ -168,7 +500,7 @@ babelHelpers;
     try {
       if (promise === value) throw new TypeError('A promises callback cannot return that same promise.');
 
-      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object')) {
+      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object')) {
         var then = value.then; // then should be retrived only once
 
         if (typeof then === 'function') {
@@ -327,7 +659,7 @@ babelHelpers;
   Promise.resolve = function (value) {
     var Class = this;
 
-    if (value && (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object' && value.constructor === Class) return value;
+    if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.constructor === Class) return value;
 
     return new Class(function (resolve) {
       resolve(value);
@@ -341,7 +673,7 @@ babelHelpers;
       reject(reason);
     });
   };
-})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : this);
+})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : undefined);
 
 var BunnyFile = {
 
@@ -355,7 +687,7 @@ var BunnyFile = {
      */
 
     download: function download(URL) {
-        var convert_to_blob = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+        var convert_to_blob = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
         var request = new XMLHttpRequest();
         var p = new Promise(function (success, fail) {
@@ -519,7 +851,7 @@ var BunnyImage = {
         return this._toImagePromise(URL, true);
     },
     _toImagePromise: function _toImagePromise(src) {
-        var crossOrigin = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+        var crossOrigin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         var img = new Image();
         var p = new Promise(function (ok, fail) {
@@ -553,8 +885,8 @@ var BunnyImage = {
     // SECTION:: create different sources from Image object
 
     imageToCanvas: function imageToCanvas(img) {
-        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var width = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var height = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
         if (!img.complete) {
             throw new Error('Can not create canvas from Image. Image is not loaded yet.');
@@ -581,8 +913,8 @@ var BunnyImage = {
      * @returns {string}
      */
     imageToBase64: function imageToBase64(img) {
-        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var width = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var height = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
         return this.imageToCanvas(img, width, height).toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
     },
@@ -596,8 +928,8 @@ var BunnyImage = {
      * @returns {Blob}
      */
     imageToBlob: function imageToBlob(img) {
-        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var width = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var height = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
         return BunnyFile.base64ToBlob(this.imageToBase64(img, width, height));
     },
@@ -657,6 +989,8 @@ var BunnyImage = {
     }
 };
 
+'use strict';
+
 /**
  * Base object Ajax
  */
@@ -683,9 +1017,9 @@ var Ajax = {
      */
 
     create: function create(method, url, data, on_success) {
-        var on_error = arguments.length <= 4 || arguments[4] === undefined ? null : arguments[4];
-        var headers = arguments.length <= 5 || arguments[5] === undefined ? {} : arguments[5];
-        var do_send = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
+        var on_error = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+        var headers = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
+        var do_send = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : true;
 
 
         var t = Object.create(this);
@@ -753,8 +1087,8 @@ var Ajax = {
      * @param {object} headers = {'Content-Type': 'application/x-www-form-urlencoded'} - key: value map of headers
      */
     sendForm: function sendForm(form_el, on_success) {
-        var on_error = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'Content-Type': 'application/x-www-form-urlencoded' } : arguments[3];
+        var on_error = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'Content-Type': 'application/x-www-form-urlencoded' };
 
         var data = {};
         form_el.querySelectorAll('[name]').forEach(function (input) {
@@ -774,8 +1108,8 @@ var Ajax = {
      * @param {object} headers = {'Content-Type': 'multipart/form-data'} - key: value map of headers
      */
     sendFormWithFiles: function sendFormWithFiles(form_el, on_success) {
-        var on_error = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'Content-Type': 'multipart/form-data' } : arguments[3];
+        var on_error = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'Content-Type': 'multipart/form-data' };
 
         this.sendForm(form_el, on_success, on_error, headers);
     },
@@ -793,15 +1127,15 @@ var Ajax = {
      * @param headers = {'X-Requested-With': 'XMLHttpRequest'} key: value map of headers
      */
     get: function get(url, on_success) {
-        var on_error = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[3];
+        var on_error = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'X-Requested-With': 'XMLHttpRequest' };
 
         this.create('GET', url, {}, on_success, on_error, headers, true);
     },
 
     post: function post(url, data, on_success) {
-        var on_error = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
-        var headers = arguments.length <= 4 || arguments[4] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[4];
+        var on_error = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+        var headers = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : { 'X-Requested-With': 'XMLHttpRequest' };
 
         this.create('POST', url, data, on_success, on_error, headers, true);
     }
@@ -838,15 +1172,15 @@ var BunnyElement = {
      * @param {Number} offset
      */
     scrollTo: function scrollTo(target) {
-        var duration = arguments.length <= 1 || arguments[1] === undefined ? 500 : arguments[1];
-        var offset = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+        var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 500;
+        var offset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 
         return new Promise(function (onAnimationEnd) {
 
-            var element = undefined;
+            var element = void 0;
             if (typeof target === 'string') {
                 element = document.querySelector(target);
-            } else if ((typeof target === 'undefined' ? 'undefined' : babelHelpers.typeof(target)) === 'object') {
+            } else if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) === 'object') {
                 element = target;
             } else {
                 // number
@@ -1170,7 +1504,7 @@ var ValidationValidators = {
                 (function () {
                     var _input$getAttribute$s = input.getAttribute('mindimensions').split('x');
 
-                    var _input$getAttribute$s2 = babelHelpers.slicedToArray(_input$getAttribute$s, 2);
+                    var _input$getAttribute$s2 = slicedToArray(_input$getAttribute$s, 2);
 
                     var minWidth = _input$getAttribute$s2[0];
                     var minHeight = _input$getAttribute$s2[1];
@@ -1198,7 +1532,7 @@ var ValidationValidators = {
                 (function () {
                     var _input$getAttribute$s3 = input.getAttribute('maxdimensions').split('x');
 
-                    var _input$getAttribute$s4 = babelHelpers.slicedToArray(_input$getAttribute$s3, 2);
+                    var _input$getAttribute$s4 = slicedToArray(_input$getAttribute$s3, 2);
 
                     var maxWidth = _input$getAttribute$s4[0];
                     var maxHeight = _input$getAttribute$s4[1];
@@ -1222,7 +1556,7 @@ var ValidationValidators = {
     },
     requiredFromList: function requiredFromList(input) {
         return new Promise(function (valid, invalid) {
-            var id = undefined;
+            var id = void 0;
             if (input.hasAttribute('requiredfromlist')) {
                 id = input.getAttribute('requiredfromlist');
             } else {
@@ -1448,10 +1782,10 @@ var ValidationUI = {
      * @returns {Array|Object}
      */
     getInputsInSection: function getInputsInSection(node) {
-        var resolving = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+        var resolving = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         var inputGroups = this.getInputGroupsInSection(node);
-        var inputs = undefined;
+        var inputs = void 0;
         if (resolving) {
             inputs = {
                 inputs: {},
@@ -1517,7 +1851,7 @@ var Validation = {
     init: function init(form) {
         var _this = this;
 
-        var inline = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+        var inline = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         // disable browser built-in validation
         form.setAttribute('novalidate', '');
@@ -1596,8 +1930,8 @@ var Validation = {
                 setTimeout(function () {
                     if (resolvingInputs.unresolvedLength > 0) {
                         var unresolvedInputs = _this3._getUnresolvedInputs(resolvingInputs);
-                        for (var i = 0; i < unresolvedInputs.length; i++) {
-                            var _input = unresolvedInputs[i];
+                        for (var _i = 0; _i < unresolvedInputs.length; _i++) {
+                            var _input = unresolvedInputs[_i];
                             var inputGroup = _this3.ui.getInputGroup(_input);
                             _this3._addInvalidInput(resolvingInputs, _input);
                             _this3.ui.setErrorMessage(inputGroup, 'Validation terminated after 3s');
@@ -1611,8 +1945,8 @@ var Validation = {
         });
     },
     focusInput: function focusInput(input) {
-        var delay = arguments.length <= 1 || arguments[1] === undefined ? 500 : arguments[1];
-        var offset = arguments.length <= 2 || arguments[2] === undefined ? -50 : arguments[2];
+        var delay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 500;
+        var offset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : -50;
 
         BunnyElement.scrollTo(input, delay, offset);
         input.focus();

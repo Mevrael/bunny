@@ -20,6 +20,15 @@
             and <a href="https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.js">JS source</a>
         </p>
 
+        <div class="dropdown" dropdown-hover>
+            <button class="btn dropdown-toggle" type="button">Menu</button>
+            <div class="dropdown-menu">
+                <button class="dropdown-item" type="button">Item #1</button>
+                <button class="dropdown-item" type="button">Item #2</button>
+                <button class="dropdown-item" type="button">Item #3</button>
+            </div>
+        </div>
+
         <!--<h1>BunnyJS Autocomplete 2 example</h1>-->
 
         <!--<fieldset class="form-group">
@@ -36,7 +45,7 @@
         <fieldset class="form-group">
 
             <label for="country">Country</label>
-            <autocomplete class="dropdown" action="Country.search" custom>
+            <autocomplete class="dropdown" action="Country.search">
                 <input name="country" id="country" class="form-control" autocomplete="off">
                 <input type="hidden" name="country_id" id="country_id">
             </autocomplete>

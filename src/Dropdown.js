@@ -49,7 +49,7 @@ export const DropdownUI = {
         if (this.Config.useTagNames) {
             return dropdown.getElementsByTagName(this.Config['tagName' + name])[0] || false;
         }
-        return dropdown.querySelector(`div.${this.Config['className' + name]}`) || false;
+        return dropdown.getElementsByClassName(this.Config['className' + name])[0] || false;
     },
 
     _createElement(name) {
@@ -101,7 +101,7 @@ export const DropdownUI = {
         if (this.Config.useTagNames) {
             queryStr += this.Config.tagNameItem;
         } else {
-            queryStr += 'div.' + this.Config.classNameItem;
+            queryStr += '.' + this.Config.classNameItem;
         }
         queryStr += ', [role="menuitem"]';
         return menu.querySelectorAll(queryStr);
@@ -143,7 +143,7 @@ export const DropdownUI = {
         if (this.Config.useTagNames) {
             return document.getElementsByTagName(this.Config.tagName);
         }
-        return document.getElementsByClassName(`div.${this.Config.className}`);
+        return document.querySelectorAll(`div.${this.Config.className}`);
     },
 
     show(dropdown) {
@@ -289,15 +289,13 @@ export const Dropdown = {
             btn.addEventListener('click', this._getUniqueClickToggleBtnHandler(dropdown));
 
             if (this.isHoverable(dropdown)) {
+                const menu = this.UI.getMenu(dropdown);
                 addEventOnce(dropdown, 'mouseover', (e) => {
-                    if (isEventCursorInside(e, dropdown, this.UI.getMenu(dropdown))) {
-                        // cursor is inside toggle btn or menu => open menu if required
-                        this.open(dropdown);
-                    }
-                }, 100);
+                    this.open(dropdown);
+                }, 50);
 
                 addEventOnce(dropdown, 'mouseout', (e) => {
-                    if (!isEventCursorInside(e, dropdown, this.UI.getMenu(dropdown))) {
+                    if (!isEventCursorInside(e, btn) && !isEventCursorInside(e, menu)) {
                         // cursor is outside toggle btn and menu => close menu if required
                         this.close(dropdown);
                     }

@@ -1,9 +1,11 @@
+'use strict';
+
 var Container = {
 
     _bindings: {},
 
     bind: function bind(service_name, service_provider) {
-        var allow_override = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+        var allow_override = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
         if (this.isBound(service_name)) {
             if (allow_override) {

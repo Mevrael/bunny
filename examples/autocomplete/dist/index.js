@@ -11,7 +11,7 @@ var AutocompleteMarkup = {
         return item;
     },
     createDropdownItemsFromData: function createDropdownItemsFromData(data) {
-        var callback = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
         var fragment = document.createDocumentFragment();
         for (var key in data) {
@@ -51,7 +51,7 @@ var AutocompleteDecorator = {
     },
 
     buildClass: function buildClass(el, classProperty, theme) {
-        var del = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
+        var del = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
         var cls = this.theme[theme][classProperty + 'Class'];
         if (typeof cls === 'string') {
@@ -71,26 +71,28 @@ var AutocompleteDecorator = {
         }
     },
     decorateDropdown: function decorateDropdown(dropdown) {
-        var theme = arguments.length <= 1 || arguments[1] === undefined ? 'bs4' : arguments[1];
+        var theme = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'bs4';
 
         this.buildClass(dropdown, 'dropdown', theme);
     },
     decorateDropdownItem: function decorateDropdownItem(item) {
-        var theme = arguments.length <= 1 || arguments[1] === undefined ? 'bs4' : arguments[1];
+        var theme = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'bs4';
 
         this.buildClass(item, 'dropdownItem', theme);
     },
     showDropdown: function showDropdown(el_to_apply_class) {
-        var theme = arguments.length <= 1 || arguments[1] === undefined ? 'bs4' : arguments[1];
+        var theme = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'bs4';
 
         this.buildClass(el_to_apply_class, 'show', theme);
     },
     hideDropdown: function hideDropdown(el_to_apply_class) {
-        var theme = arguments.length <= 1 || arguments[1] === undefined ? 'bs4' : arguments[1];
+        var theme = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'bs4';
 
         this.buildClass(el_to_apply_class, 'show', theme, true);
     }
 };
+
+'use strict';
 
 /**
  * Base object Ajax
@@ -118,9 +120,9 @@ var Ajax = {
      */
 
     create: function create(method, url, data, on_success) {
-        var on_error = arguments.length <= 4 || arguments[4] === undefined ? null : arguments[4];
-        var headers = arguments.length <= 5 || arguments[5] === undefined ? {} : arguments[5];
-        var do_send = arguments.length <= 6 || arguments[6] === undefined ? true : arguments[6];
+        var on_error = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+        var headers = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
+        var do_send = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : true;
 
 
         var t = Object.create(this);
@@ -188,8 +190,8 @@ var Ajax = {
      * @param {object} headers = {'Content-Type': 'application/x-www-form-urlencoded'} - key: value map of headers
      */
     sendForm: function sendForm(form_el, on_success) {
-        var on_error = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'Content-Type': 'application/x-www-form-urlencoded' } : arguments[3];
+        var on_error = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'Content-Type': 'application/x-www-form-urlencoded' };
 
         var data = {};
         form_el.querySelectorAll('[name]').forEach(function (input) {
@@ -209,8 +211,8 @@ var Ajax = {
      * @param {object} headers = {'Content-Type': 'multipart/form-data'} - key: value map of headers
      */
     sendFormWithFiles: function sendFormWithFiles(form_el, on_success) {
-        var on_error = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'Content-Type': 'multipart/form-data' } : arguments[3];
+        var on_error = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'Content-Type': 'multipart/form-data' };
 
         this.sendForm(form_el, on_success, on_error, headers);
     },
@@ -228,15 +230,15 @@ var Ajax = {
      * @param headers = {'X-Requested-With': 'XMLHttpRequest'} key: value map of headers
      */
     get: function get(url, on_success) {
-        var on_error = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[3];
+        var on_error = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'X-Requested-With': 'XMLHttpRequest' };
 
         this.create('GET', url, {}, on_success, on_error, headers, true);
     },
 
     post: function post(url, data, on_success) {
-        var on_error = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
-        var headers = arguments.length <= 4 || arguments[4] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[4];
+        var on_error = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+        var headers = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : { 'X-Requested-With': 'XMLHttpRequest' };
 
         this.create('POST', url, data, on_success, on_error, headers, true);
     }
@@ -247,8 +249,8 @@ var AutocompleteController = {
     attachInputTypeEvent: function attachInputTypeEvent(container_id) {
         var _this = this;
 
-        var data_handler = arguments.length <= 1 || arguments[1] === undefined ? JSON.parse : arguments[1];
-        var ajax_headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var data_handler = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : JSON.parse;
+        var ajax_headers = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         var ac = Autocomplete.get(container_id);
         var timer = 0;
@@ -441,8 +443,8 @@ var Autocomplete = {
      * @param {object} options
      */
     create: function create(input_id, hidden_input_id, ajax_url) {
-        var data_handler = arguments.length <= 3 || arguments[3] === undefined ? JSON.parse : arguments[3];
-        var options = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
+        var data_handler = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : JSON.parse;
+        var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
 
 
         for (var i in this._options) {

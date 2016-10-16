@@ -1,8 +1,16 @@
 
 import './constants/keycodes';
 import { Dropdown, DropdownUI, DropdownConfig } from './Dropdown';
-import { addEventOnce, onClickOutside, removeClickOutside } from './utils/DOM/events';
+import {
+  addEventOnce,
+  onClickOutside,
+  removeClickOutside,
+  addEventKeyNavigation,
+  removeEventKeyNavigation
+} from './utils/DOM/events';
 import { getActionObject, pushCallbackToElement, callElementCallbacks } from './utils/core';
+
+
 
 export const AutocompleteConfig = Object.assign({}, DropdownConfig, {
 
@@ -18,6 +26,8 @@ export const AutocompleteConfig = Object.assign({}, DropdownConfig, {
 
 });
 
+
+
 export const AutocompleteUI = Object.assign({}, DropdownUI, {
 
     Config: AutocompleteConfig,
@@ -28,18 +38,6 @@ export const AutocompleteUI = Object.assign({}, DropdownUI, {
 
     getHiddenInput(autocomplete) {
         return autocomplete.querySelector('input[type="hidden"]') || false;
-    },
-
-    isCustomValueAllowed(autocomplete) {
-        return autocomplete.hasAttribute('custom') || this.Config.allowCustomInput;
-    },
-
-    getMinChar(autocomplete) {
-        if (autocomplete.hasAttribute('min')) {
-            return autocomplete.getAttribute('min')
-        } else {
-            return this.Config.minChar;
-        }
     }
 
 });
@@ -54,46 +52,105 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     // override methods
 
     close(autocomplete) {
-        if (autocomplete.__bunny_autocomplete_outside) {
-            removeClickOutside(autocomplete, autocomplete.__bunny_autocomplete_outside);
-            delete autocomplete.__bunny_autocomplete_outside;
-        }
+        this._removeEventClickOutside(autocomplete);
+        this._removeEventKeyNavigation(autocomplete);
         Dropdown.close.call(this, autocomplete);
     },
 
     open(autocomplete) {
-        autocomplete.__bunny_autocomplete_outside = onClickOutside(autocomplete, () => {
-            if (!this.UI.isCustomValueAllowed(autocomplete)) {
-                // custom input not allowed, restore to value before input was focused
-                if (autocomplete.__bunny_autocomplete_initial_value !== undefined) {
-                    this.UI.getInput(autocomplete).value = autocomplete.__bunny_autocomplete_initial_value;
-                }
-            } else {
-                // custom input is allowed, empty hidden value
-                this._selectItem(autocomplete, null);
-            }
-        });
+        this._addEventClickOutside(autocomplete);
+        this._addEventKeyNavigation(autocomplete);
         Dropdown.open.call(this, autocomplete);
     },
 
     _addEvents(autocomplete) {
         const input = this.UI.getInput(autocomplete);
+        this._addEventInput(autocomplete, input);
+        this._addEventFocus(autocomplete, input);
+    },
+
+
+    // custom methods
+
+    // config methods
+
+    isCustomValueAllowed(autocomplete) {
+      return autocomplete.hasAttribute('custom') || this.Config.allowCustomInput;
+    },
+
+    getMinChar(autocomplete) {
+      if (autocomplete.hasAttribute('min')) {
+        return autocomplete.getAttribute('min')
+      } else {
+        return this.Config.minChar;
+      }
+    },
+
+    // events
+
+    _addEventInput(autocomplete, input) {
         addEventOnce(input, 'input', () => {
-            if (input.value.length >= this.UI.getMinChar(autocomplete)) {
+            if (input.value.length >= this.getMinChar(autocomplete)) {
                 this.update(autocomplete, input.value);
             } else {
                 this.close(autocomplete);
-                //this.UI.removeMenu();
             }
         }, this.Config.delay);
+    },
 
+    _addEventFocus(autocomplete, input) {
         input.addEventListener('focus', () => {
             autocomplete.__bunny_autocomplete_initial_value = input.value;
         })
     },
 
+    _addEventClickOutside(autocomplete) {
+      autocomplete.__bunny_autocomplete_outside = onClickOutside(autocomplete, () => {
+        this._selectItem(autocomplete, null);
+      });
+    },
 
-    // custom methods
+    _addEventKeyNavigation(autocomplete) {
+      autocomplete.__bunny_autocomplete_keydown = addEventKeyNavigation(
+        this.UI.getInput(autocomplete),
+        this.UI.getMenuItems(autocomplete),
+        (selectedItem) => {
+          if (selectedItem === false) {
+            // canceled
+            this.restoreValue(autocomplete);
+          } else {
+            this._selectItem(autocomplete, selectedItem);
+          }
+
+        }
+      );
+    },
+
+    _removeEventClickOutside(autocomplete) {
+      if (autocomplete.__bunny_autocomplete_outside) {
+        removeClickOutside(autocomplete, autocomplete.__bunny_autocomplete_outside);
+        delete autocomplete.__bunny_autocomplete_outside;
+      }
+    },
+
+    _removeEventKeyNavigation(autocomplete) {
+      if (autocomplete.__bunny_autocomplete_keydown) {
+        removeEventKeyNavigation(autocomplete, autocomplete.__bunny_autocomplete_keydown);
+        delete autocomplete.__bunny_autocomplete_keydown;
+      }
+    },
+
+    // item events
+
+    _addItemEvents(autocomplete, items) {
+      [].forEach.call(items.childNodes, item => {
+        item.addEventListener('click', () => {
+          this._selectItem(autocomplete, item);
+        })
+      });
+    },
+
+    // public methods
 
     update(autocomplete, search) {
         const action = getActionObject(autocomplete);
@@ -111,13 +168,22 @@ export const Autocomplete = Object.assign({}, Dropdown, {
         });
     },
 
-    _addItemEvents(autocomplete, items) {
-        [].forEach.call(items.childNodes, item => {
-            item.addEventListener('click', () => {
-                this._selectItem(autocomplete, item);
-            })
-        });
+    restoreValue(autocomplete) {
+      if (autocomplete.__bunny_autocomplete_initial_value !== undefined) {
+        this.UI.getInput(autocomplete).value = autocomplete.__bunny_autocomplete_initial_value;
+      }
+
+      this.close(autocomplete);
     },
+
+    // public event subscription
+
+    onItemSelect(autocomplete, callback) {
+      pushCallbackToElement(autocomplete, 'autocomplete', callback)
+    },
+
+    // private methods
+
 
     _updateInputValues(autocomplete, item) {
 
@@ -125,6 +191,7 @@ export const Autocomplete = Object.assign({}, Dropdown, {
 
         if (item !== null) {
             input.value = item.textContent;
+            autocomplete.__bunny_autocomplete_initial_value = item.textContent;
         }
 
         const hiddenInput = this.UI.getHiddenInput(autocomplete);
@@ -132,28 +199,39 @@ export const Autocomplete = Object.assign({}, Dropdown, {
             if (item !== null) {
                 hiddenInput.value = item.dataset.value;
             } else {
-                hiddenInput.value = input.value;
+                hiddenInput.value = '';
             }
         }
     },
 
+    /**
+     * If item = null, tries to select a custom value;
+     * If custom value not allowed restore initial value (previously selected item or input value attribute otherwise)
+     *
+     * @param {HTMLElement} autocomplete
+     * @param {HTMLElement|null} item
+     * @private
+     */
     _selectItem(autocomplete, item = null) {
-        this._updateInputValues(autocomplete, item);
+        console.log(item);
 
-        callElementCallbacks(autocomplete, 'autocomplete', cb => {
-            if (item === null) {
+        if (item === null && !this.isCustomValueAllowed(autocomplete)) {
+            // custom input not allowed, restore to value before input was focused
+            this.restoreValue(autocomplete);
+        } else {
+            this._updateInputValues(autocomplete, item);
+
+            callElementCallbacks(autocomplete, 'autocomplete', cb => {
+              if (item === null) {
                 cb(null, this.UI.getInput(autocomplete).value);
-            } else {
+              } else {
                 cb(item.dataset.value, item.textContent, item);
-            }
-        });
+              }
+            });
+        }
 
         this.close(autocomplete);
-    },
-
-    onItemSelect(autocomplete, callback) {
-        pushCallbackToElement(autocomplete, 'autocomplete', callback)
-    },
+    }
 
 });
 

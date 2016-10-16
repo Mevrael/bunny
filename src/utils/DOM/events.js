@@ -1,4 +1,6 @@
 
+import './../../constants/keycodes';
+
 /**
  * Adds event listener to element and stores a function in this element's custom property
  * and returns unique ID which can be used to remove event listener later
@@ -97,13 +99,10 @@ export function addEventOnce(element, eventName, eventListener, delay = 500) {
     });
 }
 
-export function isEventCursorInside(e, parent, child) {
-    const bounds = parent.getBoundingClientRect();
-    const childBounds = child.getBoundingClientRect();
+export function isEventCursorInside(e, element) {
+    const bounds = element.getBoundingClientRect();
     return (e.clientX > bounds.left && e.clientX < bounds.right
-        && e.clientY > bounds.top && e.clientY < bounds.bottom ||
-        e.clientX > childBounds.left && e.clientX < childBounds.right
-        && e.clientY > childBounds.top && e.clientY < childBounds.bottom
+        && e.clientY > bounds.top && e.clientY < bounds.bottom
     );
 }
 
@@ -160,4 +159,67 @@ export function removeClickOutside(element, callback) {
             element.__bunny_core_outside_callbacks.splice(index, 1);
         }
     }
+}
+
+export function addEventKeyNavigation(element, items, itemSelectCallback, activeClass = 'active') {
+
+  let currentItemIndex = null;
+
+  const _itemAdd = () => {
+    items[currentItemIndex].classList.add(activeClass);
+    items[currentItemIndex].setAttribute('aria-selected', 'true');
+    items[currentItemIndex].scrollIntoView(false);
+  };
+
+  const _itemRemove = () => {
+    items[currentItemIndex].classList.remove(activeClass);
+    items[currentItemIndex].removeAttribute('aria-selected');
+  };
+
+  const handler = (e) => {
+    const c = e.keyCode;
+
+    const maxItemIndex = items.length - 1;
+
+    if (c === KEY_ENTER) {
+      e.preventDefault();
+      if (currentItemIndex !== null) {
+        itemSelectCallback(items[currentItemIndex]);
+      } else {
+        // pick first item from list
+        itemSelectCallback(items[0]);
+      }
+
+    } else if (c === KEY_ESCAPE) {
+      e.preventDefault();
+      itemSelectCallback(false);
+
+    } else if (c === KEY_ARROW_UP) {
+      e.preventDefault();
+      if (currentItemIndex !== null && currentItemIndex > 0) {
+        _itemRemove();
+        currentItemIndex -= 1;
+        _itemAdd();
+      }
+
+    } else if (c === KEY_ARROW_DOWN) {
+      e.preventDefault();
+      if (currentItemIndex === null) {
+        currentItemIndex = 0;
+        _itemAdd();
+      } else if (currentItemIndex < maxItemIndex) {
+        _itemRemove();
+        currentItemIndex += 1;
+        _itemAdd();
+      }
+    }
+  };
+
+  element.addEventListener('keydown', handler);
+
+  return handler;
+}
+
+export function removeEventKeyNavigation(element, handler) {
+  element.removeEventListener('keydown', handler);
 }

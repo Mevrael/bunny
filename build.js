@@ -1,11 +1,7 @@
 
-var fs = require('fs');
-
-var rollup = require('rollup');
-var babel = require('rollup-plugin-babel');
-var npm = require('rollup-plugin-node-resolve');
-
-var examples = fs.readdirSync('examples');
+const buildJs = require('assets-builder/node_scripts/js');
+const Core = require('assets-builder/node_scripts/core');
+const fs = require('fs');
 
 function file_exists(file) {
     try {
@@ -17,24 +13,13 @@ function file_exists(file) {
 }
 
 function build_example(folder) {
-    if (file_exists('examples/' + folder + '/index.js')) {
-        rollup.rollup({
-            // tell rollup our main entry point
-            entry: 'examples/' + folder + '/index.js',
-            plugins: [
-                // configure rollup-babel to use the ES2015 Rollup preset
-                // and not transpile any node_modules files
-                babel(),
-                npm()
-                // minify with uglify
-            ]
-        }).then(function(bundle) {
-            // write bundle to a file and use the IIFE format so it executes immediately
-            return bundle.write({
-                //format: 'iife',
-                dest: 'examples/' + folder + '/dist/index.js'
-            });
-        }).then(function() {
+
+  const entryFile = 'examples/' + folder + '/index.js';
+  const destFile = 'examples/' + folder + '/dist/index.js';
+
+    if (file_exists(entryFile)) {
+        buildJs(null, entryFile, destFile)
+        .then(function() {
             console.log('Bundle for example "' + folder + '" created');
         }).catch(function(e) {
             console.error(e);
@@ -44,6 +29,30 @@ function build_example(folder) {
     }
 }
 
-examples.forEach(example => {
+
+
+//buildJs('dom-utils', 'src/Dropdown.js', 'dist/dropdown.min.js', ['src/utils/DOM/events.js']);
+
+if (Core.args[0] === 'dist') {
+  const dists = [
+    ['Dropdown', 'dropdown.min', ['src/utils/DOM/events.js']],
+    ['Autocomplete', 'autocomplete.min', ['src/utils/DOM/events.js', 'src/Dropdown.js', 'src/utils/core.js']],
+    ['utils/core', 'core-helpers.min'],
+    ['utils/DOM/events', 'utils-dom.min']
+  ];
+
+  dists.forEach(dist => {
+    const entryFile = `src/${dist[0]}.js`;
+    const destFile = `dist/${dist[1]}.js`;
+    const ignoreFiles = dist[2] !== undefined ? dist[2] : [];
+    buildJs(null, entryFile, destFile, ignoreFiles).catch(e => console.error(e));
+  })
+
+} else {
+  const examples = fs.readdirSync('examples');
+
+  examples.forEach(example => {
     build_example(example);
-});
+  });
+}
+

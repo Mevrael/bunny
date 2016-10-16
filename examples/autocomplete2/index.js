@@ -7,7 +7,7 @@ Autocomplete.onItemSelect(document.getElementsByTagName('autocomplete')[0], (id,
     if (id !== null) {
         document.getElementById('current').textContent = id;
     } else {
-        document.getElementById('current').textContent = 'CUSTOM ' + label;
+        document.getElementById('current').textContent = '';
     }
 });
 

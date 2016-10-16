@@ -1,5 +1,4 @@
 /*import { Template } from '../../src/bunny.template';
-import { DataTable } from '../../src/DataTable';*/
 
 Template.define('users_row_template', {
     edit: function edit(btn, user) {

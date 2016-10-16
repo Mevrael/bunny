@@ -69,6 +69,24 @@ function addEvent(element, eventName, eventListener) {
 }
 
 /**
+ * Remove event listener
+ *
+ * @param {HTMLElement} element
+ * @param {String} eventName
+ * @param {Number} eventIndex
+ *
+ * @returns {null}
+ */
+function removeEvent(element, eventName, eventIndex) {
+    if (element.__bunny_event_handlers !== undefined && element.__bunny_event_handlers.handlers[eventIndex] !== undefined) {
+        element.removeEventListener(eventName, element.__bunny_event_handlers.handlers[eventIndex]);
+        delete element.__bunny_event_handlers.handlers[eventIndex];
+        // do not decrement counter, each new event handler should have next unique index
+    }
+    return null;
+}
+
+/**
  * Call event listener only once after "delay" ms
  * Useful for scroll, keydown and other events
  * when the actions must be done only once
@@ -81,7 +99,7 @@ function addEvent(element, eventName, eventListener) {
  * @returns {Number}
  */
 function addEventOnce(element, eventName, eventListener) {
-    var delay = arguments.length <= 3 || arguments[3] === undefined ? 500 : arguments[3];
+    var delay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 500;
 
     var timeout = 0;
     return addEvent(element, eventName, function (e) {
@@ -92,10 +110,9 @@ function addEventOnce(element, eventName, eventListener) {
     });
 }
 
-function isEventCursorInside(e, parent, child) {
-    var bounds = parent.getBoundingClientRect();
-    var childBounds = child.getBoundingClientRect();
-    return e.clientX > bounds.left && e.clientX < bounds.right && e.clientY > bounds.top && e.clientY < bounds.bottom || e.clientX > childBounds.left && e.clientX < childBounds.right && e.clientY > childBounds.top && e.clientY < childBounds.bottom;
+function isEventCursorInside(e, element) {
+    var bounds = element.getBoundingClientRect();
+    return e.clientX > bounds.left && e.clientX < bounds.right && e.clientY > bounds.top && e.clientY < bounds.bottom;
 }
 
 function onClickOutside(element, callback) {
@@ -145,11 +162,73 @@ function removeClickOutside(element, callback) {
     }
 
     if (element.__bunny_core_outside_callbacks !== undefined) {
-        var index = element.__bunny_core_outside_callbacks.indexOf(callback);
-        if (index !== -1) {
-            element.__bunny_core_outside_callbacks.splice(index, 1);
+        var _index = element.__bunny_core_outside_callbacks.indexOf(callback);
+        if (_index !== -1) {
+            element.__bunny_core_outside_callbacks.splice(_index, 1);
         }
     }
+}
+
+function addEventKeyNavigation(element, items, itemSelectCallback) {
+    var activeClass = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'active';
+
+
+    var currentItemIndex = null;
+
+    var _itemAdd = function _itemAdd() {
+        items[currentItemIndex].classList.add(activeClass);
+        items[currentItemIndex].setAttribute('aria-selected', 'true');
+        items[currentItemIndex].scrollIntoView(false);
+    };
+
+    var _itemRemove = function _itemRemove() {
+        items[currentItemIndex].classList.remove(activeClass);
+        items[currentItemIndex].removeAttribute('aria-selected');
+    };
+
+    var handler = function handler(e) {
+        var c = e.keyCode;
+
+        var maxItemIndex = items.length - 1;
+
+        if (c === KEY_ENTER) {
+            e.preventDefault();
+            if (currentItemIndex !== null) {
+                itemSelectCallback(items[currentItemIndex]);
+            } else {
+                // pick first item from list
+                itemSelectCallback(items[0]);
+            }
+        } else if (c === KEY_ESCAPE) {
+            e.preventDefault();
+            itemSelectCallback(false);
+        } else if (c === KEY_ARROW_UP) {
+            e.preventDefault();
+            if (currentItemIndex !== null && currentItemIndex > 0) {
+                _itemRemove();
+                currentItemIndex -= 1;
+                _itemAdd();
+            }
+        } else if (c === KEY_ARROW_DOWN) {
+            e.preventDefault();
+            if (currentItemIndex === null) {
+                currentItemIndex = 0;
+                _itemAdd();
+            } else if (currentItemIndex < maxItemIndex) {
+                _itemRemove();
+                currentItemIndex += 1;
+                _itemAdd();
+            }
+        }
+    };
+
+    element.addEventListener('keydown', handler);
+
+    return handler;
+}
+
+function removeEventKeyNavigation(element, handler) {
+    element.removeEventListener('keydown', handler);
 }
 
 var DropdownConfig = {
@@ -191,7 +270,7 @@ var DropdownUI = {
         if (this.Config.useTagNames) {
             return dropdown.getElementsByTagName(this.Config['tagName' + name])[0] || false;
         }
-        return dropdown.querySelector('div.' + this.Config['className' + name]) || false;
+        return dropdown.getElementsByClassName(this.Config['className' + name])[0] || false;
     },
     _createElement: function _createElement(name) {
         var el = null;
@@ -237,7 +316,7 @@ var DropdownUI = {
         if (this.Config.useTagNames) {
             queryStr += this.Config.tagNameItem;
         } else {
-            queryStr += 'div.' + this.Config.classNameItem;
+            queryStr += '.' + this.Config.classNameItem;
         }
         queryStr += ', [role="menuitem"]';
         return menu.querySelectorAll(queryStr);
@@ -255,7 +334,7 @@ var DropdownUI = {
         menu.appendChild(newItems);
     },
     createMenuItems: function createMenuItems(items) {
-        var callback = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
         var f = document.createDocumentFragment();
         for (var id in items) {
@@ -277,7 +356,7 @@ var DropdownUI = {
         if (this.Config.useTagNames) {
             return document.getElementsByTagName(this.Config.tagName);
         }
-        return document.getElementsByClassName('div.' + this.Config.className);
+        return document.querySelectorAll('div.' + this.Config.className);
     },
     show: function show(dropdown) {
         var menu = this.getMenu(dropdown);
@@ -410,19 +489,19 @@ var Dropdown = {
             btn.addEventListener('click', this._getUniqueClickToggleBtnHandler(dropdown));
 
             if (this.isHoverable(dropdown)) {
-                addEventOnce(dropdown, 'mouseover', function (e) {
-                    if (isEventCursorInside(e, dropdown, _this3.UI.getMenu(dropdown))) {
-                        // cursor is inside toggle btn or menu => open menu if required
+                (function () {
+                    var menu = _this3.UI.getMenu(dropdown);
+                    addEventOnce(dropdown, 'mouseover', function (e) {
                         _this3.open(dropdown);
-                    }
-                }, 100);
+                    }, 50);
 
-                addEventOnce(dropdown, 'mouseout', function (e) {
-                    if (!isEventCursorInside(e, dropdown, _this3.UI.getMenu(dropdown))) {
-                        // cursor is outside toggle btn and menu => close menu if required
-                        _this3.close(dropdown);
-                    }
-                }, 500);
+                    addEventOnce(dropdown, 'mouseout', function (e) {
+                        if (!isEventCursorInside(e, btn) && !isEventCursorInside(e, menu)) {
+                            // cursor is outside toggle btn and menu => close menu if required
+                            _this3.close(dropdown);
+                        }
+                    }, 500);
+                })();
             }
         }
     },
@@ -436,7 +515,7 @@ var Dropdown = {
         if (menu) {
             menu.setAttribute('role', 'menu');
         }
-          const menuitems = this.UI.getMenuItems(dropdown);
+         const menuitems = this.UI.getMenuItems(dropdown);
         [].forEach.call(menuitems, menuitem => {
             menuitem.setAttribute('role', 'menuitem');
         })*/
@@ -590,16 +669,6 @@ var AutocompleteUI = Object.assign({}, DropdownUI, {
     },
     getHiddenInput: function getHiddenInput(autocomplete) {
         return autocomplete.querySelector('input[type="hidden"]') || false;
-    },
-    isCustomValueAllowed: function isCustomValueAllowed(autocomplete) {
-        return autocomplete.hasAttribute('custom') || this.Config.allowCustomInput;
-    },
-    getMinChar: function getMinChar(autocomplete) {
-        if (autocomplete.hasAttribute('min')) {
-            return autocomplete.getAttribute('min');
-        } else {
-            return this.Config.minChar;
-        }
     }
 });
 
@@ -611,66 +680,91 @@ var Autocomplete = Object.assign({}, Dropdown, {
     // override methods
 
     close: function close(autocomplete) {
-        if (autocomplete.__bunny_autocomplete_outside) {
-            removeClickOutside(autocomplete, autocomplete.__bunny_autocomplete_outside);
-            delete autocomplete.__bunny_autocomplete_outside;
-        }
+        this._removeEventClickOutside(autocomplete);
+        this._removeEventKeyNavigation(autocomplete);
         Dropdown.close.call(this, autocomplete);
     },
     open: function open(autocomplete) {
-        var _this = this;
-
-        autocomplete.__bunny_autocomplete_outside = onClickOutside(autocomplete, function () {
-            if (!_this.UI.isCustomValueAllowed(autocomplete)) {
-                // custom input not allowed, restore to value before input was focused
-                if (autocomplete.__bunny_autocomplete_initial_value !== undefined) {
-                    _this.UI.getInput(autocomplete).value = autocomplete.__bunny_autocomplete_initial_value;
-                }
-            } else {
-                // custom input is allowed, empty hidden value
-                _this._selectItem(autocomplete, null);
-            }
-        });
+        this._addEventClickOutside(autocomplete);
+        this._addEventKeyNavigation(autocomplete);
         Dropdown.open.call(this, autocomplete);
     },
     _addEvents: function _addEvents(autocomplete) {
-        var _this2 = this;
-
         var input = this.UI.getInput(autocomplete);
-        addEventOnce(input, 'input', function () {
-            if (input.value.length >= _this2.UI.getMinChar(autocomplete)) {
-                _this2.update(autocomplete, input.value);
-            } else {
-                _this2.close(autocomplete);
-                //this.UI.removeMenu();
-            }
-        }, this.Config.delay);
-
-        input.addEventListener('focus', function () {
-            autocomplete.__bunny_autocomplete_initial_value = input.value;
-        });
+        this._addEventInput(autocomplete, input);
+        this._addEventFocus(autocomplete, input);
     },
 
 
     // custom methods
 
-    update: function update(autocomplete, search) {
+    // config methods
+
+    isCustomValueAllowed: function isCustomValueAllowed(autocomplete) {
+        return autocomplete.hasAttribute('custom') || this.Config.allowCustomInput;
+    },
+    getMinChar: function getMinChar(autocomplete) {
+        if (autocomplete.hasAttribute('min')) {
+            return autocomplete.getAttribute('min');
+        } else {
+            return this.Config.minChar;
+        }
+    },
+
+
+    // events
+
+    _addEventInput: function _addEventInput(autocomplete, input) {
+        var _this = this;
+
+        addEventOnce(input, 'input', function () {
+            if (input.value.length >= _this.getMinChar(autocomplete)) {
+                _this.update(autocomplete, input.value);
+            } else {
+                _this.close(autocomplete);
+            }
+        }, this.Config.delay);
+    },
+    _addEventFocus: function _addEventFocus(autocomplete, input) {
+        input.addEventListener('focus', function () {
+            autocomplete.__bunny_autocomplete_initial_value = input.value;
+        });
+    },
+    _addEventClickOutside: function _addEventClickOutside(autocomplete) {
+        var _this2 = this;
+
+        autocomplete.__bunny_autocomplete_outside = onClickOutside(autocomplete, function () {
+            _this2._selectItem(autocomplete, null);
+        });
+    },
+    _addEventKeyNavigation: function _addEventKeyNavigation(autocomplete) {
         var _this3 = this;
 
-        var action = getActionObject(autocomplete);
-        action(search).then(function (data) {
-            if (Object.keys(data).length > 0) {
-                _this3.close(autocomplete);
-                var items = _this3.UI.createMenuItems(data);
-                _this3._addItemEvents(autocomplete, items);
-                _this3.UI.setMenuItems(autocomplete, items);
-                _this3._setARIA(autocomplete);
-                _this3.open(autocomplete);
+        autocomplete.__bunny_autocomplete_keydown = addEventKeyNavigation(this.UI.getInput(autocomplete), this.UI.getMenuItems(autocomplete), function (selectedItem) {
+            if (selectedItem === false) {
+                // canceled
+                _this3.restoreValue(autocomplete);
             } else {
-                _this3.close(autocomplete);
+                _this3._selectItem(autocomplete, selectedItem);
             }
         });
     },
+    _removeEventClickOutside: function _removeEventClickOutside(autocomplete) {
+        if (autocomplete.__bunny_autocomplete_outside) {
+            removeClickOutside(autocomplete, autocomplete.__bunny_autocomplete_outside);
+            delete autocomplete.__bunny_autocomplete_outside;
+        }
+    },
+    _removeEventKeyNavigation: function _removeEventKeyNavigation(autocomplete) {
+        if (autocomplete.__bunny_autocomplete_keydown) {
+            removeEventKeyNavigation(autocomplete, autocomplete.__bunny_autocomplete_keydown);
+            delete autocomplete.__bunny_autocomplete_keydown;
+        }
+    },
+
+
+    // item events
+
     _addItemEvents: function _addItemEvents(autocomplete, items) {
         var _this4 = this;
 
@@ -680,12 +774,52 @@ var Autocomplete = Object.assign({}, Dropdown, {
             });
         });
     },
+
+
+    // public methods
+
+    update: function update(autocomplete, search) {
+        var _this5 = this;
+
+        var action = getActionObject(autocomplete);
+        action(search).then(function (data) {
+            if (Object.keys(data).length > 0) {
+                _this5.close(autocomplete);
+                var items = _this5.UI.createMenuItems(data);
+                _this5._addItemEvents(autocomplete, items);
+                _this5.UI.setMenuItems(autocomplete, items);
+                _this5._setARIA(autocomplete);
+                _this5.open(autocomplete);
+            } else {
+                _this5.close(autocomplete);
+            }
+        });
+    },
+    restoreValue: function restoreValue(autocomplete) {
+        if (autocomplete.__bunny_autocomplete_initial_value !== undefined) {
+            this.UI.getInput(autocomplete).value = autocomplete.__bunny_autocomplete_initial_value;
+        }
+
+        this.close(autocomplete);
+    },
+
+
+    // public event subscription
+
+    onItemSelect: function onItemSelect(autocomplete, callback) {
+        pushCallbackToElement(autocomplete, 'autocomplete', callback);
+    },
+
+
+    // private methods
+
     _updateInputValues: function _updateInputValues(autocomplete, item) {
 
         var input = this.UI.getInput(autocomplete);
 
         if (item !== null) {
             input.value = item.textContent;
+            autocomplete.__bunny_autocomplete_initial_value = item.textContent;
         }
 
         var hiddenInput = this.UI.getHiddenInput(autocomplete);
@@ -693,29 +827,43 @@ var Autocomplete = Object.assign({}, Dropdown, {
             if (item !== null) {
                 hiddenInput.value = item.dataset.value;
             } else {
-                hiddenInput.value = input.value;
+                hiddenInput.value = '';
             }
         }
     },
+
+
+    /**
+     * If item = null, tries to select a custom value;
+     * If custom value not allowed restore initial value (previously selected item or input value attribute otherwise)
+     *
+     * @param {HTMLElement} autocomplete
+     * @param {HTMLElement|null} item
+     * @private
+     */
     _selectItem: function _selectItem(autocomplete) {
-        var _this5 = this;
+        var _this6 = this;
 
-        var item = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+        var item = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
-        this._updateInputValues(autocomplete, item);
+        console.log(item);
 
-        callElementCallbacks(autocomplete, 'autocomplete', function (cb) {
-            if (item === null) {
-                cb(null, _this5.UI.getInput(autocomplete).value);
-            } else {
-                cb(item.dataset.value, item.textContent, item);
-            }
-        });
+        if (item === null && !this.isCustomValueAllowed(autocomplete)) {
+            // custom input not allowed, restore to value before input was focused
+            this.restoreValue(autocomplete);
+        } else {
+            this._updateInputValues(autocomplete, item);
+
+            callElementCallbacks(autocomplete, 'autocomplete', function (cb) {
+                if (item === null) {
+                    cb(null, _this6.UI.getInput(autocomplete).value);
+                } else {
+                    cb(item.dataset.value, item.textContent, item);
+                }
+            });
+        }
 
         this.close(autocomplete);
-    },
-    onItemSelect: function onItemSelect(autocomplete, callback) {
-        pushCallbackToElement(autocomplete, 'autocomplete', callback);
     }
 });
 
@@ -761,6 +909,6 @@ Autocomplete.onItemSelect(document.getElementsByTagName('autocomplete')[0], func
     if (id !== null) {
         document.getElementById('current').textContent = id;
     } else {
-        document.getElementById('current').textContent = 'CUSTOM ' + label;
+        document.getElementById('current').textContent = '';
     }
 });

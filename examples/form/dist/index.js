@@ -1,11 +1,3 @@
-var babelHelpers = {};
-babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-};
-babelHelpers;
-
 /**
  * Hack in support for Function.name for browsers that don't support it.
  * IE, I'm looking at you.
@@ -43,6 +35,385 @@ babelHelpers;
 
     window.CustomEvent = CustomEvent;
 })();
+
+var babelHelpers = {};
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+};
+
+var jsx = function () {
+  var REACT_ELEMENT_TYPE = typeof Symbol === "function" && Symbol.for && Symbol.for("react.element") || 0xeac7;
+  return function createRawReactElement(type, props, key, children) {
+    var defaultProps = type && type.defaultProps;
+    var childrenLength = arguments.length - 3;
+
+    if (!props && childrenLength !== 0) {
+      props = {};
+    }
+
+    if (props && defaultProps) {
+      for (var propName in defaultProps) {
+        if (props[propName] === void 0) {
+          props[propName] = defaultProps[propName];
+        }
+      }
+    } else if (!props) {
+      props = defaultProps || {};
+    }
+
+    if (childrenLength === 1) {
+      props.children = children;
+    } else if (childrenLength > 1) {
+      var childArray = Array(childrenLength);
+
+      for (var i = 0; i < childrenLength; i++) {
+        childArray[i] = arguments[i + 3];
+      }
+
+      props.children = childArray;
+    }
+
+    return {
+      $$typeof: REACT_ELEMENT_TYPE,
+      type: type,
+      key: key === undefined ? null : '' + key,
+      ref: null,
+      props: props,
+      _owner: null
+    };
+  };
+}();
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            return step("next", value);
+          }, function (err) {
+            return step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
+    });
+  };
+};
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+var defineEnumerableProperties = function (obj, descs) {
+  for (var key in descs) {
+    var desc = descs[key];
+    desc.configurable = desc.enumerable = true;
+    if ("value" in desc) desc.writable = true;
+    Object.defineProperty(obj, key, desc);
+  }
+
+  return obj;
+};
+
+var defaults = function (obj, defaults) {
+  var keys = Object.getOwnPropertyNames(defaults);
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var value = Object.getOwnPropertyDescriptor(defaults, key);
+
+    if (value && value.configurable && obj[key] === undefined) {
+      Object.defineProperty(obj, key, value);
+    }
+  }
+
+  return obj;
+};
+
+var defineProperty = function (obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var get$1 = function get$1(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get$1(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+var _instanceof = function (left, right) {
+  if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) {
+    return right[Symbol.hasInstance](left);
+  } else {
+    return left instanceof right;
+  }
+};
+
+var interopRequireDefault = function (obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
+};
+
+var interopRequireWildcard = function (obj) {
+  if (obj && obj.__esModule) {
+    return obj;
+  } else {
+    var newObj = {};
+
+    if (obj != null) {
+      for (var key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+      }
+    }
+
+    newObj.default = obj;
+    return newObj;
+  }
+};
+
+var newArrowCheck = function (innerThis, boundThis) {
+  if (innerThis !== boundThis) {
+    throw new TypeError("Cannot instantiate an arrow function");
+  }
+};
+
+var objectDestructuringEmpty = function (obj) {
+  if (obj == null) throw new TypeError("Cannot destructure undefined");
+};
+
+var objectWithoutProperties = function (obj, keys) {
+  var target = {};
+
+  for (var i in obj) {
+    if (keys.indexOf(i) >= 0) continue;
+    if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
+    target[i] = obj[i];
+  }
+
+  return target;
+};
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+var selfGlobal = typeof global === "undefined" ? self : global;
+
+var set$1 = function set$1(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set$1(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
+  }
+
+  return value;
+};
+
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
+var slicedToArrayLoose = function (arr, i) {
+  if (Array.isArray(arr)) {
+    return arr;
+  } else if (Symbol.iterator in Object(arr)) {
+    var _arr = [];
+
+    for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+      _arr.push(_step.value);
+
+      if (i && _arr.length === i) break;
+    }
+
+    return _arr;
+  } else {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  }
+};
+
+var taggedTemplateLiteral = function (strings, raw) {
+  return Object.freeze(Object.defineProperties(strings, {
+    raw: {
+      value: Object.freeze(raw)
+    }
+  }));
+};
+
+var taggedTemplateLiteralLoose = function (strings, raw) {
+  strings.raw = raw;
+  return strings;
+};
+
+var temporalRef = function (val, name, undef) {
+  if (val === undef) {
+    throw new ReferenceError(name + " is not defined - temporal dead zone");
+  } else {
+    return val;
+  }
+};
+
+var temporalUndefined = {};
+
+var toArray = function (arr) {
+  return Array.isArray(arr) ? arr : Array.from(arr);
+};
+
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
+babelHelpers;
 
 (function (global) {
 
@@ -167,7 +538,7 @@ babelHelpers;
     try {
       if (promise === value) throw new TypeError('A promises callback cannot return that same promise.');
 
-      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object')) {
+      if (value && (typeof value === 'function' || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object')) {
         var then = value.then; // then should be retrived only once
 
         if (typeof then === 'function') {
@@ -326,7 +697,7 @@ babelHelpers;
   Promise.resolve = function (value) {
     var Class = this;
 
-    if (value && (typeof value === 'undefined' ? 'undefined' : babelHelpers.typeof(value)) === 'object' && value.constructor === Class) return value;
+    if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.constructor === Class) return value;
 
     return new Class(function (resolve) {
       resolve(value);
@@ -340,7 +711,25 @@ babelHelpers;
       reject(reason);
     });
   };
-})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : this);
+})(typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : typeof self != 'undefined' ? self : undefined);
+
+var nonEnumKeys = function nonEnumKeys(object) {
+    var target = object;
+    var enum_and_nonenum = Object.getOwnPropertyNames(target);
+    var enum_only = Object.keys(target);
+    var nonenum_only = enum_and_nonenum.filter(function (key) {
+        var indexInEnum = enum_only.indexOf(key);
+        if (indexInEnum == -1) {
+            // not found in enum_only keys mean the key is non-enumerable,
+            // so return true so we keep this in the filter
+            return true;
+        } else {
+            return false;
+        }
+    });
+
+    return nonenum_only;
+}
 
 /**
  * FormData wrapper for browsers supporting only FormData constructor and append()
@@ -483,7 +872,7 @@ BunnyFormData.prototype.getRadioLists = function getRadioLists() {
 
 BunnyFormData.prototype.getInputType = function getInputType(name_or_el) {
     var input = null;
-    if ((typeof name_or_el === 'undefined' ? 'undefined' : babelHelpers.typeof(name_or_el)) === 'object') {
+    if ((typeof name_or_el === 'undefined' ? 'undefined' : _typeof(name_or_el)) === 'object') {
         input = name_or_el;
     } else {
         input = this.getInput(name_or_el);
@@ -569,7 +958,7 @@ BunnyFormData.prototype.isArray = function isArray(input_name) {
 };
 
 BunnyFormData.prototype.isNodeList = function isNodeList(input_name_or_el) {
-    var input = (typeof input_name_or_el === 'undefined' ? 'undefined' : babelHelpers.typeof(input_name_or_el)) === 'object' ? input_name_or_el : this.getInput(input_name_or_el);
+    var input = (typeof input_name_or_el === 'undefined' ? 'undefined' : _typeof(input_name_or_el)) === 'object' ? input_name_or_el : this.getInput(input_name_or_el);
     // RadioNodeList is undefined in IE, Edge, it uses HTMLCollection instead
     return input instanceof (typeof RadioNodeList !== 'undefined' ? RadioNodeList : HTMLCollection);
 };
@@ -628,7 +1017,7 @@ BunnyFormData.prototype.buildFormDataObject = function buildFormDataObject() {
 BunnyFormData.prototype.remove = function remove(input_name) {
     var _this2 = this;
 
-    var array_value = arguments.length <= 1 || arguments[1] === undefined ? undefined : arguments[1];
+    var array_value = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
 
     if (array_value !== undefined) {
         // remove element from array
@@ -650,6 +1039,8 @@ BunnyFormData.prototype.remove = function remove(input_name) {
         delete this._collection[input_name];
     }
 };
+
+var BunnyFormData = BunnyFormData;
 
 /**
  * BunnyJS Form component
@@ -804,7 +1195,7 @@ var Form$1 = Form = {
     // without 4th argument - getter
     // called from .value property observer
     _parseFormControl: function _parseFormControl(form_id, form_control) {
-        var value = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
+        var value = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
 
         var type = this._collection[form_id].getInputType(form_control);
 
@@ -905,8 +1296,8 @@ var Form$1 = Form = {
                         if (radio_input.getAttribute('value') === value) {
                             if (!_this3._valueSetFromEvent) {
                                 console.log('firing radio event');
-                                var event = new CustomEvent('change');
-                                radio_input.dispatchEvent(event);
+                                var _event = new CustomEvent('change');
+                                radio_input.dispatchEvent(_event);
                                 break;
                             }
                         }
@@ -967,8 +1358,8 @@ var Form$1 = Form = {
                 var inputs = node.getElementsByTagName('input');
                 if (inputs.length > 0) {
                     for (var k2 = 0; k2 < inputs.length; k2++) {
-                        var input = inputs[k2];
-                        this._collection[form_id].remove(input.name, input.value);
+                        var _input = inputs[k2];
+                        this._collection[form_id].remove(_input.name, _input.value);
                     }
                 }
             }
@@ -1131,7 +1522,7 @@ var Form$1 = Form = {
         formData.append(array_name, value);
     },
     remove: function remove(form_id, array_name) {
-        var value = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
+        var value = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
 
         this._checkInit(form_id);
         /*const formData = this._collection[form_id];
@@ -1229,19 +1620,19 @@ var Form$1 = Form = {
         this._checkInit(form_id);
         return document.querySelectorAll(`[data-mirror="${form_id}"]`);
     },
-     _getCalcMirrorFunction(calc_mirror_el) {
+      _getCalcMirrorFunction(calc_mirror_el) {
         return calc_mirror_el.getAttribute('data-mirror-function');
     },
-     _calcMirror(form_id, calc_mirror, calc_mirror_function) {
+      _calcMirror(form_id, calc_mirror, calc_mirror_function) {
         // parse function
         const input_names = calc_mirror_function.split('*');
         console.log(input_names);
         // get arguments (inputs)
         const input1 = document.forms[form_id].elements[input_names[0]];
         const input2 = document.forms[form_id].elements[input_names[1]];
-         const value1 = (input1.value === '') ? 0 : input1.value;
+          const value1 = (input1.value === '') ? 0 : input1.value;
         const value2 = (input2.value === '') ? 0 : input2.value;
-         // update collection
+          // update collection
         if (this._calcMirrorCollection[form_id] === undefined) {
             this._calcMirrorCollection[form_id] = {};
         }
@@ -1253,9 +1644,9 @@ var Form$1 = Form = {
         }
         this._calcMirrorCollection[form_id][input1.name][input2.name] = calc_mirror;
         this._calcMirrorCollection[form_id][input2.name][input1.name] = calc_mirror;
-         // set initial value
+          // set initial value
         calc_mirror.textContent = value1 * value2;
-         // set new value when input value changed
+          // set new value when input value changed
         input1.addEventListener('change', () => {
             calc_mirror.textContent = input1.value * document.forms[form_id].elements[input2.name].value;
         });
@@ -1263,7 +1654,7 @@ var Form$1 = Form = {
             calc_mirror.textContent = input2.value * document.forms[form_id].elements[input1.name].value;
         });
     },
-     calcMirrorAll(form_id) {
+      calcMirrorAll(form_id) {
         this._checkInit(form_id);
         const calc_mirrors = this._getCalcMirrors(form_id);
         for(let calc_mirror of calc_mirrors) {
@@ -1308,9 +1699,9 @@ var Form$1 = Form = {
      */
 
     submit: function submit(form_id) {
-        var url = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var method = arguments.length <= 2 || arguments[2] === undefined ? 'POST' : arguments[2];
-        var headers = arguments.length <= 3 || arguments[3] === undefined ? { 'X-Requested-With': 'XMLHttpRequest' } : arguments[3];
+        var url = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var method = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'POST';
+        var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { 'X-Requested-With': 'XMLHttpRequest' };
 
         this._checkInit(form_id);
         var request = new XMLHttpRequest();
@@ -1353,7 +1744,7 @@ var BunnyFile = {
      */
 
     download: function download(URL) {
-        var convert_to_blob = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+        var convert_to_blob = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
         var request = new XMLHttpRequest();
         var p = new Promise(function (success, fail) {
@@ -1517,7 +1908,7 @@ var BunnyImage = {
         return this._toImagePromise(URL, true);
     },
     _toImagePromise: function _toImagePromise(src) {
-        var crossOrigin = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+        var crossOrigin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
         var img = new Image();
         var p = new Promise(function (ok, fail) {
@@ -1551,8 +1942,8 @@ var BunnyImage = {
     // SECTION:: create different sources from Image object
 
     imageToCanvas: function imageToCanvas(img) {
-        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var width = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var height = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
         if (!img.complete) {
             throw new Error('Can not create canvas from Image. Image is not loaded yet.');
@@ -1579,8 +1970,8 @@ var BunnyImage = {
      * @returns {string}
      */
     imageToBase64: function imageToBase64(img) {
-        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var width = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var height = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
         return this.imageToCanvas(img, width, height).toDataURL(this.IMG_CONVERT_TYPE, this.IMG_QUALITY);
     },
@@ -1594,8 +1985,8 @@ var BunnyImage = {
      * @returns {Blob}
      */
     imageToBlob: function imageToBlob(img) {
-        var width = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-        var height = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+        var width = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var height = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
         return BunnyFile.base64ToBlob(this.imageToBase64(img, width, height));
     },
