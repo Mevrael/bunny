@@ -53,7 +53,7 @@
   },
   "homepage": "https://github.com/Mevrael/bunny#readme",
   "devDependencies": {
-    "assets-builder": "^0.0.2"
+    "assets-builder": "^0.0.3"
   },
   "dependencies": {
     "es6-promise-polyfill": "^1.2.0"
