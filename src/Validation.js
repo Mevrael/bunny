@@ -771,3 +771,12 @@ export const Validation = {
 
 
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    [].forEach.call(document.forms, form => {
+        if (form.getAttribute('validator') === 'bunny') {
+            const inline = form.hasAttribute('validator-inline');
+            Validation.init(form, inline);
+        }
+    });
+});

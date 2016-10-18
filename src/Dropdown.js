@@ -143,7 +143,7 @@ export const DropdownUI = {
         if (this.Config.useTagNames) {
             return document.getElementsByTagName(this.Config.tagName);
         }
-        return document.querySelectorAll(`div.${this.Config.className}`);
+        return document.querySelectorAll(`div.${this.Config.className}, li.${this.Config.className}`);
     },
 
     show(dropdown) {
