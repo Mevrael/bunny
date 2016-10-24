@@ -118,7 +118,6 @@ var Ajax = {
      *
      * @returns {Object}
      */
-
     create: function create(method, url, data, on_success) {
         var on_error = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
         var headers = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};

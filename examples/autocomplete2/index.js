@@ -1,5 +1,9 @@
 
+import '../../src/polyfills/Promise';
+
 import { Autocomplete } from '../../src/Autocomplete';
+
+import '../../src/CustomSelect';
 
 import './CountryModel';
 
