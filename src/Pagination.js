@@ -46,7 +46,7 @@ export const Pagination = {
         const items = this.getItems(pagination);
         [].forEach.call(items, item => {
             //if (!this.isItemActive(item) && !this.isItemDisabled(item)) {
-                this._attachSingleEventHandler(item);
+            this._attachSingleEventHandler(item);
             //}
         });
     },
@@ -288,11 +288,10 @@ export const Pagination = {
     },
 
     redraw(pagination) {
+        this.removeItems(pagination);
         if (!this.hasPages(pagination)) {
             return false;
         }
-
-        this.removeItems(pagination);
 
         const isOuter = this.isOuter(pagination);
         const limit = this.getLimit(pagination);
@@ -348,12 +347,3 @@ export const Pagination = {
         this._attachEventHandlers(pagination);
     },
 };
-
-/*
-updateStats: function() {
-    document.getElementById(this._id + '_stats_count').innerHTML = this.count;
-    document.getElementById(this._id + '_stats_from').innerHTML = this.from;
-    document.getElementById(this._id + '_stats_to').innerHTML = this.to;
-    document.getElementById(this._id + '_stats_cur_page').innerHTML = this.currentPage;
-    document.getElementById(this._id + '_stats_last_page').innerHTML = this.lastPage;
-}*/

@@ -3,6 +3,9 @@ import { Ajax } from './bunny.ajax';
 import { Template } from './bunny.template';
 import { Pagination } from './Pagination';
 import { ready } from './utils/DOM/ready';
+import { addEventOnce } from './utils/DOM/events';
+import { BunnyURL } from './url';
+import { BunnyElement } from './BunnyElement';
 
 export const DataTableConfig = {
     ajax: Ajax,
@@ -19,6 +22,8 @@ export const DataTableConfig = {
     perPage: 15,
     paginationLimit: 7,
 
+    loadingImg: '/img/loading.svg',
+
     ajaxHeaders: []
 };
 
@@ -29,15 +34,39 @@ export const DataTable = {
     _collection: [],
 
     init(datatable) {
+        datatable.__bunny_loadingIcon = this.addLoadingIcon(datatable);
         this._collection.push(datatable);
-        this.changePage(datatable, 1);
+        let page = BunnyURL.getParam('page');
+        if (page === undefined) {
+            page = 1;
+        }
+
+        this.changePage(datatable, page, this.getSearchDataFromURL(datatable));
+        this.addEvents(datatable);
     },
 
-    getPageUrl(datatable, page) {
-        return this._config.pagination.addPageParamToUrl(this.getAjaxUrl(datatable), page);
+    addEvents(datatable) {
+        const searchInput = this.getSearchInput(datatable);
+        if (searchInput) {
+            addEventOnce(searchInput, 'input', () => {
+                this.search(datatable, searchInput.value);
+            });
+        }
     },
 
-    getPageData(datatable, url) {
+    getSearchInput(datatable, name = 'search') {
+        return datatable.querySelector('[name="' + name + '"]') || false;
+    },
+
+    getDataUrl(datatable, page, urlParams = {}) {
+        let url = this._config.pagination.addPageParamToUrl(this.getAjaxUrl(datatable), page);
+        for (let k in urlParams) {
+            url += '&' + k + '=' + urlParams[k];
+        }
+        return url;
+    },
+
+    fetchData(datatable, url) {
         return new Promise(callback => {
             this._config.ajax.get(url, data => {
                 data = JSON.parse(data);
@@ -123,8 +152,50 @@ export const DataTable = {
         }
     },
 
-    changePage(datatable, page) {
-        this.getPageData(datatable, this.getPageUrl(datatable, page)).then(data => {
+    changePage(datatable, page, data = null) {
+        if (data === null) {
+            data = this.getSearchData(datatable);
+        }
+        this.update(datatable, this.getDataUrl(datatable, page, data));
+    },
+
+    getSearchData(datatable) {
+        const searchInput = this.getSearchInput(datatable);
+        const data = {};
+        if (searchInput && searchInput.value.length > 0) {
+            data.search = searchInput.value;
+        }
+        return data;
+    },
+
+    getSearchDataFromURL(datatable, url = window.location.href) {
+        const urlParams = BunnyURL.getParams(url);
+        let data = {};
+        for (let k in urlParams) {
+            if (k !== 'page') {
+                const input = this.getSearchInput(datatable, k);
+                if (input) {
+                    input.value = urlParams[k];
+                    data[k] = urlParams[k];
+                }
+            }
+        }
+        return data;
+    },
+
+    search(datatable, text) {
+        this.update(datatable, this.getDataUrl(datatable, 1, {search: text}));
+    },
+
+    updateURL(datatable, url) {
+        window.history.pushState('', '', url);
+    },
+
+    update(datatable, url) {
+        this.getTable(datatable).classList.remove('in');
+        datatable.__bunny_loadingIcon = this.addLoadingIcon(datatable);
+        BunnyElement.scrollTo(datatable, 500, -100);
+        this.fetchData(datatable, url).then(data => {
             const pg = this.getPagination(datatable);
             const Pagination = this._config.pagination;
             Pagination.initOrUpdate(pg, data);
@@ -136,6 +207,9 @@ export const DataTable = {
             this.removeRows(datatable);
             this.insertRows(datatable, data.data);
             this.callHandlers(datatable, data);
+            this.getTable(datatable).classList.add('in');
+            this.updateURL(datatable, url);
+            this.removeLoadingIcon(datatable);
         });
     },
 
@@ -144,6 +218,25 @@ export const DataTable = {
             datatable.callbacks = [];
         }
         datatable.callbacks.push(callback);
+    },
+
+    addLoadingIcon(datatable) {
+        if (datatable.__bunny_loadingIcon !== undefined) {
+            return datatable.__bunny_loadingIcon;
+        }
+        const img = new Image;
+        img.src = this._config.loadingImg;
+        img.style.opacity = 0.5;
+        img.style.position = 'absolute';
+        img.style.top = '30%';
+        img.style.left = '50%';
+        datatable.appendChild(img);
+        return img;
+    },
+
+    removeLoadingIcon(datatable) {
+        datatable.removeChild(datatable.__bunny_loadingIcon);
+        delete datatable.__bunny_loadingIcon;
     }
 
 };

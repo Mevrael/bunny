@@ -34,7 +34,25 @@ export const BunnyURL = {
      */
     getQueryString(url = window.location.href) {
         const pos = url.indexOf('?');
+        let hashPos = url.indexOf('#');
+        if (hashPos > -1) {
+            return pos > -1 ? decodeURI(url.slice(pos + 1, hashPos)) : undefined;
+        }
         return pos > -1 ? decodeURI(url.slice(pos + 1)) : undefined;
+    },
+
+
+
+    getHash(url = window.location.href) {
+        const pos = url.indexOf('#');
+        return pos > -1 ? decodeURI(url.slice(pos + 1)) : undefined;
+    },
+
+
+
+    getURLWithoutQueryString(url = window.location.href) {
+        const pos = url.indexOf('?');
+        return pos > -1 ? decodeURI(url.slice(0, pos)) : url;
     },
 
 
@@ -76,6 +94,48 @@ export const BunnyURL = {
      */
     hasParam(param, url = window.location.href) {
         return this.getParam(param, url) !== undefined;
+    },
+
+    setParam(param, value, url = window.location.href) {
+        const params = this.getParams(url);
+        params[param] = value;
+        return this.replaceParams(params, url);
+    },
+
+    generateQueryString(params) {
+        let i = 0;
+        let queryStr = '';
+        for(let k in params) {
+            queryStr += i === 0 ? '?' : '&';
+            queryStr += k + '=' + params[k];
+            i++;
+        }
+        return queryStr;
+    },
+
+    replaceParams(params, url = window.location.href) {
+        let newUrl = this.getURLWithoutQueryString(url) + this.generateQueryString(params);
+        const hash = this.getHash(url);
+        if (hash !== undefined) {
+            newUrl += '#' + hash;
+        }
+        return newUrl;
+    },
+
+    setParams(params, url = window.location.href) {
+        const urlParams = this.getParams(url);
+        for (let k in params) {
+            urlParams[k] = params[k];
+        }
+        return this.replaceParams(urlParams, url);
+    },
+
+    removeParam(param, url = window.location.href) {
+        const params = this.getParams(url);
+        if (params[param] !== undefined) {
+            delete params[param];
+        }
+        return this.replaceParams(params, url);
     }
 
 };
