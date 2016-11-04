@@ -111,7 +111,7 @@ export var TabList = {
 
         // remove active state from old tab panel
         if (active_tab_panel.classList.contains('fade')) {
-            active_tab_panel.classList.remove('in');
+            active_tab_panel.classList.remove('active');
             setTimeout(function() {
                 active_tab_panel.setAttribute('aria-expanded', 'false');
                 active_tab_panel.classList.remove('active');
@@ -126,7 +126,7 @@ export var TabList = {
             setTimeout(function() {
                 tab_panel.setAttribute('aria-expanded', 'true');
                 tab_panel.classList.add('active');
-                tab_panel.classList.add('in');
+                //tab_panel.classList.add('in');
             }, 150);
         } else {
             tab_panel.setAttribute('aria-expanded', 'true');

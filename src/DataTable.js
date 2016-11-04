@@ -192,7 +192,7 @@ export const DataTable = {
     },
 
     update(datatable, url) {
-        this.getTable(datatable).classList.remove('in');
+        this.getTable(datatable).classList.remove('active');
         datatable.__bunny_loadingIcon = this.addLoadingIcon(datatable);
         BunnyElement.scrollTo(datatable, 500, -100);
         this.fetchData(datatable, url).then(data => {
@@ -207,7 +207,7 @@ export const DataTable = {
             this.removeRows(datatable);
             this.insertRows(datatable, data.data);
             this.callHandlers(datatable, data);
-            this.getTable(datatable).classList.add('in');
+            this.getTable(datatable).classList.add('active');
             this.updateURL(datatable, url);
             this.removeLoadingIcon(datatable);
         });

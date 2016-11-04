@@ -36,7 +36,7 @@ export const DropdownConfig = {
 
     additionalClassNameMenu: 'w-100',
 
-    classNameOpened: 'open',
+    classNameOpened: 'active',
     applyOpenedClassToDropdown: true // false - apply to menu
 
 };

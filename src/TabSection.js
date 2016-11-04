@@ -9,7 +9,7 @@ export const TabSectionConfig = {
     animate: true,
     animationDelay: 0.15,
     classFade: 'fade',
-    classFadeIn: 'in'
+    classFadeIn: 'active'
 
 };
 
