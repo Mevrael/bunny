@@ -7,7 +7,7 @@ export var AutocompleteDecorator = {
 
             dropdownClass: ['dropdown-menu', 'w-100'],
             dropdownItemClass: 'dropdown-item',
-            showClass: 'open'
+            showClass: 'active'
 
         }
     },
