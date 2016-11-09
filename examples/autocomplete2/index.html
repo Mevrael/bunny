@@ -20,7 +20,7 @@
             and <a href="https://github.com/Mevrael/bunny/blob/master/examples/autocomplete/index.js">JS source</a>
         </p>
 
-        <div class="dropdown" dropdown-hover>
+        <div id="dropdown1" class="dropdown" dropdown-hoverr>
             <button class="btn dropdown-toggle" type="button">Menu</button>
             <div class="dropdown-menu">
                 <button class="dropdown-item" type="button">Item #1</button>
@@ -29,14 +29,27 @@
             </div>
         </div>
 
-        <customselect class="dropdown" data-name="type_sid">
-            <toggle class="btn dropdown-toggle" type="button">Select type</toggle>
-            <menu class="dropdown-menu">
-                <button class="dropdown-item" type="button" data-value="1">One</button>
-                <button class="dropdown-item" type="button" data-value="2">Two</button>
-                <button class="dropdown-item" type="button" data-value="3">Three</button>
+        <div class="m-b-2"></div>
+
+        <select>
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+        </select>
+
+        <fieldset class="form-group">
+            <label>Custom select</label>
+
+        <customselect id="customselect1" class="dropdown" data-name="type_sid">
+            <button class="form-control dropdown-toggle" type="button">Select type</button>
+            <menu class="dropdown-menu w-100">
+                <button class="dropdown-item" type="button" data-value="1" data-class="red">One</button>
+                <button class="dropdown-item" type="button" data-value="2" data-class="green">Two</button>
+                <button class="dropdown-item" type="button" data-value="3" data-class="blue">Three</button>
             </menu>
         </customselect>
+
+        </fieldset>
 
         <!--<h1>BunnyJS Autocomplete 2 example</h1>-->
 
@@ -71,6 +84,19 @@
 <style>
     autocomplete {
         display: block;
+    }
+
+    customselect {
+        display: block;
+    }
+
+    .dropdown-toggle.form-control {
+        text-align: left;
+    }
+
+    .dropdown-toggle.form-control:after {
+        float: right;
+        margin-top: 0.5rem;
     }
 </style>
 

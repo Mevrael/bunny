@@ -1,15 +1,5 @@
 
 import { Dropdown, DropdownUI, DropdownConfig } from './Dropdown';
-import {
-  addEventOnce,
-  onClickOutside,
-  removeClickOutside,
-  addEventKeyNavigation,
-  removeEventKeyNavigation
-} from './utils/DOM/events';
-import { getActionObject, pushCallbackToElement, callElementCallbacks } from './utils/core';
-
-
 
 export const CustomSelectConfig = Object.assign({}, DropdownConfig, {
 
@@ -19,8 +9,6 @@ export const CustomSelectConfig = Object.assign({}, DropdownConfig, {
   tagName: 'customselect',
 
 });
-
-
 
 export const CustomSelectUI = Object.assign({}, DropdownUI, {
 
@@ -126,8 +114,6 @@ export const CustomSelectUI = Object.assign({}, DropdownUI, {
 
 });
 
-
-
 export const CustomSelect = Object.assign({}, Dropdown, {
 
   UI: CustomSelectUI,
@@ -171,11 +157,8 @@ export const CustomSelect = Object.assign({}, Dropdown, {
   },
 
   _addCustomSelectEvents(customSelect) {
-    const items = this.UI.getMenuItems(customSelect);
-    [].forEach.call(items, item => {
-      item.addEventListener('click', (e) => {
-        this.select(customSelect, item.dataset.value);
-      });
+    this.onItemSelect(customSelect, (item) => {
+      this.select(customSelect, item.dataset.value);
     });
   },
 

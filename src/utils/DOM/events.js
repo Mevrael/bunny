@@ -161,14 +161,23 @@ export function removeClickOutside(element, callback) {
   }
 }
 
-export function addEventKeyNavigation(element, items, itemSelectCallback, activeClass = 'active') {
+export function addEventKeyNavigation(element, items, itemSelectCallback, itemSwitchCallback = null, activeClass = 'active') {
 
   let currentItemIndex = null;
+  for (let k = 0; k < items.length; k++) {
+    if (items[k].hasAttribute('aria-selected')) {
+      currentItemIndex = k;
+      break;
+    }
+  }
 
   const _itemAdd = () => {
     items[currentItemIndex].classList.add(activeClass);
     items[currentItemIndex].setAttribute('aria-selected', 'true');
     items[currentItemIndex].scrollIntoView(false);
+    if (itemSwitchCallback !== null) {
+      itemSwitchCallback(items[currentItemIndex]);
+    }
   };
 
   const _itemRemove = () => {

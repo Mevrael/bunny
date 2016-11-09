@@ -35,8 +35,30 @@ export function pushCallbackToElement(element, namespace, callback) {
 export function callElementCallbacks(element, namespace, cb) {
     const callbacks = element[`__bunny_${namespace}_callbacks`];
     if (callbacks !== undefined) {
-        callbacks.forEach(callback => {
-            cb(callback);
-        })
+
+      // process each promise in direct order
+      // if promise returns false, do not execute further promises
+      const checkPromise = index => {
+        const res = cb(callbacks[index]); // actually calling callback
+        if (res instanceof Promise) {
+          res.then(cbRes => {
+            if (cbRes !== false) {
+              // keep going
+              if (index > 0) {
+                checkPromise(index-1);
+              }
+            }
+          })
+        } else {
+          if (res !== false) {
+            // keep going
+            if (index > 0) {
+              checkPromise(index-1);
+            }
+          }
+        }
+      };
+
+      checkPromise(callbacks.length - 1);
     }
 }
