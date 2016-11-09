@@ -161,6 +161,7 @@ export var AutocompleteController = {
                     }
                 }
             } else if (c === 13) { // Enter
+                e.preventDefault();
                 self.callCustomItemSelectHandlers(container_id);
             }
         });
