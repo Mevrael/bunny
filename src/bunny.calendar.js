@@ -338,7 +338,7 @@ export var CalendarController = {
 
     attachMonthSelectEvent: function(calendar_id) {
         Calendar._calendars[calendar_id].headerMonthSelect.addEventListener('change', function() {
-            Calendar.changeMonth(calendar_id, Calendar._calendars[calendar_id].displayedYear, this.value);
+            Calendar.changeMonth(calendar_id, Calendar._calendars[calendar_id].displayedYear, +this.value);
         });
     },
 
