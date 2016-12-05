@@ -265,7 +265,12 @@ export const Pagination = {
     },
 
     addPageParamToUrl(url, page) {
-        return url + '?' + this._config.paramPage + '=' + page;
+        if (t.indexOf('?')!=-1) {
+            var paramsep = '&';
+        } else {
+            var paramsep = '?';
+        }
+        return url + paramsep + this._config.paramPage + '=' + page;
     },
 
     getPageFromUrl(url) {
