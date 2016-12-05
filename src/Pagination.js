@@ -265,7 +265,7 @@ export const Pagination = {
     },
 
     addPageParamToUrl(url, page) {
-        if (t.indexOf('?')!=-1) {
+        if (url.indexOf('?')!=-1) {
             var paramsep = '&';
         } else {
             var paramsep = '?';
