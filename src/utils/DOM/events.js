@@ -1,5 +1,6 @@
 
 import './../../constants/keycodes';
+//import {BunnyElement} from "../../BunnyElement";
 
 /**
  * Adds event listener to element and stores a function in this element's custom property
@@ -161,7 +162,21 @@ export function removeClickOutside(element, callback) {
   }
 }
 
-export function addEventKeyNavigation(element, items, itemSelectCallback, itemSwitchCallback = null, activeClass = 'active') {
+/**
+ * Adds up, down, esc, enter keypress event on 'element' to traverse though 'items'
+ *
+ * @param {HTMLElement} element
+ * @param {HTMLCollection|NodeList} items
+ * @param {function} itemSelectCallback
+ *   callback(null) if Enter was pressed and no item was selected (for example custom value entered)
+ *   callback(false) if Esc was pressed (canceled)
+ *   callback({HTMLElement} item) - selected item on Enter
+ * @param {function} itemSwitchCallback = null
+ *   callback({HTMLElement} item) - new item on arrow up/down
+ *
+ * @returns {function(*)}
+ */
+export function addEventKeyNavigation(element, items, itemSelectCallback, itemSwitchCallback = null) {
 
   let currentItemIndex = null;
   for (let k = 0; k < items.length; k++) {
@@ -171,18 +186,29 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
     }
   }
 
+  /*let currentActiveItems = [];
+  for (let k = 0; k < items.length; k++) {
+    if (items[k].classList.contains(activeClass)) {
+      currentActiveItems.push(items[k]);
+    }
+  }*/
+
   const _itemAdd = () => {
-    items[currentItemIndex].classList.add(activeClass);
-    items[currentItemIndex].setAttribute('aria-selected', 'true');
-    items[currentItemIndex].scrollIntoView(false);
+    items[currentItemIndex].focus();
+    //items[currentItemIndex].classList.add(activeClass);
+    //items[currentItemIndex].setAttribute('aria-selected', 'true');
+    /*if (!BunnyElement.isInViewport(items[currentItemIndex])) {
+      BunnyElement.scrollTo(items[currentItemIndex], 400, -200);
+    }*/
+    //items[currentItemIndex].scrollIntoView(false);
     if (itemSwitchCallback !== null) {
       itemSwitchCallback(items[currentItemIndex]);
     }
   };
 
   const _itemRemove = () => {
-    items[currentItemIndex].classList.remove(activeClass);
-    items[currentItemIndex].removeAttribute('aria-selected');
+    //items[currentItemIndex].classList.remove(activeClass);
+    //items[currentItemIndex].removeAttribute('aria-selected');
   };
 
   const handler = (e) => {
@@ -195,15 +221,25 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
       if (currentItemIndex !== null) {
         itemSelectCallback(items[currentItemIndex]);
       } else {
-        // pick first item from list
-        itemSelectCallback(items[0]);
+        itemSelectCallback(null);
       }
 
     } else if (c === KEY_ESCAPE) {
       e.preventDefault();
+      /*for (let k = 0; k < items.length; k++) {
+        if (currentActiveItems.indexOf(items[k]) === -1) {
+          // remove active state
+          items[k].classList.remove(activeClass);
+          items[k].removeAttribute('aria-selected');
+        } else {
+          // set active state
+          items[k].classList.add(activeClass);
+          items[k].setAttribute('aria-selected', 'true');
+        }
+      }*/
       itemSelectCallback(false);
 
-    } else if (c === KEY_ARROW_UP) {
+    } else if (c === KEY_ARROW_UP || c === KEY_ARROW_LEFT) {
       e.preventDefault();
       if (currentItemIndex !== null && currentItemIndex > 0) {
         _itemRemove();
@@ -211,7 +247,7 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
         _itemAdd();
       }
 
-    } else if (c === KEY_ARROW_DOWN) {
+    } else if (c === KEY_ARROW_DOWN || c === KEY_ARROW_RIGHT) {
       e.preventDefault();
       if (currentItemIndex === null) {
         currentItemIndex = 0;

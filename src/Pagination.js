@@ -348,12 +348,3 @@ export const Pagination = {
         this._attachEventHandlers(pagination);
     },
 };
-
-/*
-updateStats: function() {
-    document.getElementById(this._id + '_stats_count').innerHTML = this.count;
-    document.getElementById(this._id + '_stats_from').innerHTML = this.from;
-    document.getElementById(this._id + '_stats_to').innerHTML = this.to;
-    document.getElementById(this._id + '_stats_cur_page').innerHTML = this.currentPage;
-    document.getElementById(this._id + '_stats_last_page').innerHTML = this.lastPage;
-}*/

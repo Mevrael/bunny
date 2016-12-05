@@ -1,5 +1,12 @@
 
 import { Dropdown, DropdownUI, DropdownConfig } from './Dropdown';
+import {initObjectExtensions} from "./utils/core";
+
+/**
+ * CustomSelect
+ * Wrapper of Bootstrap 4 dropdown list
+ * Requires dropdown js
+ */
 
 export const CustomSelectConfig = Object.assign({}, DropdownConfig, {
 
@@ -7,6 +14,9 @@ export const CustomSelectConfig = Object.assign({}, DropdownConfig, {
   useTagNames: true,
 
   tagName: 'customselect',
+
+  roleMenu: 'textbox',
+  roleMenuItem: 'option',
 
 });
 
@@ -23,30 +33,85 @@ export const CustomSelectUI = Object.assign({}, DropdownUI, {
     return customSelect.getElementsByTagName('select')[0] || false;
   },
 
-  createHiddenSelect(selectAttributes, dropdownItems, label) {
+  createHiddenSelect(selectAttributes, dropdownItems) {
     const e = document.createElement('select');
     e.setAttribute('hidden', '');
+    e.setAttribute('role', 'textbox');
 
     for(let attribute in selectAttributes) {
       e.setAttribute(attribute, selectAttributes[attribute]);
     }
 
-    const o = document.createElement('option');
-    o.value = '';
-    o.textContent = label;
-    e.appendChild(o);
-
     [].forEach.call(dropdownItems, dropdownItem => {
       const o = document.createElement('option');
-      if (dropdownItem.dataset.value === undefined) {
+      const val = this.getItemValue(dropdownItem);
+      if (val === undefined) {
         throw new Error('CustomSelect: each item must have data-value attribute');
       }
-      o.value = dropdownItem.dataset.value;
-      o.textContent = dropdownItem.textContent;
+      o.value = val;
+      if (dropdownItem.hasAttribute('aria-selected')) {
+        o.setAttribute('selected', '');
+      }
       e.appendChild(o);
     });
 
     return e;
+  },
+
+  /**
+   * Synchronizes default value and selected options with UI
+   * If dropdown item has aria-selected but has no active class, add it
+   * If dropdown item has no aria-selected but has active class, remove it
+   * If no dropdown item selected, select 1st item and hidden option
+   * If customselect has value attribute, sets selected option according to it in highest priority
+   *
+   * @param {HTMLElement} customSelect
+   * @param {String|Array} defaultValue
+   * @param {boolean} isMultiple
+   */
+  syncUI(customSelect, defaultValue, isMultiple) {
+    console.log(defaultValue, isMultiple);
+    const menuItems = this.getMenuItems(customSelect);
+    const tglBtn = this.getToggleBtn(customSelect);
+    let hasSelected = false;
+    [].forEach.call(menuItems, menuItem => {
+      if (defaultValue !== '') {
+        const value = this.getItemValue(menuItem);
+        if (isMultiple) {
+          for (let k = 0; k < defaultValue.length; k++) {
+            if (defaultValue[k] == value) {
+              this.setItemActive(menuItem);
+              hasSelected = true;
+              this.getOptionByValue(customSelect, value).selected = true;
+              break;
+            }
+          }
+        } else if (value == defaultValue) {
+          this.setItemActive(menuItem);
+          hasSelected = true;
+          this.getOptionByValue(customSelect, value).selected = true;
+          if (tglBtn.innerHTML === '') {
+            tglBtn.innerHTML = menuItem.innerHTML;
+          }
+        }
+      } else if (menuItem.hasAttribute('aria-selected')) {
+        this.setItemActive(menuItem);
+        hasSelected = true;
+        if (tglBtn.innerHTML === '') {
+          tglBtn.innerHTML = menuItem.innerHTML;
+        }
+      } else if (menuItem.classList.contains(this.Config.classNameActive)) {
+        this.setItemInactive(menuItem);
+      }
+    });
+
+    if (!hasSelected) {
+      this.setItemActive(menuItems[0]);
+      this.getHiddenSelect(customSelect).options[0].setAttribute('selected', '');
+      if (tglBtn.innerHTML === '') {
+        tglBtn.innerHTML = menuItems[0].innerHTML;
+      }
+    }
   },
 
   insertHiddenSelect(customSelect, hiddenSelect) {
@@ -58,58 +123,19 @@ export const CustomSelectUI = Object.assign({}, DropdownUI, {
     return menu.querySelector(`[data-value="${value}"]`) || false;
   },
 
+  getLabelByValue(customSelect, value) {
+    return this.getItemByValue(customSelect, value).innerHTML;
+  },
+
   getOptionByValue(customSelect, value) {
     const hiddenSelect = this.getHiddenSelect(customSelect);
     return hiddenSelect.querySelector(`[value="${value}"]`) || false;
   },
 
-  getSelectedOption(customSelect) {
-    const hiddenSelect = this.getHiddenSelect(customSelect);
-    if (hiddenSelect.selectedIndex === 0) {
-      return false;
-    }
-    return hiddenSelect.options[hiddenSelect.selectedIndex];
-  },
-
-  getSelectedValue(customSelect) {
-    const option = this.getSelectedOption(customSelect);
-    if (option === false) {
-      return false;
-    }
-    return option.value;
-  },
-
-  getLabelByValue(customSelect, value) {
-    return this.getOptionByValue(customSelect, value).textContent;
-  },
-
-  getPlaceholder(customSelect) {
-    return this.getHiddenSelect(customSelect).options[0].textContent;
-  },
-
-  selectItem(customSelect, value) {
-    const curSelectedValue = this.getSelectedValue(customSelect);
-    if (curSelectedValue !== false) {
-      this.deselectItem(customSelect, curSelectedValue);
-    }
-
-    const option = this.getOptionByValue(customSelect, value);
-    option.selected = true;
-
+  setToggleByValue(customSelect, value) {
     const tglBtn = this.getToggleBtn(customSelect);
     const item = this.getItemByValue(customSelect, value);
-    tglBtn.textContent = option.textContent;
-    this.setItemActive(item);
-  },
-
-  deselectItem(customSelect, value) {
-    const option = this.getOptionByValue(customSelect, value);
-    option.selected = false;
-
-    const tglBtn = this.getToggleBtn(customSelect);
-    tglBtn.textContent = this.getPlaceholder(customSelect);
-    const item = this.getItemByValue(customSelect, value);
-    this.setItemInactive(item);
+    tglBtn.innerHTML = item.innerHTML;
   }
 
 });
@@ -140,25 +166,28 @@ export const CustomSelect = Object.assign({}, Dropdown, {
 
     customSelect.__bunny_customselect = {};
 
-    const defaultValue = customSelect.getAttribute('value');
-
     const hiddenSelect = this.UI.createHiddenSelect(
       this.getAttributesForSelect(customSelect),
       this.UI.getMenuItems(customSelect),
       this.UI.getToggleBtn(customSelect).textContent
     );
     this.UI.insertHiddenSelect(customSelect, hiddenSelect);
+    const defaultValue = this.getDefaultValue(customSelect);
+    this.UI.syncUI(customSelect, defaultValue, this.isMultiple(customSelect));
 
-    this._addEvents(customSelect);
     this._addCustomSelectEvents(customSelect);
     this._setARIA(customSelect);
+
+    initObjectExtensions(this, customSelect);
 
     return true;
   },
 
   _addCustomSelectEvents(customSelect) {
     this.onItemSelect(customSelect, (item) => {
-      this.select(customSelect, item.dataset.value);
+      if (item !== null) {
+        this.select(customSelect, this.UI.getItemValue(item));
+      }
     });
   },
 
@@ -170,346 +199,93 @@ export const CustomSelect = Object.assign({}, Dropdown, {
     return selectAttributes;
   },
 
+  /**
+   * Get default value from value="" attribute
+   * which might be a string representing a single selected option value
+   * or a JSON array representing selected options in multiple select
+   *
+   * This attribute has highest priority over aria-selected which will be updated in syncUI()
+   * If value is empty string or no value attribute found then 1st option is selected
+   *
+   * @param customSelect
+   * @returns {String|Array}
+   */
+  getDefaultValue(customSelect) {
+    const val = customSelect.getAttribute('value');
+    if (val === null) {
+      return '';
+    }
+    const firstChar = val[0];
+    if (firstChar === undefined) {
+      return '';
+    } else if (firstChar === '[') {
+      return JSON.parse(val);
+    }
+    return val;
+  },
+
   isMultiple(customSelect) {
     return customSelect.dataset.multiple !== undefined;
   },
 
   select(customSelect, value) {
-    this.UI.selectItem(customSelect, value);
+    const option = this.UI.getOptionByValue(customSelect, value);
+    if (this.isMultiple(customSelect)) {
+      if (option.selected) {
+        this.deselect(customSelect, value);
+      } else {
+        const item = this.UI.getItemByValue(customSelect, value);
+        this.UI.setItemActive(item);
+        option.selected = true;
+      }
+    } else {
+      if (!option.selected) {
+        const curValue = this.getSelectedValue(customSelect);
+        if (curValue != value) {
+          this.deselect(customSelect, curValue);
+        }
+
+        const item = this.UI.getItemByValue(customSelect, value);
+        this.UI.setItemActive(item);
+        option.selected = true;
+        this.UI.setToggleByValue(customSelect, value);
+      }
+    }
   },
 
+  deselect(customSelect, value) {
+    const option = this.UI.getOptionByValue(customSelect, value);
+    if (option.selected) {
+      const item = this.UI.getItemByValue(customSelect, value);
+      this.UI.setItemInactive(item);
+      option.selected = false;
+    }
+  },
+
+  /**
+   * Get selected value
+   * If select is multiple then returns array
+   *
+   * @param customSelect
+   * @returns {String|Array}
+   */
   getSelectedValue(customSelect) {
     const hiddenSelect = this.UI.getHiddenSelect(customSelect);
-    return this.UI.getSelectedOption()
+    if (this.isMultiple(customSelect)) {
+      let selectedOptions = [];
+      [].forEach.call(hiddenSelect.options, option => {
+        if (option.selected) {
+          selectedOptions.push(option.value);
+        }
+      });
+      return selectedOptions;
+    } else {
+      return hiddenSelect.options[hiddenSelect.selectedIndex].value;
+    }
   }
-
 
 });
 
 document.addEventListener('DOMContentLoaded', () => {
   CustomSelect.initAll();
 });
-
-/**
- * CustomSelect base object
- * Wrapper of Bootstrap 4 dropdown list
- * Requires dropdown js
- */
-export default CustomSelect2 = {
-
-  /**
-   * CustomSelect factory, creates new object and initializes it
-   * SHOULD contain "data-name" attribute
-   *
-   * No need of adding hidden inputs manually, they are created automatically by CustomSelect
-   *
-   *  TODO: move UI outside of CustomSelect logic and controller
-   *  TODO: save container by id in private collection/singleton
-   *
-   *
-   * @param {HTMLElement} dropdown_container  -  container containing dropdown, dropdown-toggle, dropdown-menu,
-   * dropdown-item's;
-   * dropdown-toggle is used as label (non-selected option)
-   * dropdown-menu should contain at least one dropdown-item
-   * dropdown-item should have data-value="value"
-   * dropdown-item may have data-selected
-   * in this container hidden native <select> is created
-   *
-   * @param {Object} selectAttributes  -  additional attributes to be set on hidden <select>,
-   * if multiple no need to add "[]" at the end
-   *
-   *
-   * @returns {Object} select  - object to be used as 1st argument in all CustomSelect public methods
-   */
-  create(dropdown_container, selectAttributes = {}) {
-    if (dropdown_container.dataset.name === undefined) {
-      throw new Error('CustomSelect: data-name attribute missing')
-    }
-
-    const defaultValue = dropdown_container.getAttribute('value');
-
-    let dataset = {};
-    for(let k in dropdown_container.dataset) {
-      dataset[k] = dropdown_container.dataset[k];
-    }
-
-    selectAttributes = Object.assign({}, dataset, selectAttributes);
-
-
-    const select = {};
-    select.container = dropdown_container;
-    if (selectAttributes.multiple) {
-      selectAttributes.name += '[]';
-    }
-
-    select.toggle = this._getCustomToggleInput(select);
-    select.toggleDefaultLabel = select.toggle.textContent;
-    select.dropdown = this._getDropdown(select);
-
-    const items = this._getDropdownItems(select);
-    select.dropdownItems = {};
-
-    select.select = this._createHiddenSelect(selectAttributes, items);
-    this._insertHiddenSelect(select, select.select);
-
-    for (let k = 0; k < items.length; k++) {
-      let item = items[k];
-      select.dropdownItems[item.dataset.value] = item;
-      this._attachDropdownItemClickEvent(select, item);
-      if (item.dataset.selected !== undefined || defaultValue == item.dataset.value) {
-        this._select(select, item.dataset.value, false);
-      }
-    }
-
-    dropdown_container._select = select;
-
-    return select;
-  },
-
-  initAll(container = document) {
-    container.getElementsByTagName('customselect').forEach( custom_select => {
-      this.create(custom_select);
-    });
-  },
-
-  _createHiddenSelect(selectAttributes, items) {
-    const e = document.createElement('select');
-    e.setAttribute('hidden', '');
-
-    for(let attribute in selectAttributes) {
-      e.setAttribute(attribute, selectAttributes[attribute]);
-    }
-
-    const o = document.createElement('option');
-    o.value = '';
-    e.appendChild(o);
-
-    for (let k = 0; k < items.length; k++) {
-      let item = items[k];
-      const o = document.createElement('option');
-      o.value = item.dataset.value;
-      e.appendChild(o);
-    }
-
-    return e;
-  },
-
-  _insertHiddenSelect(select, hiddenSelect) {
-    select.container.appendChild(hiddenSelect);
-  },
-
-  /**
-   * Get select option DOM element by value
-   * @param {Object} select
-   * @param {String} value
-   * @returns {HTMLElement|undefined}
-   */
-  getOption(select, value) {
-    return select.dropdownItems[value];
-  },
-
-  hideOption(select, value) {
-    this.getOption(select, value).setAttribute('hidden', '');
-  },
-
-  showOption(select, value) {
-    this.getOption(select, value).removeAttribute('hidden');
-  },
-
-  select(select, value) {
-    if (!this.isSelected(select, value)) {
-      if (this.isMultiple(select)) {
-        this._select(select, value);
-      } else {
-        let oldValue = null;
-        if (!this.hasNoSelectedOptions(select)) {
-          oldValue = select.select.selectedOptions[0].value;
-          this._deselect(select, select.select.selectedOptions[0].value, false);
-        }
-        this._select(select, value, true, oldValue);
-      }
-    } else {
-      this._deselect(select, value);
-    }
-  },
-
-  _select(select, value, fire_event = true, oldValue = null) {
-    const option = this.getOption(select, value);
-    option.classList.add('active');
-    option.dataset.selected = '';
-
-    this._getHiddenOptionByValue(select, value).selected = true;
-
-    //const hiddenOption = this._createHiddenOption(value);
-    //this._insertHiddenOption(select, hiddenOption);
-
-    if (!this.isMultiple(select)) {
-      this.setLabelByValue(select, value);
-    }
-
-    if (fire_event) {
-      this._fireChangeEventOnSelect(select, value, oldValue, option.textContent, true);
-    }
-  },
-
-  deselect(select, value) {
-    if (this.isSelected(select, value)) {
-      this._deselect(select, value);
-    }
-  },
-
-  _deselect(select, value, fire_event = true) {
-    const option = this.getOption(select, value);
-    const label = option.textContent;
-    option.classList.remove('active');
-    delete option.dataset.selected;
-
-    //this._removeHiddenOption(select, value);
-    this._getHiddenOptionByValue(select, value).selected = false;
-
-    if (this.hasNoSelectedOptions(select)) {
-      this.setDefaultLabel(select);
-    }
-
-    if (fire_event) {
-      this._fireChangeEventOnSelect(select, value, value, label, false);
-    }
-  },
-
-  hasNoSelectedOptions(select) {
-    return select.select.selectedOptions.length === 0
-      || select.select.selectedOptions.length === 1 && select.select.selectedOptions[0].value === ''
-  },
-
-  isSelected(select, value) {
-    for (let k = 0; k < select.select.selectedOptions.length; k++) {
-      if (select.select.selectedOptions[k].value === value) {
-        return true;
-      }
-    }
-    return false;
-  },
-
-  isMultiple(select) {
-    return select.select.multiple;
-  },
-
-  isRequired(select) {
-    return select.select.required;
-  },
-
-  getSelectedOptions(select) {
-    const selected_values = this.getSelectedValues(select);
-    const selected_options = {};
-    for (let k = 0; k < selected_values.length; k++) {
-      let value = selected_values[k];
-      selected_options[value] = select.dropdownItems[value];
-    }
-    return selected_options;
-  },
-
-  getSelectedValues(select) {
-    let selectedValues = [];
-    for (let k = 0; k < select.select.selectedOptions.length; k++) {
-      selectedValues.push(select.select.selectedOptions[k].value);
-    }
-    return selectedValues;
-  },
-
-  getOptionLabel(select, value) {
-    const option = this.getOption(select, value);
-    return option.textContent;
-  },
-
-  setLabel(select, label) {
-    select.toggle.textContent = label;
-    this._setToggleActive(select);
-  },
-
-  setLabelByValue(select, value) {
-    const label = this.getOptionLabel(select, value);
-    this.setLabel(select, label);
-  },
-
-  setDefaultLabel(select) {
-    this.setLabel(select, select.toggleDefaultLabel);
-    this._setToggleInactive(select);
-  },
-
-
-
-
-  _attachDropdownItemClickEvent(select, item) {
-    item.addEventListener('click', () => {
-      const value = item.dataset.value;
-      this.select(select, value);
-    });
-  },
-
-  _fireChangeEventOnSelect(select, value, oldValue, label, selected = true) {
-    const event = new CustomEvent('change', {detail: {value: value, oldValue: oldValue, label: label, selected: selected}});
-    select.container.dispatchEvent(event);
-  },
-
-
-
-
-  _getCustomToggleInput(select) {
-    const toggle = select.container.getElementsByClassName('dropdown-toggle')[0];
-    if (toggle === undefined) {
-      throw new Error('CustomSelect must have a child element with class="dropdown-toggle"');
-    }
-    return toggle;
-  },
-
-  _getDropdown(select) {
-    const dropdown = select.container.getElementsByClassName('dropdown-menu')[0];
-    if (dropdown === undefined) {
-      throw new Error('CustomSelect must have a child element with class="dropdown-menu"');
-    }
-    return dropdown;
-  },
-
-  /**
-   * Get all dropdown items and custom input with empty value
-   * @param {Object} select
-   * @returns {Array} of HTMLElement
-   * @private
-   */
-  _getDropdownItems(select) {
-    const items = select.dropdown.getElementsByClassName('dropdown-item');
-    if (items.length === 0) {
-      throw new Error('Dropdown in CustomSelect must have at least one child element with class="dropdown-item"');
-    }
-    for (let k = 0; k < items.length; k++) {
-      let item = items[k];
-      if (item.dataset.value === undefined) {
-        throw new Error('All Dropdown Items in CustomSelect must have data-value attribute');
-      }
-    }
-    return items;
-  },
-
-
-
-
-  _setToggleActive(select) {
-    select.toggle.classList.add('dropdown-active');
-  },
-
-  _setToggleInactive(select) {
-    select.toggle.classList.remove('dropdown-active');
-  },
-
-
-
-  _getHiddenOptionByValue(select, value) {
-    for (let k = 0; k < select.select.options.length; k++) {
-      if (select.select.options[k].value == value) {
-        return select.select.options[k];
-      }
-    }
-    throw new Error('CustomSelect: option with value "' + value + '" not found');
-  }
-
-};

@@ -19,7 +19,14 @@ export function getActionObject(element) {
     return actionObject;
 }
 
-
+export function initObjectExtensions(obj, arg) {
+  const keys = Object.keys(obj);
+  keys.forEach(key => {
+    if (key.indexOf('init') === 0) {
+      obj[key](arg);
+    }
+  });
+}
 
 export function pushToElementProperty(element, property, value) {
     if (element[property] === undefined) {

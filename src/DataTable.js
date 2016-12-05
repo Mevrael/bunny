@@ -2,7 +2,7 @@
 import { Ajax } from './bunny.ajax';
 import { Template } from './bunny.template';
 import { Pagination } from './Pagination';
-import { ready } from './utils/DOM/ready';
+import { ready } from './utils/DOM';
 
 export const DataTableConfig = {
     ajax: Ajax,
