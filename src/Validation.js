@@ -651,8 +651,9 @@ export const Validation = {
         BunnyElement.scrollTo(input, delay, offset);
         input.focus();
         if (
-            input.offsetParent !== null &&
-            input.setSelectionRange !== undefined
+            input.offsetParent !== null
+            && input.setSelectionRange !== undefined
+            && ['text', 'search', 'url', 'tel', 'password'].indexOf(input.type) !== -1
             && typeof input.setSelectionRange === 'function'
         ) {
             input.setSelectionRange(input.value.length, input.value.length);
