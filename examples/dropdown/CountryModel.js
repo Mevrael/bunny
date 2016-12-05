@@ -11,9 +11,10 @@ export const Api = {
                 return [];
             }
             return data;
-        }).catch(e => {
+        })/*.catch(e => {
             console.error(e);
-        });
+            return Promise.reject(e);
+        });*/
     }
 
 };

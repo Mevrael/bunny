@@ -3,7 +3,7 @@
     <img src="https://bunnyjs.com/img/bunnyjs-logo.png" alt="BunnyJS Logo">
 </p>
 
-# BunnyJS v 0.11.7 (Alpha)
+# BunnyJS v 0.12.0 (Beta)
 
 [Website](https://bunnyjs.com) [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) 
 
@@ -25,13 +25,6 @@
 
 For help & ideas - [DM me on Twitter](https://twitter.com/Mevrael)
 
-## Contributors wanted
-
-* Become a contributor of a fast growing open source project
-* Share your ideas to the world
-* Help yourself and millions of developers around the world solving JavaScript fatigue and modern overendineered problem
-* Help building a tool which will provide a best user experience, performance, security, durability and load time for billions of the Internet users with smart usage of Computer's and Mobile device's resources
-
 ## Browser support
 
 IE9+, last 2 versions of Chrome, Firefox, Safari, Android 4.4+, iOS 9+
@@ -40,8 +33,12 @@ IE9+, last 2 versions of Chrome, Firefox, Safari, Android 4.4+, iOS 9+
 
 1. Install via `npm install bunnyjs --save`
 2. [Rollup.js](http://rollupjs.org) with babel and npm plugins is recommended for transpiling and bundling.
-3. Or just include into HTML JS scripts from `dists` folder or any CDN.
-4. Probably some polyfills might be required depending on Component. They all available in `bunnyjs/src/bunny`
+3. Or just include into HTML already transpiled and minified JS from `dists` folder or any [CDN](https://unpkg.com/bunnyjs/dist).
+4. Probably some polyfills for IE might be required depending on Component.
+
+```html
+<script src="https://unpkg.com/bunnyjs/dist/..."></script>
+```
 
 ## Extending BunnyJS and Vanilla JS objects
 
@@ -96,8 +93,22 @@ export const Component = Object.assign({}, BunnyComponent, {
 1. Object composition over inheritance
 1. Dependency injection
 
+
+## Contributors wanted
+
+* Become a contributor of a fast growing open source project
+* Share your ideas to the world
+* Help yourself and millions of developers around the world solving JavaScript fatigue and modern overendineered problem
+* Help building a tool which will provide a best user experience, performance, security, durability and load time for billions of the Internet users with smart usage of Computer's and Mobile device's resources
+
+## Local development, examples and dists generation
+
+* Make sure to install npm dev dependencies first with `npm install`
+* Examples in `examples` folder. `index.html` can be opened in browser to view examples. Examples are generated with `npm build`
+* To generate dists - `npm build dist -p`
+
 --- 
 
-&copy; Mev-Rael
+&copy; [Mev-Rael](https://twitter.com/Mevrael)
 
-GPL 3.0
+[MIT License](https://github.com/mevrael/bunny/blob/master/LICENSE)

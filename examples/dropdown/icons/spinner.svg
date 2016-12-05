@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   viewBox="0 0 504.00507 504.00507"
+   version="1.1"
+   width="504"
+   height="504"
+   id="svg2">
+  <metadata
+     id="metadata12">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient5734">
+      <stop
+         id="stop5736"
+         offset="0"
+         style="stop-color:#000000;stop-opacity:1;" />
+      <stop
+         id="stop5738"
+         offset="1"
+         style="stop-color:#000000;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       gradientUnits="userSpaceOnUse"
+       y2="401.38965"
+       x2="378.55865"
+       y1="103.95506"
+       x1="378.49722"
+       id="linearGradient5740"
+       xlink:href="#linearGradient5734" />
+  </defs>
+  <g
+     transform="translate(-2.1885086,-7.7344675)"
+     id="g5742">
+    <path
+       style="opacity:1;fill:url(#linearGradient5740);fill-opacity:1;stroke:none;stroke-width:6.00006056;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 407.4375,68.570312 -70.66992,46.152348 a 169.04575,169.04575 0 0 1 86.46484,147.41992 169.04575,169.04575 0 0 1 -65.18359,133.2793 l 47.0039,61.77343 A 246.89575,246.89575 0 0 0 501.08398,262.14258 246.89575,246.89575 0 0 0 407.4375,68.570312 Z"
+       id="path5724"
+       transform="scale(1.0000101,1.0000101)" />
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:6.00006056;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 254.20117,15.234375 A 246.89575,246.89575 0 0 0 7.2929688,262.14258 246.89575,246.89575 0 0 0 103.24414,457.32617 l 47.16211,-62.00976 A 169.04575,169.04575 0 0 1 85.144531,262.14258 169.04575,169.04575 0 0 1 254.20117,93.085938 169.04575,169.04575 0 0 1 336.76758,114.72266 L 407.4375,68.570312 A 246.89575,246.89575 0 0 0 254.20117,15.234375 Z"
+       id="path4140"
+       transform="scale(1.0000101,1.0000101)" />
+  </g>
+</svg>

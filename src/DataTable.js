@@ -2,10 +2,9 @@
 import { Ajax } from './bunny.ajax';
 import { Template } from './bunny.template';
 import { Pagination } from './Pagination';
-import { ready } from './utils/DOM/ready';
-import { addEventOnce } from './utils/DOM/events';
 import { BunnyURL } from './url';
 import { BunnyElement } from './BunnyElement';
+import { ready, addEventOnce } from './utils/DOM';
 
 export const DataTableConfig = {
     ajax: Ajax,
