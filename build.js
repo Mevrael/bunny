@@ -44,7 +44,7 @@ if (Core.args[0] === 'dist') {
     ['utils/core', 'core-helpers.min'],
 
     // Utility (helper) functions
-    ['utils/DOM/events', 'utils-dom.min'],
+    ['utils/DOM', 'utils-dom.min'],
     ['utils/svg', 'utils-svg.min'],
     ['utils/string', 'utils-string.min'],
 
@@ -77,6 +77,8 @@ if (Core.args[0] === 'dist') {
     // Higher-level components
     ['Validation', 'validation.min', ['src/file/file.js', 'src/file/image.js', 'src/bunny.ajax.js', 'src/BunnyElement.js']],
     ['DataTable', 'datatable.min', ['src/bunny.ajax.js', 'src/bunny.template.js', 'src/Pagination.js', 'src/utils/DOM.js', 'src/url.js', 'src/BunnyElement.js']],
+    ['plugins/DataTableIcons', 'datatable.icons.min', ['src/Spinner.js', 'src/DataTable.js']],
+    ['plugins/DataTableScrollTop', 'datatable.scrolltop.min', ['src/BunnyElement.js', 'src/DataTable.js']],
 
   ];
 

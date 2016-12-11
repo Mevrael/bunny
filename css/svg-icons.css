@@ -1,0 +1,39 @@
+
+svg {
+    width: 1.4rem;
+    height: 1.4rem;
+    fill: currentColor;
+}
+
+.i-spinner {
+    opacity: 0.4;
+    transform-origin: 50% 50%;
+    outline: 1px solid transparent;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    animation: i-spin 0.5s infinite linear;
+}
+
+@keyframes i-spin {
+    from {transform:rotate(0deg);}
+    to {transform:rotate(360deg);}
+}
+
+.i-check path {
+    fill: none;
+    stroke: #3C6;
+    stroke-width: 60;
+    stroke-linecap: round;
+    stroke-dasharray: 520;
+    stroke-dashoffset: 520;
+    transform-origin: 50% 50%;
+    outline: 1px solid transparent;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    animation: i-draw 1s ease forwards;
+}
+@keyframes i-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}

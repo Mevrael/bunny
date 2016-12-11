@@ -1953,6 +1953,33 @@ document.addEventListener('DOMContentLoaded', function () {
 var NAMESPACE_SVG = 'http://www.w3.org/2000/svg';
 var NAMESPACE_XLINK = 'http://www.w3.org/1999/xlink';
 
+/**
+ * Document root <svg> with defs and icons
+ */
+
+function getRootSvg() {
+  var childNodes = document.body.childNodes;
+  var length = childNodes.length;
+  for (var k = 0; k < length; k++) {
+    var node = childNodes[k];
+    if (node.tagName === 'svg' || node.tagName === 'SVG') {
+      return node;
+    }
+  }
+  return false;
+}
+
+function createRootSvg() {
+  var svg = document.createElementNS(NAMESPACE_SVG, 'svg');
+  svg.setAttribute('height', '0');
+  document.body.appendChild(svg);
+  return svg;
+}
+
+/**
+ * SVG <use>, spites and icons
+ */
+
 function createSvgUse(iconId) {
   var attributes = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -1972,6 +1999,53 @@ function changeSvgIcon(svg, newIconId) {
 
 function getSvgIcon(svg) {
   return svg.firstChild.getAttributeNS(NAMESPACE_XLINK, 'href').slice(1);
+}
+
+/**
+ * SVG color matrix filter
+ */
+
+function rgbaToColorMatrix(red, green, blue) {
+  var alpha = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+  var decToFloat = function decToFloat(value) {
+    return Math.round(value / 255 * 10) / 10;
+  };
+  var redFloat = decToFloat(red);
+  var greenFloat = decToFloat(green);
+  var blueFloat = decToFloat(blue);
+  var alphaFloat = decToFloat(alpha);
+  return '0 0 0 0 ' + redFloat + ' 0 0 0 0 ' + greenFloat + ' 0 0 0 0 ' + blueFloat + ' 0 0 0 1 ' + alphaFloat;
+}
+
+function getIdForSvgColorFilter(red, green, blue) {
+  var alpha = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+  return '__bunny_filter_' + red + '_' + green + '_' + blue + '_' + alpha;
+}
+
+function createOrGetSvgColorFilter(red, green, blue) {
+  var alpha = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+  var id = getIdForSvgColorFilter(red, green, blue, alpha);
+  var rootSvg = getRootSvg();
+  if (rootSvg === false) {
+    rootSvg = createRootSvg();
+  }
+  if (!document.getElementById(id)) {
+    var filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+    filter.setAttribute('id', id);
+    filter.innerHTML = '<feColorMatrix type="matrix" values="' + rgbaToColorMatrix(red, green, blue, alpha) + '" />';
+    rootSvg.appendChild(filter);
+  }
+  return id;
+}
+
+function applySvgColorFilterToElement(element, red, green, blue) {
+  var alpha = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+
+  var id = createOrGetSvgColorFilter(red, green, blue, alpha);
+  element.style.filter = 'url(#' + id + ')';
 }
 
 /**

@@ -97,7 +97,10 @@ export const BunnyURL = {
     },
 
     setParam(param, value, url = window.location.href) {
-        const params = this.getParams(url);
+        let params = this.getParams(url);
+        if (params === undefined) {
+          params = {};
+        }
         params[param] = value;
         return this.replaceParams(params, url);
     },

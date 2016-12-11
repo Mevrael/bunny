@@ -1,4 +1,4 @@
-/*import { Template } from '../../src/bunny.template';
+/*import { Template } from '../../src/bunny.template';*/
 
 Template.define('users_row_template', {
     edit: function edit(btn, user) {

@@ -1,0 +1,30 @@
+
+fade {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #999;
+    font-size: 2rem;
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.95) no-repeat center center;
+    opacity: 0;
+    transition: opacity 0.75s ease-in-out;
+}
+
+fade.show {
+    opacity: 1;
+}
+
+fade svg {
+    width: 4rem;
+    height: 4rem;
+    margin-top: 1.5rem;
+}
