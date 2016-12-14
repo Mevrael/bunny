@@ -134,7 +134,10 @@ export const DropdownUI = {
   },
 
   removeMenuItems(dropdown) {
-    this.getMenu(dropdown).innerHTML = '';
+    const menu = this.getMenu(dropdown);
+    if (menu) {
+      menu.innerHTML = '';
+    }
   },
 
   setMenuItems(dropdown, newItems) {

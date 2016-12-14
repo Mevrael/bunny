@@ -9,7 +9,7 @@ export function getActionObject(element) {
     } else {
         const searchAction = parts[1];
         try {
-            actionObject = window[Model][searchAction];
+            actionObject = window[Model][searchAction].bind(window[Model]);
         } catch (e) {}
     }
 
