@@ -19,6 +19,8 @@ export const DataTableConfig = {
 
   loadingImg: '/img/loading.svg',
 
+  searchInputName: 'search',
+
   ajaxHeaders: []
 };
 
@@ -27,7 +29,7 @@ export const DataTableUI = {
   Config: DataTableConfig,
   Template: Template,
 
-  getSearchInput(datatable, name = 'search') {
+  getSearchInput(datatable, name = DataTableConfig.searchInputName) {
     return datatable.querySelector('[name="' + name + '"]') || false;
   },
 
