@@ -14,12 +14,11 @@ export const DataTableConfig = {
   tagNamePagination: 'pagination',
   tagNameStats: 'stats',
 
+  classNameAsc: 'arrow-down',
+  classNameDesc: 'arrow-up',
+
   perPage: 15,
   paginationLimit: 7,
-
-  loadingImg: '/img/loading.svg',
-
-  searchInputName: 'search',
 
   ajaxHeaders: []
 };
@@ -29,12 +28,24 @@ export const DataTableUI = {
   Config: DataTableConfig,
   Template: Template,
 
-  getSearchInput(datatable, name = DataTableConfig.searchInputName) {
+  getSearchInput(datatable, name) {
     return datatable.querySelector('[name="' + name + '"]') || false;
+  },
+
+  getColumn(datatable, name) {
+    return this.getTable(datatable).querySelector('[pid="' + name + '"]') || false;
+  },
+
+  getAllSearchInputs(datatable) {
+    return datatable.querySelectorAll('input, select');
   },
 
   getTable(datatable) {
     return datatable.getElementsByTagName('table')[0];
+  },
+
+  getOrderCells(datatable) {
+    return datatable.querySelectorAll('th[pid]');
   },
 
   getPagination(datatable) {
@@ -55,6 +66,32 @@ export const DataTableUI = {
 
   insertRows(datatable, rowsData, templateId) {
     this.Template.insertAll(templateId, rowsData, this.getTable(datatable));
+  },
+
+  clearAllColumnsOrder(thCell) {
+    const thCells = thCell.parentNode.querySelectorAll('th');
+    [].forEach.call(thCells, cell => {
+      cell.classList.remove(this.Config.classNameAsc);
+      cell.classList.remove(this.Config.classNameDesc);
+    });
+  },
+
+  setColumnAsc(thCell) {
+    this.clearAllColumnsOrder(thCell);
+    thCell.classList.add(this.Config.classNameAsc);
+  },
+
+  setColumnDesc(thCell) {
+    this.clearAllColumnsOrder(thCell);
+    thCell.classList.add(this.Config.classNameDesc);
+  },
+
+  isColumnAsc(thCell) {
+    return thCell.classList.contains(this.Config.classNameAsc);
+  },
+
+  isColumnDesc(thCell) {
+    return thCell.classList.contains(this.Config.classNameDesc);
   },
 
 };
@@ -83,7 +120,16 @@ export const DataTable = {
 
     initObjectExtensions(this, datatable);
 
-    this.changePage(datatable, page, this.getSearchDataFromURL(datatable));
+    const orderData = this.getOrderDataFromURL(datatable);
+    if (orderData['order_by'] !== undefined) {
+      const thCell = this.UI.getColumn(datatable, orderData['order_by']);
+      if (orderData['order_rule'] === 'asc') {
+        this.UI.setColumnAsc(thCell);
+      } else {
+        this.UI.setColumnDesc(thCell);
+      }
+    }
+    this.changePage(datatable, page, Object.assign(this.getSearchDataFromURL(datatable), orderData));
 
     return true;
   },
@@ -124,11 +170,13 @@ export const DataTable = {
   },
 
   getSearchData(datatable) {
-    const searchInput = this.UI.getSearchInput(datatable);
+    const searchInputs = this.UI.getAllSearchInputs(datatable);
     const data = {};
-    if (searchInput && searchInput.value.length > 0) {
-      data.search = searchInput.value;
-    }
+    [].forEach.call(searchInputs, searchInput => {
+      if (searchInput && searchInput.value.length > 0) {
+        data[searchInput.name] = searchInput.value;
+      }
+    });
     return data;
   },
 
@@ -147,6 +195,35 @@ export const DataTable = {
     return data;
   },
 
+
+  getOrderData(datatable) {
+    const data = {};
+    const thCells = this.UI.getOrderCells(datatable);
+    for (let k = 0; k < thCells.length; k++) {
+      const thCell = thCells[k];
+      if (this.UI.isColumnAsc(thCell)) {
+        data['order_by'] = thCell.getAttribute('pid');
+        data['order_rule'] = 'asc';
+        break;
+      } else if (this.UI.isColumnDesc(thCell)) {
+        data['order_by'] = thCell.getAttribute('pid');
+        data['order_rule'] = 'desc';
+        break;
+      }
+    }
+    return data;
+  },
+
+  getOrderDataFromURL(datatable, url = window.location.href) {
+    const urlParam = BunnyURL.getParam('order_by', url);
+    let data = {};
+    if (urlParam) {
+      data['order_by'] = urlParam;
+      data['order_rule'] = BunnyURL.getParam('order_rule', url);
+    }
+    return data;
+  },
+
   getDataUrl(datatable, page, urlParams = {}) {
     let url = this.Pagination.addPageParamToUrl(this.getAjaxUrl(datatable), page);
     for (let k in urlParams) {
@@ -158,12 +235,25 @@ export const DataTable = {
 
 
   addEvents(datatable) {
-    const searchInput = this.UI.getSearchInput(datatable);
-    if (searchInput) {
+    const searchInputs = this.UI.getAllSearchInputs(datatable);
+    [].forEach.call(searchInputs, searchInput => {
       addEventOnce(searchInput, 'input', () => {
-        this.search(datatable, searchInput.value);
+        this.update(datatable, this.getDataUrl(datatable, 1, Object.assign(this.getSearchData(datatable), this.getOrderData(datatable))));
       });
-    }
+    });
+
+    const thCells = this.UI.getOrderCells(datatable);
+    [].forEach.call(thCells, thCell => {
+      thCell.addEventListener('click', () => {
+        if (this.UI.isColumnAsc(thCell)) {
+          this.UI.setColumnDesc(thCell);
+          this.update(datatable, this.getDataUrl(datatable, this.getPage(), Object.assign(this.getSearchData(datatable), this.getOrderData(datatable))));
+        } else {
+          this.UI.setColumnAsc(thCell);
+          this.update(datatable, this.getDataUrl(datatable, this.getPage(), Object.assign(this.getSearchData(datatable), this.getOrderData(datatable))));
+        }
+      });
+    });
   },
 
   attachPaginationEventHandlers(datatable) {
@@ -211,9 +301,17 @@ export const DataTable = {
     this.update(datatable, this.getDataUrl(datatable, page, data));
   },
 
-  search(datatable, text) {
-    this.update(datatable, this.getDataUrl(datatable, 1, {search: text}));
+  getPage() {
+    const page = BunnyURL.getParam('page');
+    if (page) {
+      return page;
+    }
+    return 1;
   },
+
+  /*search(datatable, param, text) {
+    this.update(datatable, this.getDataUrl(datatable, 1, {[param]: text}));
+  },*/
 
   updateURL(datatable, url) {
     let newURL = window.location.href;
@@ -225,14 +323,22 @@ export const DataTable = {
       newURL = BunnyURL.removeParam('page', newURL);
     }
 
-
-
-    const search = BunnyURL.getParam('search', url);
-    if (search && search !== '') {
-      newURL = BunnyURL.setParam('search', search, newURL);
-    } else if (BunnyURL.hasParam('search', newURL)) {
-      newURL = BunnyURL.removeParam('search', newURL);
+    const orderBy = BunnyURL.getParam('order_by', url);
+    if (orderBy) {
+      newURL = BunnyURL.setParam('order_by', orderBy, newURL);
+      newURL = BunnyURL.setParam('order_rule', BunnyURL.getParam('order_rule', url), newURL);
     }
+
+    const searchInputs = this.UI.getAllSearchInputs(datatable);
+    [].forEach.call(searchInputs, searchInput => {
+      const searchParam = searchInput.name;
+      const search = BunnyURL.getParam(searchParam, url);
+      if (search && search !== '') {
+        newURL = BunnyURL.setParam(searchParam, search, newURL);
+      } else if (BunnyURL.hasParam(searchParam, newURL)) {
+        newURL = BunnyURL.removeParam(searchParam, newURL);
+      }
+    });
 
     if (newURL !== window.location.href) {
       window.history.replaceState('', '', newURL);

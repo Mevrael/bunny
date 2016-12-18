@@ -1100,7 +1100,7 @@ function getActionObject(element) {
   } else {
     var searchAction = parts[1];
     try {
-      actionObject = window[Model][searchAction];
+      actionObject = window[Model][searchAction].bind(window[Model]);
     } catch (e) {}
   }
 
@@ -1276,7 +1276,10 @@ var DropdownUI = {
     return false;
   },
   removeMenuItems: function removeMenuItems(dropdown) {
-    this.getMenu(dropdown).innerHTML = '';
+    var menu = this.getMenu(dropdown);
+    if (menu) {
+      menu.innerHTML = '';
+    }
   },
   setMenuItems: function setMenuItems(dropdown, newItems) {
     var menu = this.getMenu(dropdown);

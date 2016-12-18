@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>DataTable example</title>
-    <link rel="stylesheet" href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css" integrity="sha384-AysaV+vQoT3kOAXZkl02PThvDr8HYKPZhNT5h/CXfBThSRXQ6jW5DO2ekP5ViFdi" crossorigin="anonymous">
+
+    <!--<link rel="stylesheet" href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">-->
     <link rel="stylesheet" href="../../css/fade.css">
     <link rel="stylesheet" href="../../css/svg-icons.css">
     <style>
@@ -17,8 +19,27 @@
             margin-bottom: 1rem;
         }
 
-        .dt-search {
-            width: 14rem;
+        datatable img {
+            width: 48px;
+            height: 48px;
+            border-radius: 48px;
+        }
+
+        .arrow-up:after,
+        .arrow-down:after {
+            font-size: 1.5rem;
+            position: absolute;
+            margin-left: 5px;
+            margin-top: -5px;
+            color: #4B8;
+        }
+
+        .arrow-up:after {
+            content: "↑";
+        }
+
+        .arrow-down:after {
+            content: "↓";
         }
     </style>
 </head>
@@ -30,21 +51,32 @@
 
     <p>Server on page=3 will have a small delay so SVG spinner icon could be noticed</p>
 
-    <p><code>input name="search"</code> can be added within <code>datatable</code> which will add search=value GET param to AJAX request. Server may handle such requests and filter response data.</p>
+    <p>Inputs and selects with <code>name="{GET_PARAM_NAME}"</code> can be added within <code>datatable</code> which will add search=value GET param to AJAX request. Server may handle such requests and filter response data.</p>
 
     <datatable url="https://bunnyjs.com/api/users/" template="users_row_template">
-        <header>
-            <div class="dt-search">
-                <input name="search" class="form-control" placeholder="Search...">
+        <header class="row">
+            <div class="col-lg-4">
+                <input name="search" class="form-control" placeholder="Search all...">
+            </div>
+            <div class="col-lg-4">
+                <input name="email" class="form-control" placeholder="E-mail...">
+            </div>
+            <div class="col-lg-4">
+                <select name="age" class="form-control">
+                    <option value="">Age...</option>
+                    <option value="1">< 20</option>
+                    <option value="2">21-29</option>
+                    <option value="3">30+</option>
+                </select>
             </div>
         </header>
         <table class="table fade in">
             <tr>
-                <th>ID</th>
+                <th pid="id">ID</th>
                 <th>Photo</th>
-                <th>Name</th>
-                <th>email</th>
-                <th>Age</th>
+                <th pid="name">Name</th>
+                <th pid="email">email</th>
+                <th pid="age">Age</th>
                 <th>Actions</th>
             </tr>
         </table>

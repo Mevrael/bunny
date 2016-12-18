@@ -1,4 +1,5 @@
-/*import { Template } from '../../src/bunny.template';*/
+//import { Template } from '../../src/bunny.template';
+//import { DataTable } from '../../src/DataTable';
 
 Template.define('users_row_template', {
     edit: function edit(btn, user) {
@@ -14,11 +15,6 @@ Template.define('users_row_template', {
                 window.location = btn.href;
             }
         });
-    }
-}, {
-    format_data: function format_data(data) {
-        data.name = data.name.first + ' ' + data.name.last;
-        return data;
     }
 });
 
