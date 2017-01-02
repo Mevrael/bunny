@@ -1090,6 +1090,24 @@ function removeEventKeyNavigation(element, handler) {
   element.removeEventListener('keydown', handler);
 }
 
+function htmlToNode(html) {
+  var e = document.createElement('div');
+  e.innerHTML = html;
+  return e.firstElementChild;
+}
+
+function appendHtml(parent, html) {
+  parent.appendChild(htmlToNode(html));
+}
+
+function parseTemplate(id, data) {
+  var tpl = document.getElementById(id).innerHTML;
+  for (var key in data) {
+    tpl = tpl.replace('{{ ' + key + ' }}', data[key]);
+  }
+  return htmlToNode(tpl);
+}
+
 function getActionObject(element) {
   var action = element.getAttribute('action');
   var parts = action.split('.');

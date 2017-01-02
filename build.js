@@ -39,6 +39,8 @@ if (Core.args[0] === 'dist') {
     ['polyfills/Promise', 'polyfill-promise.min'],
     ['polyfills/ObjectAssign', 'polyfill-object-assign.min'],
     ['polyfills/fetch', 'polyfill-fetch.min'],
+    ['polyfills/template', 'polyfill-template.min'],
+    ['polyfills/polyfills', 'polyfills.min'],
 
     // BunnyJS specific core helpers
     ['utils/core', 'core-helpers.min'],
@@ -61,6 +63,10 @@ if (Core.args[0] === 'dist') {
     ['bunny.ajax', 'ajax.min'],
     ['file/file', 'file.min'],
     ['file/image', 'image.min', ['src/file/file.js']],
+
+    // Experimental Components based on DOMObserver
+    //['DOMObserver', 'dom-observer/min'],
+    ['Component', 'component.min'],
 
     // Components
     ['Pagination', 'pagination.min', ['src/url.js']],

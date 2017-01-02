@@ -3,7 +3,7 @@
     <img src="https://bunnyjs.com/img/bunnyjs-logo.png" alt="BunnyJS Logo">
 </p>
 
-# BunnyJS v 0.12.5 (Beta)
+# BunnyJS v 0.13.0 (Beta)
 
 [Website](https://bunnyjs.com) [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) 
 
@@ -106,6 +106,55 @@ export const Component = Object.assign({}, BunnyComponent, {
 * Make sure to install npm dev dependencies first with `npm install`
 * Examples in `examples` folder. `index.html` can be opened in browser to view examples. Examples are generated with `npm build`
 * To generate dists - `npm build dist -p`
+
+## Experimental components based on DOMObserver (Mutation Observer)
+
+`src/DOMObserver` may be used to listen for DOM events like when new tag (component) was inserted into DOM or removed. It is based on latest Mutation Observer API (IE11+) and allows to automatically init components inserted into DOM later.
+
+BunnyJS provides an experimental base abstract `src/Component` which may be used to create custom components:
+
+```html
+<script src="https://unpkg.com/bunnyjs/dist/component.min.js"></script>
+```
+
+```javascript
+
+const MyClock = Object.assign({}, Component, {
+
+  tagName: 'clock',
+
+  attributes: {
+    date: new Date,
+  },
+
+  addEvents(clock) {
+    clock._timer = setInterval(() => {
+      clock.date = new Date;
+    }, 1000);
+  },
+
+  uninit(clock) {
+    clearInterval(clock._timer);
+  },
+
+  __date(clock, newVal) {
+    clock.textContent = newVal.toLocaleTimeString();
+  }
+
+});
+
+MyClock.register();
+```
+
+Now just `document.body.appendChild(document.createElement('clock'))` and it works.
+
+To update the whole "state" of the component you may just use Vanilla JS `Object.assign(component, {stateObject})`.
+
+For example, you have a simple <btn> clicker. By clicking on it btn.counter is increased. You can update counter with `btn.counter = 1` or `Object.assign(document.getElementsByTagName('btn')[0], {counter: 1})`;
+
+You may also set default counter value with `<btn counter="6">`
+
+For more examples look in `examples/component` folder.
 
 --- 
 

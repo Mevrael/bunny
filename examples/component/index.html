@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<main>
+    <btn counter="6"></btn>
+
+    <todo>
+        <items>
+        </items>
+        <footer>
+            <input pid="add_input">
+            <button pid="add_btn">Add</button>
+        </footer>
+    </todo>
+</main>
+
+
+<template id="todo">
+    <todo>
+        <items>
+        </items>
+        <footer>
+            <input pid="add_input">
+            <button pid="add_btn">Add</button>
+        </footer>
+    </todo>
+</template>
+
+<template id="todo_item">
+    <item><b>{{ id }}:</b> {{ value }}</item>
+</template>
+
+
+
+<style>
+    body, html {
+        margin: 0;
+        padding: 2rem;
+    }
+
+    btn {
+        margin: 1rem;
+        padding: 0.6rem 1.2rem;
+        text-align: center;
+        min-width: 6rem;
+        color: #FFF;
+        background-color: #39E;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    btn:focus {
+        box-shadow: 0 0 0 3px orange;
+    }
+
+    btn:hover {
+        background-color: #38D;
+    }
+
+    btn:active {
+        box-shadow: inset 2px 2px 4px 4px #27B;
+    }
+
+    [role="button"]:hover {
+        cursor: pointer;
+    }
+
+    item {
+        display: block;
+        margin: 0.5rem;
+    }
+
+    todo {
+        display: block;
+        margin: 1rem;
+        padding: 1rem;
+        background: #EEE;
+    }
+
+</style>
+
+<script src="../../dist/polyfills.min.js"></script>
+<script src="../../dist/utils-dom.min.js"></script>
+<script src="../../dist/component.min.js"></script>
+<script src="dist/index.js"></script>
+
+</body>
+</html>

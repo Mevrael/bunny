@@ -181,14 +181,16 @@ export const Pagination = {
     return str;
   },
 
-  _getPaginationData(data) {
+  _getPaginationData(data, urlParams = null) {
+    const nextPageUrl = urlParams === null || data.next_page_url === null ? data.next_page_url : BunnyURL.setParams(urlParams, data.next_page_url);
+    const prevPageUrl = urlParams === null || data.prev_page_url === null ? data.prev_page_url : BunnyURL.setParams(urlParams, data.prev_page_url);
     return {
       count: parseInt(data.to) - parseInt(data.from) + 1,
       currentPage: parseInt(data.current_page),
       lastPage: parseInt(data.last_page),
-      nextPageUrl: data.next_page_url,
+      nextPageUrl: nextPageUrl,
       perPage: parseInt(data.per_page),
-      previousPageUrl: data.prev_page_url,
+      previousPageUrl: prevPageUrl,
       total: parseInt(data.total),
       from: parseInt(data.from),
       to: parseInt(data.to)
@@ -336,14 +338,14 @@ export const Pagination = {
   },
 
 
-  initOrUpdate(pagination, data) {
+  initOrUpdate(pagination, data, urlParams = null) {
     const index = this._getIndex(pagination);
     if (index === false) {
       this._collection.push(pagination);
-      this._dataCollection.push(this._getPaginationData(data));
+      this._dataCollection.push(this._getPaginationData(data, urlParams));
       this._callbacks.push([]);
     } else {
-      this._dataCollection[index] = this._getPaginationData(data);
+      this._dataCollection[index] = this._getPaginationData(data, urlParams);
       this._callbacks[index] = []; // clear callbacks
     }
     this.redraw(pagination);

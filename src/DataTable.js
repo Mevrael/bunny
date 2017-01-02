@@ -129,7 +129,9 @@ export const DataTable = {
         this.UI.setColumnDesc(thCell);
       }
     }
-    this.changePage(datatable, page, Object.assign(this.getSearchDataFromURL(datatable), orderData));
+    //this.changePage(datatable, page, Object.assign(this.getSearchDataFromURL(datatable), orderData));
+
+    this.changePage(datatable, page, this.getSearchAndOrderDataFromURL(datatable));
 
     return true;
   },
@@ -224,11 +226,19 @@ export const DataTable = {
     return data;
   },
 
+
+  getSearchAndOrderData(datatable) {
+    return Object.assign(this.getSearchData(datatable), this.getOrderData(datatable));
+  },
+
+  getSearchAndOrderDataFromURL(datatable) {
+    return Object.assign(this.getSearchDataFromURL(datatable), this.getOrderDataFromURL(datatable));
+  },
+
+
   getDataUrl(datatable, page, urlParams = {}) {
     let url = this.Pagination.addPageParamToUrl(this.getAjaxUrl(datatable), page);
-    for (let k in urlParams) {
-      url += '&' + k + '=' + urlParams[k];
-    }
+    url = BunnyURL.setParams(urlParams, url);
     return url;
   },
 
@@ -238,7 +248,7 @@ export const DataTable = {
     const searchInputs = this.UI.getAllSearchInputs(datatable);
     [].forEach.call(searchInputs, searchInput => {
       addEventOnce(searchInput, 'input', () => {
-        this.update(datatable, this.getDataUrl(datatable, 1, Object.assign(this.getSearchData(datatable), this.getOrderData(datatable))));
+        this.update(datatable, this.getDataUrl(datatable, 1, this.getSearchAndOrderData(datatable)));
       });
     });
 
@@ -247,10 +257,10 @@ export const DataTable = {
       thCell.addEventListener('click', () => {
         if (this.UI.isColumnAsc(thCell)) {
           this.UI.setColumnDesc(thCell);
-          this.update(datatable, this.getDataUrl(datatable, this.getPage(), Object.assign(this.getSearchData(datatable), this.getOrderData(datatable))));
+          this.update(datatable, this.getDataUrl(datatable, this.getPage(), this.getSearchAndOrderData(datatable)));
         } else {
           this.UI.setColumnAsc(thCell);
-          this.update(datatable, this.getDataUrl(datatable, this.getPage(), Object.assign(this.getSearchData(datatable), this.getOrderData(datatable))));
+          this.update(datatable, this.getDataUrl(datatable, this.getPage(), this.getSearchAndOrderData(datatable)));
         }
       });
     });
@@ -296,7 +306,7 @@ export const DataTable = {
 
   changePage(datatable, page, data = null) {
     if (data === null) {
-      data = this.getSearchData(datatable);
+      data = this.getSearchAndOrderData(datatable);
     }
     this.update(datatable, this.getDataUrl(datatable, page, data));
   },
@@ -351,7 +361,7 @@ export const DataTable = {
     this.fetchData(datatable, url).then(data => {
       const pg = this.UI.getPagination(datatable);
       const Pagination = this.Pagination;
-      Pagination.initOrUpdate(pg, data);
+      Pagination.initOrUpdate(pg, data, this.getSearchAndOrderData(datatable));
       this.attachPaginationEventHandlers(datatable);
       const stats = this.UI.getStats(datatable);
       if (stats !== undefined) {
