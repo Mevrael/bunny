@@ -109,6 +109,8 @@ export const Component = Object.assign({}, BunnyComponent, {
 
 ## Experimental components based on DOMObserver (Mutation Observer)
 
+Learn how to build [Vanilla JavaScript components on Medium.](https://medium.com/bunnyllc/vanilla-js-components-8d20c58b69f4#.qpwcm9mbn)
+
 `src/DOMObserver` may be used to listen for DOM events like when new tag (component) was inserted into DOM or removed. It is based on latest Mutation Observer API (IE11+) and allows to automatically init components inserted into DOM later.
 
 BunnyJS provides an experimental base abstract `src/Component` which may be used to create custom components:
@@ -116,6 +118,8 @@ BunnyJS provides an experimental base abstract `src/Component` which may be used
 ```html
 <script src="https://unpkg.com/bunnyjs/dist/component.min.js"></script>
 ```
+
+Below is [Clock](https://jsfiddle.net/o01mvsyn/) example from [Inferno](https://infernojs.org/). As you can see you can do everything in Vanilla JS with less code, size and it works natively.
 
 ```javascript
 
