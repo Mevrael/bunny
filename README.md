@@ -33,8 +33,9 @@ IE9+, last 2 versions of Chrome, Firefox, Safari, Android 4.4+, iOS 9+
 
 1. Install via `npm install bunnyjs --save`
 2. [Rollup.js](http://rollupjs.org) with babel and npm plugins is recommended for transpiling and bundling.
-3. Or just include into HTML already transpiled and minified JS from `dists` folder or any [CDN](https://unpkg.com/bunnyjs/dist).
-4. Probably some polyfills for IE might be required depending on Component.
+3. Or you can just use [Assets Builder](https://github.com/Mevrael/assets-builder) which will automatically build your future JS and CSS with 1 command.
+4. Or just include into HTML already transpiled and minified JS from `dists` folder or any [CDN](https://unpkg.com/bunnyjs/dist).
+5. Probably some polyfills for IE might be required depending on Component.
 
 ```html
 <script src="https://unpkg.com/bunnyjs/dist/..."></script>
