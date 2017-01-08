@@ -216,7 +216,7 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
 
     const maxItemIndex = items.length - 1;
 
-    if (c === KEY_ENTER) {
+    if (c === KEY_ENTER || c === KEY_SPACE) {
       e.preventDefault();
       if (currentItemIndex !== null) {
         itemSelectCallback(items[currentItemIndex]);

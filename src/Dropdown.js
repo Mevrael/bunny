@@ -82,6 +82,9 @@ export const DropdownUI = {
         return children[k];
       }
     }
+    if (dropdown.classList.contains(this.Config.classNameToggleBtn)) {
+      return dropdown;
+    }
     return dropdown.getElementsByClassName(this.Config.classNameToggleBtn)[0] || false;
   },
 
@@ -406,6 +409,11 @@ export const Dropdown = {
     const btn = this.UI.getToggleBtn(dropdown);
     if (btn) {
       addEvent(btn, 'click', this._onToggleClick.bind(this, dropdown));
+      addEvent(btn, 'keydown', (e) => {
+        if (e.keyCode === KEY_ENTER || e.keyCode === KEY_SPACE) {
+          btn.click();
+        }
+      });
 
       if (this.isHoverable(dropdown)) {
         const menu = this.UI.getMenu(dropdown);

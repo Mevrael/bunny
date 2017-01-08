@@ -7,6 +7,7 @@
     window.KEY_CTRL = 17;
     window.KEY_ALT = 18;
     window.KEY_ESCAPE = 27;
+    window.KEY_SPACE = 32;
     window.KEY_PAGE_UP = 33;
     window.KEY_PAGE_DOWN = 34;
     window.KEY_ARROW_LEFT = 37;
