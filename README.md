@@ -33,8 +33,9 @@ IE9+, last 2 versions of Chrome, Firefox, Safari, Android 4.4+, iOS 9+
 
 1. Install via `npm install bunnyjs --save`
 2. [Rollup.js](http://rollupjs.org) with babel and npm plugins is recommended for transpiling and bundling.
-3. Or just include into HTML already transpiled and minified JS from `dists` folder or any [CDN](https://unpkg.com/bunnyjs/dist).
-4. Probably some polyfills for IE might be required depending on Component.
+3. Or you can just use [Assets Builder](https://github.com/Mevrael/assets-builder) which will automatically build your future JS and CSS with 1 command.
+4. Or just include into HTML already transpiled and minified JS from `dists` folder or any [CDN](https://unpkg.com/bunnyjs/dist).
+5. Probably some polyfills for IE might be required depending on Component.
 
 ```html
 <script src="https://unpkg.com/bunnyjs/dist/..."></script>
@@ -109,6 +110,8 @@ export const Component = Object.assign({}, BunnyComponent, {
 
 ## Experimental components based on DOMObserver (Mutation Observer)
 
+Learn how to build [Vanilla JavaScript components on Medium.](https://medium.com/bunnyllc/vanilla-js-components-8d20c58b69f4#.qpwcm9mbn)
+
 `src/DOMObserver` may be used to listen for DOM events like when new tag (component) was inserted into DOM or removed. It is based on latest Mutation Observer API (IE11+) and allows to automatically init components inserted into DOM later.
 
 BunnyJS provides an experimental base abstract `src/Component` which may be used to create custom components:
@@ -116,6 +119,8 @@ BunnyJS provides an experimental base abstract `src/Component` which may be used
 ```html
 <script src="https://unpkg.com/bunnyjs/dist/component.min.js"></script>
 ```
+
+Below is [Clock](https://jsfiddle.net/o01mvsyn/) example from [Inferno](https://infernojs.org/). As you can see you can do everything in Vanilla JS with less code, size and it works natively.
 
 ```javascript
 
