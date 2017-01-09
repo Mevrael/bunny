@@ -1,4 +1,14 @@
 
+const CLI = require('assets-builder/node_scripts/cli');
+const Dist = require('./node_scripts/Dist');
+
+CLI.init();
+
+CLI.registerCmd('dist', 'Build dists', [], Dist);
+
+CLI.run();
+
+/*
 const buildJs = require('assets-builder/node_scripts/js');
 const Core = require('assets-builder/node_scripts/core');
 const fs = require('fs');
@@ -112,4 +122,5 @@ if (Core.args[0] === 'dist') {
     build_example(example);
   });
 }
+*/
 

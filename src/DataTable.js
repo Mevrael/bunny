@@ -247,7 +247,8 @@ export const DataTable = {
   addEvents(datatable) {
     const searchInputs = this.UI.getAllSearchInputs(datatable);
     [].forEach.call(searchInputs, searchInput => {
-      addEventOnce(searchInput, 'input', () => {
+      const eventName = searchInput.tagName === 'INPUT' ? 'input' : 'change';
+      addEventOnce(searchInput, eventName, () => {
         this.update(datatable, this.getDataUrl(datatable, 1, this.getSearchAndOrderData(datatable)));
       });
     });
@@ -258,9 +259,12 @@ export const DataTable = {
         if (this.UI.isColumnAsc(thCell)) {
           this.UI.setColumnDesc(thCell);
           this.update(datatable, this.getDataUrl(datatable, this.getPage(), this.getSearchAndOrderData(datatable)));
-        } else {
+        } else if (this.UI.isColumnDesc(thCell)) {
           this.UI.setColumnAsc(thCell);
           this.update(datatable, this.getDataUrl(datatable, this.getPage(), this.getSearchAndOrderData(datatable)));
+        } else {
+          this.UI.clearAllColumnsOrder(thCell);
+          this.update(datatable, this.getDataUrl(datatable, this.getPage(), this.getSearchData(datatable)));
         }
       });
     });
