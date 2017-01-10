@@ -268,13 +268,3 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
 export function removeEventKeyNavigation(element, handler) {
   element.removeEventListener('keydown', handler);
 }
-
-export function makeAccessible(element, tabIndex = 0, role = 'button') {
-  element.setAttribute('tabindex', tabIndex);
-  element.setAttribute('role', role);
-  element.addEventListener('keydown', e => {
-    if (e.keyCode === KEY_ENTER || e.keyCode === KEY_SPACE) {
-      element.click();
-    }
-  });
-}
