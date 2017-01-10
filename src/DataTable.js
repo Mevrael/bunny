@@ -129,7 +129,8 @@ export const DataTable = {
         this.UI.setColumnDesc(thCell);
       }
     }
-    //this.changePage(datatable, page, Object.assign(this.getSearchDataFromURL(datatable), orderData));
+
+    this.setARIA(datatable);
 
     this.changePage(datatable, page, this.getSearchAndOrderDataFromURL(datatable));
 
