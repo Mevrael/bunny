@@ -3,7 +3,7 @@ import { Ajax } from './bunny.ajax';
 import { Template } from './bunny.template';
 import { Pagination } from './Pagination';
 import { BunnyURL } from './url';
-import { ready, addEventOnce } from './utils/DOM';
+import { ready, addEventOnce, makeAccessible } from './utils/DOM';
 import { pushCallbackToElement, callElementCallbacks, initObjectExtensions } from './utils/core';
 
 export const DataTableConfig = {
@@ -267,6 +267,13 @@ export const DataTable = {
           this.update(datatable, this.getDataUrl(datatable, this.getPage(), this.getSearchAndOrderData(datatable)));
         }
       });
+    });
+  },
+
+  setARIA(datatable) {
+    const thCells = this.UI.getOrderCells(datatable);
+    [].forEach.call(thCells, thCell => {
+      makeAccessible(thCell);
     });
   },
 
