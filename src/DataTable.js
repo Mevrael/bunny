@@ -3,7 +3,7 @@ import { Ajax } from './bunny.ajax';
 import { Template } from './bunny.template';
 import { Pagination } from './Pagination';
 import { BunnyURL } from './url';
-import { ready, addEventOnce, makeAccessible } from './utils/DOM';
+import { ready, addEventOnce, makeAccessible, parseTemplate} from './utils/DOM';
 import { pushCallbackToElement, callElementCallbacks, initObjectExtensions } from './utils/core';
 
 export const DataTableConfig = {
@@ -65,7 +65,12 @@ export const DataTableUI = {
   },
 
   insertRows(datatable, rowsData, templateId) {
-    this.Template.insertAll(templateId, rowsData, this.getTable(datatable));
+    const tpl = document.getElementById(templateId);
+    if (tpl.tagName === 'TEMPLATE') {
+      this.getTable(datatable).appendChild(parseTemplate(templateId, rowsData));
+    } else {
+      this.Template.insertAll(templateId, rowsData, this.getTable(datatable));
+    }
   },
 
   clearAllColumnsOrder(thCell) {

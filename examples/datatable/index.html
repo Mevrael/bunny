@@ -88,7 +88,7 @@
 
 </div>
 
-<table id="users_row_template" hidden>
+<!--<table id="users_row_template" hidden>
     <tr>
         <td v="index"></td>
         <td><img av="src:picture" alt="Picture"></td>
@@ -100,7 +100,23 @@
             <a href="/users/delete/" class="btn btn-danger" data-handler="remove">Delete</a>
         </td>
     </tr>
-</table>
+</table>-->
+
+<template id="users_row_template">
+    <table>
+        <tr>
+            <td>{{ index }}</td>
+            <td><img src="{{ picture }}" alt="Picture"></td>
+            <td>{{ name }}</td>
+            <td>{{ email }}</td>
+            <td>{{ age }}</td>
+            <td>
+                <a href="/users/edit/{{ index }}" class="btn btn-primary">Edit</a>
+                <a href="/users/delete/{{ index }}" class="btn btn-danger" handler="remove">Delete</a>
+            </td>
+        </tr>
+    </table>
+</template>
 
 <script src="../../dist/utils-dom.min.js"></script>
 <script src="../../dist/ajax.min.js"></script>
@@ -116,7 +132,20 @@
 <script src="../../dist/element.min.js"></script>
 <script src="../../dist/datatable.scrolltop.min.js"></script>
 
-<script src="dist/index.js"></script>
+<script>
+  registerTemplateHandlers('users_row_template', {
+    remove(btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (confirm('Are you sure?')) {
+          window.location = btn.href;
+        }
+      })
+    }
+  })
+</script>
+
+<!--<script src="dist/index.js"></script>-->
 
 <svg xmlns="http://www.w3.org/2000/svg">
 
