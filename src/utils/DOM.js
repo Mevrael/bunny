@@ -27,11 +27,19 @@ export function parseTemplate(id, data) {
   let template = document.getElementById(id);
   let tpl = template.innerHTML;
 
+  const getDataByPath = (obj, path) => {
+    return path.split('.').reduce((prev, curr) => {
+      return prev ? prev[curr] : undefined
+    }, obj);
+  };
+
   const parseRow = (originalTpl, rowData) => {
     let newTpl = originalTpl;
-    for (let key in rowData) {
-      newTpl = newTpl.replace(new RegExp('{{ ' + key + ' }}', 'g'), rowData[key]);
-    }
+    newTpl = newTpl.replace(/{{ ([a-zA-Z.]*) }}/g, (match, capture) => {
+      const res = getDataByPath(rowData, capture);
+      return res === undefined ? match : res;
+    });
+
     let node = htmlToNode(newTpl);
     if (node.tagName === 'TABLE') {
       node = node.rows[0];
