@@ -35,7 +35,7 @@ export function parseTemplate(id, data) {
 
   const parseRow = (originalTpl, rowData) => {
     let newTpl = originalTpl;
-    newTpl = newTpl.replace(/{{ ([a-zA-Z.]*) }}/g, (match, capture) => {
+    newTpl = newTpl.replace(/{{ ([a-zA-Z._]*) }}/g, (match, capture) => {
       const res = getDataByPath(rowData, capture);
       return res === undefined ? match : res;
     });
