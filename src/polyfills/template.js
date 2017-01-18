@@ -13,7 +13,11 @@
     var fragment = document.createDocumentFragment();
 
     while (content[0]) {
-      fragment.appendChild(content[0]);
+      if (content[0].nodeType === Node.ELEMENT_NODE) {
+        fragment.appendChild(content[0]);
+      } else {
+        content[0].parentNode.removeChild(content[0]);
+      }
     }
 
     template.content = fragment;

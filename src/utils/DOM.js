@@ -25,7 +25,7 @@ export function appendHtml(parent, html) {
 export function parseTemplate(id, data) {
   let node = null;
   let template = document.getElementById(id);
-  let tpl = template.innerHTML;
+  let tpl = template.content.firstElementChild.outerHTML;
 
   const getDataByPath = (obj, path) => {
     return path.split('.').reduce((prev, curr) => {
