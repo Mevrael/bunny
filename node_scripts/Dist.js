@@ -2,6 +2,8 @@
 const JS = require('assets-builder/node_scripts/js');
 
 const dists = [
+  ['normalize', 'normalize.min'],
+
   // Polyfills
   ['polyfills/Promise', 'polyfill-promise.min'],
   ['polyfills/ObjectAssign', 'polyfill-object-assign.min'],

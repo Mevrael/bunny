@@ -1,6 +1,4 @@
 
-import './firstElementChild';
-
 import './ObjectAssign';
 import './Promise';
 import './template';
