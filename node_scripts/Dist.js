@@ -27,6 +27,9 @@ const dists = [
   // Basic app components
   ['bunny.template', 'template.min'],
   ['bunny.route', 'route.min'],
+  ['Api', 'api.min', ['src/Notify.js']],
+  ['Notify', 'notify.min'],
+  ['Modal', 'modal.min'],
 
   // AJAX and files
   ['bunny.ajax', 'ajax.min'],
