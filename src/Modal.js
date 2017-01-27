@@ -128,6 +128,8 @@ export const Modal = {
     setTimeout(() => {
       modal.__click_outside = onClickOutside(modal, this.handlerHide.bind(this, modal));
     }, 100);
+
+    if (modal.__on_show !== undefined) modal.__on_show.forEach(cb => cb());
   },
 
   handlerHide(modal) {
@@ -146,6 +148,8 @@ export const Modal = {
 
     removeClickOutside(modal, modal.__click_outside);
     delete modal.__click_outside;
+
+    if (modal.__on_hide !== undefined) modal.__on_hide.forEach(cb => cb());
   },
 
   show(modal) {
@@ -154,7 +158,17 @@ export const Modal = {
 
   hide(modal) {
     this.handlerHide(modal);
-  }
+  },
+
+  onShow(modal, callback) {
+    if (modal.__on_show === undefined) modal.__on_show = [];
+    modal.__on_show.push(callback);
+  },
+
+  onHide(modal, callback) {
+    if (modal.__on_hide === undefined) modal.__on_hide = [];
+    modal.__on_hide.push(callback);
+  },
 
 };
 
