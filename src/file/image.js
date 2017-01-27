@@ -202,7 +202,7 @@ export const BunnyImage = {
   },
 
   cropByCursor(img, cursor) {
-    return crop(img, cursor.offsetLeft, cursor.offsetTop, cursor.clientWidth, cursor.clientHeight);
+    return this.crop(img, cursor.offsetLeft, cursor.offsetTop, cursor.clientWidth, cursor.clientHeight);
   }
 
 };
