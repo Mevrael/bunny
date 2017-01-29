@@ -32,7 +32,7 @@ const dists = [
   ['bunny.route', 'route.min'],
   ['Api', 'api.min', ['src/Notify.js']],
   ['Notify', 'notify.min'],
-  ['Modal', 'modal.min'],
+  ['Modal', 'modal.min', ['src/utils/DOM.js']],
 
   // Experimental Components based on DOMObserver
   //['DOMObserver', 'dom-observer/min'],
