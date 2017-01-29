@@ -23,6 +23,9 @@ const dists = [
   ['url', 'url.min'],
   ['BunnyDate', 'date.min'],
   ['BunnyElement', 'element.min'],
+  ['bunny.ajax', 'ajax.min'],
+  ['file/file', 'file.min'],
+  ['file/image', 'image.min', ['src/file/file.js']],
 
   // Basic app components
   ['bunny.template', 'template.min'],
@@ -30,11 +33,6 @@ const dists = [
   ['Api', 'api.min', ['src/Notify.js']],
   ['Notify', 'notify.min'],
   ['Modal', 'modal.min'],
-
-  // AJAX and files
-  ['bunny.ajax', 'ajax.min'],
-  ['file/file', 'file.min'],
-  ['file/image', 'image.min', ['src/file/file.js']],
 
   // Experimental Components based on DOMObserver
   //['DOMObserver', 'dom-observer/min'],
@@ -54,9 +52,13 @@ const dists = [
 
   // Higher-level components
   ['Validation', 'validation.min', ['src/file/file.js', 'src/file/image.js', 'src/bunny.ajax.js', 'src/BunnyElement.js']],
+
   ['DataTable', 'datatable.min', ['src/bunny.ajax.js', 'src/bunny.template.js', 'src/Pagination.js', 'src/utils/DOM.js', 'src/url.js', 'src/BunnyElement.js']],
   ['plugins/DataTableIcons', 'datatable.icons.min', ['src/Spinner.js', 'src/DataTable.js']],
   ['plugins/DataTableScrollTop', 'datatable.scrolltop.min', ['src/BunnyElement.js', 'src/DataTable.js']],
+
+  ['ImageProcessor', 'image-processor.min', ['src/utils/DOM.js', 'src/file/image.js']],
+  ['ImageUpload', 'image-upload.min', ['src/file/file.js', 'src/file/image.js', 'src/Modal.js', 'src/ImageProcessor.js']],
 
 ];
 
