@@ -20,6 +20,8 @@ export const ImageUpload = {
   Config: ImageUploadConfig,
 
   init(imgupl) {
+    const img = this.getImagePreview(imgupl);
+    img._src = img.src;
     this.addEvents(imgupl);
   },
 
@@ -71,7 +73,7 @@ export const ImageUpload = {
 
     // if reset button clicked or form.reset() called from JS - clear custom logic also
     input.form.addEventListener('reset', (e) => {
-      img.src = img.getAttribute('src'); // restore to default image
+      img.src = img._src; // restore to default image
       delete input._file;
     });
 
