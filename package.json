@@ -1,6 +1,6 @@
 {
   "name": "bunnyjs",
-  "version": "0.14.4",
+  "version": "0.14.5",
   "description": "Lightweight native JavaScript and ECMAScript 6 library (package of small stand-alone components like routing, templating, validation, ajax, datatables, calendar, datepicker, autocomplete, pagination, url) and next generation front-end framework.",
   "main": "index.js",
   "scripts": {
@@ -53,10 +53,10 @@
   },
   "homepage": "https://github.com/Mevrael/bunny#readme",
   "devDependencies": {
-    "assets-builder": "^0.1.2"
+    "assets-builder": "^0.1.3"
   },
   "dependencies": {
     "es6-promise-polyfill": "^1.2.0",
-    "whatwg-fetch": "^2.0.1"
+    "whatwg-fetch": "^2.0.2"
   }
 }

@@ -68,6 +68,17 @@ export const ImageUpload = {
         ImageProcessor.deinit(processor);
       });
     }
+
+    // if reset button clicked or form.reset() called from JS - clear custom logic also
+    input.form.addEventListener('reset', (e) => {
+      img.src = img.getAttribute('src'); // restore to default image
+      delete input._file;
+    });
+
+    if (input.files[0] !== undefined) {
+      // after refresh photo is still in the input
+      this.setImage(imgupl, input.files[0]);
+    }
   },
 
   getQuality(imgupl) {
