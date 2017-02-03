@@ -37,7 +37,7 @@ export const Api = {
   createHeaders(additionalHeaders = {}, useGlobalHeaders = true) {
     let headers = {};
     if (useGlobalHeaders) {
-      headers = Object.assign({}, this.Config.ajaxHeaders, additionalHeaders);
+      headers = Object.assign({}, this.Config.headers, additionalHeaders);
     } else {
       headers = additionalHeaders;
     }
