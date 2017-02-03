@@ -21,6 +21,8 @@ export const AutocompleteConfig = Object.assign({}, DropdownConfig, {
   minChar: 2,
   showMark: false,
   allowCustomInput: false,
+  classNameNotFound: 'dropdown-header',
+  textNotFound: 'No results found',
 
 });
 
@@ -108,6 +110,10 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     } else {
       return this.Config.minChar;
     }
+  },
+
+  isNotFoundDisplayed(autocomplete) {
+    return autocomplete.hasAttribute('shownotfound');
   },
 
   // events
@@ -215,8 +221,10 @@ export const Autocomplete = Object.assign({}, Dropdown, {
           this.open(autocomplete);
         } else {
           this.close(autocomplete);
-          this.UI.getMenu(autocomplete).innerHTML = 'No results found';
-          this.open(autocomplete);
+          if (this.isNotFoundDisplayed(autocomplete)) {
+            this.UI.getMenu(autocomplete).appendChild(this.createNotFoundElement());
+            this.open(autocomplete);
+          }
         }
       //}, 1000);
     }).catch(e => {
@@ -226,6 +234,13 @@ export const Autocomplete = Object.assign({}, Dropdown, {
         cb(false, e);
       });
     });
+  },
+
+  createNotFoundElement() {
+    const div = document.createElement('div');
+    div.classList.add(this.Config.classNameNotFound);
+    div.textContent = this.Config.textNotFound;
+    return div;
   },
 
   onBeforeUpdate(autocomplete, cb) {
