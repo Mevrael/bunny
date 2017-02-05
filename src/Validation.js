@@ -10,6 +10,8 @@ export const ValidationConfig = {
     classInputGroup: 'form-group',
     // class to be applied on input group node if it has invalid input
     classInputGroupError: 'has-danger',
+    // class to be applied on input group node if it input passed validation (is valid)
+    classInputGroupSuccess: 'has-success',
 
     // label to pick textContent from to insert field name into error message
     classLabel: 'form-control-label',
@@ -451,6 +453,17 @@ export const ValidationUI = {
 
 
 
+    /**
+     * Marks input as valid
+     *
+     * @param {HTMLElement} inputGroup
+     */
+    setInputValid(inputGroup) {
+      inputGroup.classList.add(this.config.classInputGroupSuccess);
+    },
+
+
+
     /* ************************************************************************
      * SEARCH DOM
      */
@@ -724,8 +737,14 @@ export const Validation = {
             if (validators[index] !== undefined) {
                 this._checkInput(input, index, valid, invalid)
             } else {
+                const inputGroup = this.ui.getInputGroup(input);
                 // if has error message, remove it
-                this.ui.removeErrorNode(this.ui.getInputGroup(input));
+                this.ui.removeErrorNode(inputGroup);
+
+                if (input.form !== undefined && input.form.hasAttribute('showvalid')) {
+                  // mark input as valid
+                  this.ui.setInputValid(inputGroup);
+                }
 
                 valid();
             }
