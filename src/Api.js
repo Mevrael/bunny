@@ -93,6 +93,10 @@ export const Api = {
     this.showStatusError('401: You are not logged in!');
   },
 
+  onStatusServerError() {
+    this.showStatusError('500: Server error!');
+  },
+
   onStatusFail(status) {
     if (status === 404) {
       this.onStatusNotFound();
@@ -100,6 +104,8 @@ export const Api = {
       this.onStatusAccessDenied();
     } else if (status === 401) {
       this.onStatusUnauthorized();
+    } else if (status === 500) {
+      this.onStatusServerError();
     }
     return Promise.reject(status);
   },
