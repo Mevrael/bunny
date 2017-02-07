@@ -4,8 +4,10 @@ import { Notify } from './Notify';
 export const ApiConfig = {
   prefix: '/ajax',
   headers: {
+    'Accept': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
+  credentials: 'same-origin', // fetch Request credential option to send cookies
 };
 
 export const Api = {
@@ -31,7 +33,7 @@ export const Api = {
 
   createRequest(url, method = 'GET', body = null, additionalHeaders = {}, responseType = 'json', useGlobalHeaders = true) {
     const headers = this.createHeaders(additionalHeaders, useGlobalHeaders);
-    return new Request(this.createUrl(url), {method, headers, body});
+    return new Request(this.createUrl(url), {method, headers, body, credentials: this.Config.credentials});
   },
 
   createHeaders(additionalHeaders = {}, useGlobalHeaders = true) {
@@ -48,8 +50,8 @@ export const Api = {
     return this.Config.prefix + this.prefix + url;
   },
 
-  get(url) {
-    return this.request(url, 'GET');
+  get(url, additionalHeaders = {}) {
+    return this.request(url, 'GET', null, additionalHeaders);
   },
 
   createFormData(data) {
@@ -63,8 +65,8 @@ export const Api = {
     return formData;
   },
 
-  post(url, data) {
-    return this.request(url, 'POST', this.createFormData(data));
+  post(url, data, additionalHeaders = {}) {
+    return this.request(url, 'POST', this.createFormData(data), additionalHeaders);
   },
 
   onResponse(data) {
