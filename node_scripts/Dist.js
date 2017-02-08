@@ -6,6 +6,7 @@ const dists = [
 
   // Polyfills
   ['polyfills/Promise', 'polyfill-promise.min'],
+  ['polyfills/ArrayFrom', 'polyfill-array-from.min'],
   ['polyfills/ObjectAssign', 'polyfill-object-assign.min'],
   ['polyfills/fetch', 'polyfill-fetch.min'],
   ['polyfills/template', 'polyfill-template.min'],

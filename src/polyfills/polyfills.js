@@ -1,4 +1,5 @@
 
+import './ArrayFrom';
 import './ObjectAssign';
 import './Promise';
 import './template';
