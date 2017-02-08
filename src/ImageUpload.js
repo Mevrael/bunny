@@ -77,7 +77,7 @@ export const ImageUpload = {
       delete input._file;
     });
 
-    if (input.files[0] !== undefined) {
+    if (input.files.length > 0) {
       // after refresh photo is still in the input
       this.setImage(imgupl, input.files[0]);
     }
