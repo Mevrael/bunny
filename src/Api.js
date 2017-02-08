@@ -33,7 +33,11 @@ export const Api = {
 
   createRequest(url, method = 'GET', body = null, additionalHeaders = {}, responseType = 'json', useGlobalHeaders = true) {
     const headers = this.createHeaders(additionalHeaders, useGlobalHeaders);
-    return new Request(this.createUrl(url), {method, headers, body, credentials: this.Config.credentials});
+    const initObj = {method, headers, credentials: this.Config.credentials};
+    if (body !== null) {
+      initObj.body = body;
+    }
+    return new Request(this.createUrl(url), initObj);
   },
 
   createHeaders(additionalHeaders = {}, useGlobalHeaders = true) {
