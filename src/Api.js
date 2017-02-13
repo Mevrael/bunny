@@ -22,12 +22,12 @@ export const Api = {
       if (response.status === 200) {
         return response[responseType]();
       } else {
-        return this.onStatusFail(response.status);
+        return this.onStatusFail(response);
       }
     }).then(data => {
       return this.onResponse(data);
-    }).catch(e => {
-      return this.onError(e, this.createUrl(url), method);
+    }).catch(response => {
+      return this.onError(response, this.createUrl(url), method);
     });
   },
 
@@ -82,9 +82,10 @@ export const Api = {
     return data;
   },
 
-  onError(error, url, method) {
-    console.error('Api call error:\n  URL: ' + url + '\n  Method: ' + method + '\n  Message: ' + error);
-    return Promise.reject(error);
+  onError(response, url, method) {
+    const error = response.status + ' (' + response.statusText + ')';
+    console.error('Api call error:\n  URL: ' + url + '\n  Method: ' + method + '\n  Status: ' + error);
+    return Promise.reject(response);
   },
 
   onStatusNotFound() {
@@ -103,8 +104,12 @@ export const Api = {
     this.showStatusError('500: Server error!');
   },
 
-  onStatusFail(status) {
-    if (status === 404) {
+  onStatusFail(response) {
+    const status = response.status;
+    const methodName = this['onStatus' + status];
+    if (methodName !== undefined) {
+      methodName(response);
+    } else if (status === 404) {
       this.onStatusNotFound();
     } else if (status === 403) {
       this.onStatusAccessDenied();
@@ -113,7 +118,7 @@ export const Api = {
     } else if (status === 500) {
       this.onStatusServerError();
     }
-    return Promise.reject(status);
+    return Promise.reject(response);
   },
 
   showStatusError(status) {
