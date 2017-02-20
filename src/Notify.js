@@ -74,7 +74,7 @@ export const Notify = {
     return btn;
   },
 
-  createAndInit(message, type = this.Config.defaultType, position = this.Config.defaultPosition, insideContainer = false) {
+  createAndInit(message, type = this.Config.defaultType, position = this.Config.defaultPosition, insideContainer = false, autoRemoveAfter = this.Config.autoRemoveAfter) {
     const alert = this.create(message, type, position, insideContainer);
     if (insideContainer) {
       this.getContainer().appendChild(alert);
@@ -82,7 +82,7 @@ export const Notify = {
       document.body.appendChild(alert);
     }
     this.show(alert);
-    this.addEvents(alert);
+    this.addEvents(alert, autoRemoveAfter);
   },
 
   createContainer(position = this.Config.defaultPosition) {
@@ -103,14 +103,14 @@ export const Notify = {
     return alert.getElementsByClassName(this.Config.classNameCloser)[0] || false;
   },
 
-  addEvents(alert) {
+  addEvents(alert, autoRemoveAfter = this.Config.autoRemoveAfter) {
     alert.addEventListener('click', () => {
       this.hideAndRemove(alert);
     });
-    if (this.Config.autoRemoveAfter > 0) {
+    if (autoRemoveAfter > 0) {
       setTimeout(() => {
         this.hideAndRemove(alert);
-      }, this.Config.autoRemoveAfter * 1000);
+      }, autoRemoveAfter * 1000);
     }
   },
 
@@ -129,20 +129,20 @@ export const Notify = {
     }
   },
 
-  success(message) {
-    this.createAndInit(message, 'success', this.Config.defaultPosition, true);
+  success(message, autoRemoveAfter = this.Config.autoRemoveAfter) {
+    this.createAndInit(message, 'success', this.Config.defaultPosition, true, autoRemoveAfter);
   },
 
-  info(message) {
-    this.createAndInit(message, 'info', this.Config.defaultPosition, true);
+  info(message, autoRemoveAfter = this.Config.autoRemoveAfter) {
+    this.createAndInit(message, 'info', this.Config.defaultPosition, true, autoRemoveAfter);
   },
 
-  warning(message) {
-    this.createAndInit(message, 'warning', this.Config.defaultPosition, true);
+  warning(message, autoRemoveAfter = this.Config.autoRemoveAfter) {
+    this.createAndInit(message, 'warning', this.Config.defaultPosition, true, autoRemoveAfter);
   },
 
-  danger(message) {
-    this.createAndInit(message, 'danger', this.Config.defaultPosition, true);
+  danger(message, autoRemoveAfter = this.Config.autoRemoveAfter) {
+    this.createAndInit(message, 'danger', this.Config.defaultPosition, true, autoRemoveAfter);
   },
 
 };

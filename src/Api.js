@@ -106,9 +106,9 @@ export const Api = {
 
   onStatusFail(response) {
     const status = response.status;
-    const methodName = this['onStatus' + status];
-    if (methodName !== undefined) {
-      methodName(response);
+    const methodName = 'onStatus' + status;
+    if (this[methodName] !== undefined) {
+      this[methodName](response);
     } else if (status === 404) {
       this.onStatusNotFound();
     } else if (status === 403) {
@@ -121,8 +121,8 @@ export const Api = {
     return Promise.reject(response);
   },
 
-  showStatusError(status) {
-    Notify.danger(status)
+  showStatusError(message, autoRemoveAfter = Notify.Config.autoRemoveAfter) {
+    Notify.danger(message, autoRemoveAfter);
   },
 
 };
