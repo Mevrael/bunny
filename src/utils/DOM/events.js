@@ -108,13 +108,14 @@ export function isEventCursorInside(e, element) {
 }
 
 export function onClickOutside(element, callback) {
-
   if (document.__bunny_core_outside_callbacks === undefined) {
     document.__bunny_core_outside_callbacks = [];
   }
-
   const handler = (event) => {
-    if (!(event.target === element || element.contains(event.target))) {
+    const target = event.target;
+    const bTargetExists = document.contains(target) !== false;
+    const bTargetIsElOrChild = event.target === element || element.contains(event.target);
+    if (bTargetExists && !bTargetIsElOrChild) {
       callback(event);
     }
   };
@@ -122,10 +123,7 @@ export function onClickOutside(element, callback) {
   if (element.__bunny_core_outside_callbacks === undefined) {
     element.__bunny_core_outside_callbacks = [];
   }
-
   element.__bunny_core_outside_callbacks.push(handler);
-
-
   document.__bunny_core_outside_callbacks.push(handler);
 
   if (document.__bunny_core_outside_handler === undefined) {
