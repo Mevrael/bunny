@@ -5,7 +5,7 @@
 
 # BunnyJS v 0.14.19 (Beta)
 
-[Website](https://bunnyjs.com) [![NPM downloads/month](https://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](https://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) 
+[Website](https://bunnyjs.com) * [![NPM downloads/month](https://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](https://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) * [Gitter chat](https://gitter.im/bunny-js/Lobby) * [Contribute to Docs](https://github.com/bunnyjs/docs) * [Assets Builder](https://github.com/Mevrael/assets-builder)
 
 ## ES6 browser framework
 
