@@ -3,9 +3,9 @@
     <img src="https://bunnyjs.com/img/bunnyjs-logo.png" alt="BunnyJS Logo">
 </p>
 
-# BunnyJS v 0.14.18 (Beta)
+# BunnyJS v 0.14.19 (Beta)
 
-[Website](https://bunnyjs.com) [![NPM downloads/month](http://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](http://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) 
+[Website](https://bunnyjs.com) [![NPM downloads/month](https://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](https://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) 
 
 ## ES6 browser framework
 

@@ -110,7 +110,7 @@ export const ValidationValidators = {
         return new Promise((valid, invalid) => {
             if (input.value.length > 0 && input.getAttribute('type') === 'email') {
                 // input is email, parse string to match email regexp
-                const Regex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+                const Regex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
                 if (Regex.test(input.value)) {
                     valid();
                 } else {
