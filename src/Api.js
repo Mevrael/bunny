@@ -88,7 +88,7 @@ export const Api = {
     return Promise.reject(response);
   },
 
-  onRequestEntityToLarge() {
+  onRequestEntityTooLarge() {
     this.showStatusError('413: Request entity too large!');
   },
 
@@ -114,7 +114,7 @@ export const Api = {
     if (this[methodName] !== undefined) {
       this[methodName](response);
     } else if (status === 413) {
-      this.onRequestEntityToLarge();
+      this.onRequestEntityTooLarge();
     } else if (status === 404) {
       this.onStatusNotFound();
     } else if (status === 403) {
