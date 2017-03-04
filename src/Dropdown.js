@@ -411,7 +411,9 @@ export const Dropdown = {
       addEvent(btn, 'click', this._onToggleClick.bind(this, dropdown));
       addEvent(btn, 'keydown', (e) => {
         if (e.keyCode === KEY_ENTER || e.keyCode === KEY_SPACE) {
-          btn.click();
+          if (e.target === btn) {
+            btn.click();
+          }
         }
       });
 

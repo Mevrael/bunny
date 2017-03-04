@@ -217,6 +217,7 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
     if (c === KEY_ENTER || c === KEY_SPACE) {
       e.preventDefault();
       if (currentItemIndex !== null) {
+        items[currentItemIndex].click();
         itemSelectCallback(items[currentItemIndex]);
       } else {
         itemSelectCallback(null);
@@ -258,7 +259,9 @@ export function addEventKeyNavigation(element, items, itemSelectCallback, itemSw
     }
   };
 
-  element.addEventListener('keydown', handler);
+  if (items.length > 0) {
+    element.addEventListener('keydown', handler);
+  }
 
   return handler;
 }
