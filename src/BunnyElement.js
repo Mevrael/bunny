@@ -43,8 +43,9 @@ export const BunnyElement = {
    * @param {HTMLElement, string, number} target
    * @param {Number|function} duration
    * @param {Number} offset
+   * @param {HTMLElement} rootElement
    */
-  scrollTo(target, duration = 500, offset = 0) {
+  scrollTo(target, duration = 500, offset = 0, rootElement = window) {
     return new Promise(onAnimationEnd => {
 
       let element;
@@ -62,7 +63,7 @@ export const BunnyElement = {
         element = element.parentNode;
       }
 
-      const start = window.pageYOffset;
+      const start = rootElement === window ? window.pageYOffset : rootElement.scrollTop;
       let distance = 0;
       if (element !== null) {
         distance = element.getBoundingClientRect().top;
@@ -70,6 +71,7 @@ export const BunnyElement = {
         // number
         distance = target;
       }
+
       distance = distance + offset;
 
       if (typeof duration === 'function') {
@@ -84,9 +86,17 @@ export const BunnyElement = {
         loop(time);
       });
 
+      function setScrollYPosition(el, y) {
+        if (el === window) {
+          window.scrollTo(0, y);
+        } else {
+          el.scrollTop = y;
+        }
+      }
+
       function loop(time) {
         timeElapsed = time - timeStart;
-        window.scrollTo(0, easeInOutQuad(timeElapsed, start, distance, duration));
+        setScrollYPosition(rootElement, easeInOutQuad(timeElapsed, start, distance, duration));
         if (timeElapsed < duration) {
           requestAnimationFrame(loop);
         } else {
@@ -95,7 +105,7 @@ export const BunnyElement = {
       }
 
       function end() {
-        window.scrollTo(0, start + distance);
+        setScrollYPosition(rootElement, start + distance);
         onAnimationEnd();
       }
 

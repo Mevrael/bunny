@@ -433,6 +433,19 @@ export const ValidationUI = {
 
 
 
+  /**
+   * Removes all error node and class from input group if exists within section
+   *
+   * @param {HTMLElement} section
+   */
+    removeErrorNodesFromSection(section) {
+      [].forEach.call(this.getInputGroupsInSection(section), inputGroup => {
+        this.removeErrorNode(inputGroup);
+      });
+    },
+
+
+
     /**
      * Creates and includes into DOM error node or updates error message
      *
