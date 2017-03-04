@@ -3,6 +3,7 @@ const JS = require('assets-builder/node_scripts/js');
 
 const dists = [
   ['normalize', 'normalize.min'],
+  ['babel-helpers', 'babel-helpers.min'],
 
   // Polyfills
   ['polyfills/Promise', 'polyfill-promise.min'],
