@@ -88,6 +88,10 @@ export const Api = {
     return Promise.reject(response);
   },
 
+  onRequestEntityTooLarge() {
+    this.showStatusError('413: Request entity too large!');
+  },
+
   onStatusNotFound() {
     this.showStatusError('404: API Route not found!');
   },
@@ -109,6 +113,8 @@ export const Api = {
     const methodName = 'onStatus' + status;
     if (this[methodName] !== undefined) {
       this[methodName](response);
+    } else if (status === 413) {
+      this.onRequestEntityTooLarge();
     } else if (status === 404) {
       this.onStatusNotFound();
     } else if (status === 403) {
