@@ -137,15 +137,16 @@ export const Autocomplete = Object.assign({}, Dropdown, {
       // make sure if dropdown menu not opened and initiated with .open()
       // that on Enter hit form is not submitted
       autocomplete.__bunny_autocomplete_keydown_closed = addEvent(input, 'keydown', (e) => {
-        if (!this.UI.isOpened(autocomplete)) {
-          if (e.keyCode === KEY_ENTER && this.isStateChanged(autocomplete)) {
-            e.preventDefault();
+        //if (!this.UI.isOpened(autocomplete)) {
+        if (e.keyCode === KEY_ENTER && this.isStateChanged(autocomplete)) {
+          e.preventDefault();
+          if (e.target === input && this.isCustomValueAllowed(autocomplete)) {
+            //console.log('autocomplete custom picked');
             this._selectItem(autocomplete, false);
-            if (this.isCustomValueAllowed(autocomplete)) {
-              this._callItemSelectCallbacks(autocomplete, null);
-            }
+            this._callItemSelectCallbacks(autocomplete, null);
           }
         }
+        //}
       });
     })
   },
@@ -195,37 +196,37 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     const action = getActionObject(autocomplete);
     action(search).then(data => {
       //setTimeout(() => {
-        callElementCallbacks(autocomplete, 'autocomplete_update', cb => {
-          const res = cb(data);
-          if (res !== undefined) {
-            data = res;
-          }
-        });
-        if (Object.keys(data).length > 0) {
-          this.close(autocomplete);
-          let items;
-          if (this.isMarkDisplayed(autocomplete)) {
-            items = this.UI.createMenuItems(data, (item, value, content) => {
-              const reg = new RegExp('(' + search + ')', 'ig');
-              const html = content.replace(reg, '<mark>$1</mark>');
-              item.innerHTML = html;
-              item.dataset.value = value;
-              return item;
-            });
-          } else {
-            items = this.UI.createMenuItems(data);
-          }
-          this._addItemEvents(autocomplete, items);
-          this.UI.setMenuItems(autocomplete, items);
-          this._setARIA(autocomplete);
-          this.open(autocomplete);
-        } else {
-          this.close(autocomplete);
-          if (this.isNotFoundDisplayed(autocomplete)) {
-            this.UI.getMenu(autocomplete).appendChild(this.createNotFoundElement());
-            this.open(autocomplete);
-          }
+      callElementCallbacks(autocomplete, 'autocomplete_update', cb => {
+        const res = cb(data);
+        if (res !== undefined) {
+          data = res;
         }
+      });
+      if (Object.keys(data).length > 0) {
+        this.close(autocomplete);
+        let items;
+        if (this.isMarkDisplayed(autocomplete)) {
+          items = this.UI.createMenuItems(data, (item, value, content) => {
+            const reg = new RegExp('(' + search + ')', 'ig');
+            const html = content.replace(reg, '<mark>$1</mark>');
+            item.innerHTML = html;
+            item.dataset.value = value;
+            return item;
+          });
+        } else {
+          items = this.UI.createMenuItems(data);
+        }
+        this._addItemEvents(autocomplete, items);
+        this.UI.setMenuItems(autocomplete, items);
+        this._setARIA(autocomplete);
+        this.open(autocomplete);
+      } else {
+        this.close(autocomplete);
+        if (this.isNotFoundDisplayed(autocomplete)) {
+          this.UI.getMenu(autocomplete).appendChild(this.createNotFoundElement());
+          this.open(autocomplete);
+        }
+      }
       //}, 1000);
     }).catch(e => {
       this.UI.getMenu(autocomplete).innerHTML = e.message;

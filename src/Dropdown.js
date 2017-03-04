@@ -334,10 +334,11 @@ export const Dropdown = {
         // item selected callback
         if (selectedItem === false) {
           this._callCancelCallbacks(dropdown);
-        } else {
-          this._callItemSelectCallbacks(dropdown, selectedItem);
-        }
-        this.close(dropdown);
+        } /*else {
+         not needed anymore since click() called on item pick
+         this._callItemSelectCallbacks(dropdown, selectedItem);
+         }*/
+        //this.close(dropdown);
       }, (switchedItem) => {
         // item switched callback
         this._callSwitchCallbacks(dropdown, switchedItem);
