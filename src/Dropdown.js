@@ -7,7 +7,8 @@ import {
   onClickOutside,
   removeClickOutside,
   addEventKeyNavigation,
-  removeEventKeyNavigation
+  removeEventKeyNavigation,
+  isElementInside
 } from './utils/DOM';
 
 import { pushCallbackToElement, callElementCallbacks, initObjectExtensions } from './utils/core';
@@ -129,16 +130,20 @@ export const DropdownUI = {
   isMenuItem(dropdown, item) {
     const items = this.getMenuItems(dropdown);
     for (let k = 0; k < items.length; k++) {
-      if (items[k] === item) {
+      if (items[k] === item || isElementInside(items[k], item)) {
         return true;
       }
     }
+
     return false;
   },
 
   removeMenuItems(dropdown) {
-    const menu = this.getMenu(dropdown);
-    if (menu) {
+    let menu = this.getMenu(dropdown);
+    if (!menu) {
+      menu = this.createMenu();
+      dropdown.appendChild(menu);
+    } else  {
       menu.innerHTML = '';
     }
   },
@@ -171,6 +176,7 @@ export const DropdownUI = {
     const f = document.createDocumentFragment();
     for (let id in items) {
       const i = this._createElement('Item');
+      i.dataset.value = id;
       if (callback !== null) {
         f.appendChild(callback(i, id, items[id]));
       } else {
@@ -333,6 +339,7 @@ export const Dropdown = {
       dropdown.__bunny_dropdown_key = addEventKeyNavigation(dropdown, items, (selectedItem) => {
         // item selected callback
         if (selectedItem === false) {
+          this.close(dropdown);
           this._callCancelCallbacks(dropdown);
         } /*else {
          not needed anymore since click() called on item pick

@@ -3,9 +3,15 @@ import { Dropdown, DropdownUI, DropdownConfig } from './Dropdown';
 import {
   addEventOnce,
   addEvent,
-  removeEvent
+  removeEvent,
+  parseTemplate
 } from './utils/DOM';
-import { getActionObject, pushCallbackToElement, callElementCallbacks, initObjectExtensions } from './utils/core';
+import {
+  getActionObject,
+  pushCallbackToElement,
+  callElementCallbacks,
+  initObjectExtensions
+} from './utils/core';
 
 
 
@@ -42,6 +48,27 @@ export const AutocompleteUI = Object.assign({}, DropdownUI, {
 
   getTriggerElement(autocomplete) {
     return this.getInput(autocomplete);
+  },
+
+  applyTemplateToMenuItem(item, data, templateId) {
+    item.appendChild(parseTemplate(templateId, data));
+    return item;
+  },
+
+  getItemLabel(item) {
+    const label = item.querySelector('[autocompletelabel') || false;
+    if (label) {
+      return label.textContent;
+    }
+    return item.textContent;
+  },
+
+  getTemplateSelectLabel(autocomplete) {
+    const label = autocomplete.getAttribute('selectedlabel');
+    if (label) {
+      return document.getElementById(label);
+    }
+    return false;
   }
 
 });
@@ -100,6 +127,10 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     return autocomplete.hasAttribute('custom') || this.Config.allowCustomInput;
   },
 
+  getCustomItemContentsTemplate(autocomplete) {
+    return autocomplete.getAttribute('template');
+  },
+
   isMarkDisplayed(autocomplete) {
     return autocomplete.hasAttribute('mark') || this.Config.showMark;
   },
@@ -130,24 +161,32 @@ export const Autocomplete = Object.assign({}, Dropdown, {
 
   _addEventFocus(autocomplete, input) {
     input.addEventListener('focus', () => {
-      autocomplete.__bunny_autocomplete_initial_value = input.value;
-      this._addEventFocusOut(autocomplete, input);
-      this._addEventInput(autocomplete, input);
+      if (autocomplete.__bunny_autocomplete_focus === undefined) {
+        autocomplete.__bunny_autocomplete_focus = true;
+        autocomplete.__bunny_autocomplete_initial_value = input.value;
+        this._addEventFocusOut(autocomplete, input);
+        this._addEventInput(autocomplete, input);
 
-      // make sure if dropdown menu not opened and initiated with .open()
-      // that on Enter hit form is not submitted
-      autocomplete.__bunny_autocomplete_keydown_closed = addEvent(input, 'keydown', (e) => {
-        //if (!this.UI.isOpened(autocomplete)) {
-        if (e.keyCode === KEY_ENTER && this.isStateChanged(autocomplete)) {
-          e.preventDefault();
-          if (e.target === input && this.isCustomValueAllowed(autocomplete)) {
-            //console.log('autocomplete custom picked');
-            this._selectItem(autocomplete, false);
-            this._callItemSelectCallbacks(autocomplete, null);
+        // make sure if dropdown menu not opened and initiated with .open()
+        // that on Enter hit form is not submitted
+        autocomplete.__bunny_autocomplete_keydown_closed = addEvent(input, 'keydown', (e) => {
+          if (e.keyCode === KEY_SPACE) {
+            e.stopPropagation();
           }
-        }
-        //}
-      });
+          //if (!this.UI.isOpened(autocomplete)) {
+          if (e.keyCode === KEY_ENTER/* && this.isStateChanged(autocomplete)*/) {
+            e.preventDefault();
+            if (input.value.length === 0) {
+              this.clear(autocomplete);
+            } else if (e.target === input && this.isCustomValueAllowed(autocomplete)) {
+              //console.log('autocomplete custom picked');
+              this._selectItem(autocomplete, false);
+              this._callItemSelectCallbacks(autocomplete, null);
+            }
+          }
+          //}
+        });
+      }
     })
   },
 
@@ -159,6 +198,7 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     const k = addEvent(input, 'blur', () => {
       setTimeout(() => {
         if (!this.UI.isMenuItem(autocomplete, document.activeElement)) {
+          delete autocomplete.__bunny_autocomplete_focus;
           removeEvent(input, 'blur', k);
           removeEvent(input, 'input', autocomplete.__bunny_autocomplete_input);
           delete autocomplete.__bunny_autocomplete_input;
@@ -180,11 +220,11 @@ export const Autocomplete = Object.assign({}, Dropdown, {
   // item events
 
   _addItemEvents(autocomplete, items) {
-    [].forEach.call(items.childNodes, item => {
-      item.addEventListener('click', () => {
-        this._callItemSelectCallbacks(autocomplete, item);
-      })
-    });
+    // [].forEach.call(items.childNodes, item => {
+    //   item.addEventListener('click', () => {
+    //     this._callItemSelectCallbacks(autocomplete, item);
+    //   })
+    // });
   },
 
   // public methods
@@ -205,16 +245,25 @@ export const Autocomplete = Object.assign({}, Dropdown, {
       if (Object.keys(data).length > 0) {
         this.close(autocomplete);
         let items;
+        const templateId = this.getCustomItemContentsTemplate(autocomplete);
         if (this.isMarkDisplayed(autocomplete)) {
           items = this.UI.createMenuItems(data, (item, value, content) => {
+            if (templateId) {
+              item = this.UI.applyTemplateToMenuItem(item, data[value], templateId);
+            }
             const reg = new RegExp('(' + search + ')', 'ig');
-            const html = content.replace(reg, '<mark>$1</mark>');
+            const html = item.innerHTML.replace(reg, '<mark>$1</mark>');
             item.innerHTML = html;
-            item.dataset.value = value;
             return item;
           });
         } else {
-          items = this.UI.createMenuItems(data);
+          if (templateId) {
+            items = this.UI.createMenuItems(data, (item, value, content) => {
+              return this.UI.applyTemplateToMenuItem(item, data[value], templateId);
+            });
+          } else {
+            items = this.UI.createMenuItems(data);
+          }
         }
         this._addItemEvents(autocomplete, items);
         this.UI.setMenuItems(autocomplete, items);
@@ -223,6 +272,7 @@ export const Autocomplete = Object.assign({}, Dropdown, {
       } else {
         this.close(autocomplete);
         if (this.isNotFoundDisplayed(autocomplete)) {
+          this.UI.removeMenuItems(autocomplete);
           this.UI.getMenu(autocomplete).appendChild(this.createNotFoundElement());
           this.open(autocomplete);
         }
@@ -260,6 +310,11 @@ export const Autocomplete = Object.assign({}, Dropdown, {
       hiddenInput.value = state.value;
     }
 
+    const tplLabel = this.UI.getTemplateSelectLabel(autocomplete);
+    if (tplLabel) {
+      tplLabel.innerHTML = '';
+    }
+
     this.close(autocomplete);
   },
 
@@ -272,6 +327,12 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     }
     autocomplete.__bunny_autocomplete_state = this.getCurState(autocomplete);
     //this._updateInputValues(autocomplete, false);
+
+    const tplLabel = this.UI.getTemplateSelectLabel(autocomplete);
+    if (tplLabel) {
+      tplLabel.innerHTML = '';
+    }
+
     this._callItemSelectCallbacks(autocomplete, false);
     this.close(autocomplete);
   },
@@ -310,8 +371,9 @@ export const Autocomplete = Object.assign({}, Dropdown, {
     const input = this.UI.getInput(autocomplete);
 
     if (item !== false) {
-      input.value = item.textContent;
-      autocomplete.__bunny_autocomplete_initial_value = item.textContent;
+      const val = this.UI.getItemLabel(item);
+      input.value = val;
+      autocomplete.__bunny_autocomplete_initial_value = val;
     } else {
       if (this.isCustomValueAllowed(autocomplete)) {
         autocomplete.__bunny_autocomplete_initial_value = input.value;
@@ -332,6 +394,11 @@ export const Autocomplete = Object.assign({}, Dropdown, {
           hiddenInput.value = '';
         }
       }
+    }
+
+    const tplLabel = this.UI.getTemplateSelectLabel(autocomplete);
+    if (tplLabel) {
+      tplLabel.innerHTML = item === false ? '' : item.innerHTML;
     }
 
     autocomplete.__bunny_autocomplete_state = this.getCurState(autocomplete);
