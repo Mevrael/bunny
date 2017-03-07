@@ -75,9 +75,7 @@ export const Api = {
 
   onResponse(data) {
     if (data.message) {
-      // May be show custom alert
-      console.warn(data.message);
-      return [];
+      Notify.warning(data.message);
     }
     return data;
   },
