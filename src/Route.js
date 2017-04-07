@@ -8,7 +8,7 @@ export const Route = {
 
   Config: RouteConfig,
 
-  _routes: {}, // object of arrays, key => URI, value = array of callbacks
+  _routes: {}, // object of arrays, key = URI, value = array of callbacks
   _groupData: null,
 
   modifyURI(uri) {
@@ -68,6 +68,24 @@ export const Route = {
       }
     }
     return params;
+  },
+
+  /**
+   * Match URI with route, return defined route or false if coulnd't match URI with route
+   * Example:
+   *   Defined route: users/{id}
+   *   URI: users/42
+   *   Will return users/{id}
+   * @param uri
+   * @returns {*|boolean}
+   */
+  matchURIWithRoute(uri) {
+    for (let route in this._routes) {
+      if (this.is(route, uri)) {
+        return route;
+      }
+    }
+    return false;
   },
 
   isDefined(uri) {
@@ -130,7 +148,7 @@ export const Route = {
    */
   run(uri) {
     uri = this.modifyURI(uri);
-    console.log('trying to call route', uri);
+    //console.log('trying to call route', uri);
     const callbacks = this.getRouteCallbacks(uri);
     if (callbacks === false) {
       console.error('Route "' + uri + '" is not defined.');
@@ -154,16 +172,19 @@ export const Route = {
   to(uri) {
     uri = this.modifyURI(uri);
     history.pushState(null, null, uri);
+    const route = Route.matchURIWithRoute(uri);
     const event = new CustomEvent('onRouteChange', {detail: uri});
-    event.route = uri;
+    event.route = route;
     document.dispatchEvent(event);
 
-    const callbacks = this.getRouteCallbacks(uri);
-    if (callbacks !== false) {
-      const namedParams = this.getNamedParams(uri);
-      callbacks.forEach(cb => {
-        cb(namedParams)
-      });
+    if (route) {
+      const callbacks = this.getRouteCallbacks(route);
+      if (callbacks !== false) {
+        const namedParams = this.getNamedParams(uri);
+        callbacks.forEach(cb => {
+          cb(namedParams)
+        });
+      }
     }
   }
 
@@ -171,7 +192,8 @@ export const Route = {
 
 document.addEventListener('DOMContentLoaded', function() {
   const curURI = Route.getCurrentURI();
-  if (Route.isDefined(curURI)) {
-    Route.run(curURI);
+  const route = Route.matchURIWithRoute(curURI);
+  if (route) {
+    Route.run(route);
   }
 }, false);
