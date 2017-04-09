@@ -15,6 +15,9 @@ export const Route = {
     if (uri.lastIndexOf('/') === uri.length - 1 && !this.Config.hasTrailingSlash) {
       uri = uri.substr(0, uri.length - 1);
     }
+    if (uri === '' && this.Config.prefix === '') {
+      return '/';
+    }
     return this.Config.prefix + uri;
   },
 
