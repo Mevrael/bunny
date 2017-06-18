@@ -12,6 +12,8 @@ export const ImageUploadConfig = {
   defaultQuality: 0.7,
   attrOutputSize: 'outputsize',
   defaultOutputSize: '300',
+  attrFormat: 'format',
+  defaultFormat: 'png',
 
 };
 
@@ -103,6 +105,14 @@ export const ImageUpload = {
     return s;
   },
 
+  getFormat(imgupl) {
+    let s = imgupl.getAttribute(this.Config.attrFormat);
+    if (!s) {
+      s = this.Config.defaultFormat;
+    }
+    return s;
+  },
+
   getAll(container = document) {
     return container.getElementsByTagName(this.Config.tagName);
   },
@@ -136,11 +146,12 @@ export const ImageUpload = {
     const img = this.getImagePreview(imgupl);
     const size = this.getOutputSize(imgupl);
     const quality = this.getQuality(imgupl);
+    const format = this.getFormat(imgupl);
 
     BunnyImage.getImage(src)
       .then(img => {
         const canv = BunnyImage.resizeImage(img, size, size);
-        return canv.toDataURL('image/jpeg', quality);
+        return canv.toDataURL('image/' + format, quality);
       })
       .then(base64 => {
         img.src = base64;
