@@ -51,7 +51,7 @@ export const Api = {
   },
 
   createUrl(url) {
-    return this.Config.prefix + this.prefix + url;
+    return url.indexOf('://') > -1 ? url : this.Config.prefix + this.prefix + url;
   },
 
   get(url, additionalHeaders = {}) {
