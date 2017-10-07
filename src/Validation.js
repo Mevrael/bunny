@@ -788,13 +788,7 @@ export const Validation = {
         }
 
         // replace params in error message
-        if (label !== false) {
-            message = message.replace('{label}', label.textContent);
-        } else if (input.placeholder && input.placeholder !== '') {
-            message = message.replace('{label}', input.placeholder);
-        } else {
-            message = message.replace('{label}', '');
-        }
+        message = message.replace('{label}', this._getInputTitle(input, label));
 
         for (let paramName in data) {
             message = message.replace('{' + paramName + '}', data[paramName]);
@@ -802,6 +796,19 @@ export const Validation = {
         return message;
     },
 
+    _getInputTitle(input, label) {
+      if (label !== false) {
+        return label.textContent;
+      } else if (input.placeholder && input.placeholder !== '') {
+        return input.placeholder;
+      } else if (input.getAttribute('aria-label') && input.getAttribute('aria-label') !== '') {
+        return input.getAttribute('aria-label');
+      } else if (input.name && input.name !== '') {
+        return input.name;
+      } else {
+        return '';
+      }
+    }
 
 };
 
