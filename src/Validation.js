@@ -763,7 +763,7 @@ export const Validation = {
             }
         }).catch(data => {
             // Check if Data is system Exception
-            if (data.message !== undefined) {
+            if (data !== undefined && data.message !== undefined) {
                 throw data;
             }
 
