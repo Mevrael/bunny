@@ -8,6 +8,7 @@ export const ApiConfig = {
     'X-Requested-With': 'XMLHttpRequest',
   },
   credentials: 'same-origin', // fetch Request credential option to send cookies
+  redirectDelay: 2000, // if server returned data.redirect, redirect to that URL after redirectDelay ms.
 };
 
 export const Api = {
@@ -73,10 +74,14 @@ export const Api = {
     return this.request(url, 'POST', this.createFormData(data), additionalHeaders);
   },
 
+  // data is root object returned by server and not just inner data key
   onResponse(data) {
     if (data.message) {
-      Notify.warning(data.message);
+      this.showStatusWarning(data.message);
+    } else if (data.success) {
+      this.showStatusSuccess(data.success);
     }
+    this.attemptRedirect(data);
     return data;
   },
 
@@ -127,6 +132,39 @@ export const Api = {
 
   showStatusError(message, autoRemoveAfter = Notify.Config.autoRemoveAfter) {
     Notify.danger(message, autoRemoveAfter);
+  },
+
+  showStatusWarning(message, autoRemoveAfter = Notify.Config.autoRemoveAfter) {
+    Notify.warning(message, autoRemoveAfter);
+  },
+
+  showStatusSuccess(message, autoRemoveAfter = Notify.Config.autoRemoveAfter) {
+    Notify.success(message, autoRemoveAfter);
+  },
+
+  // for redirect back in browser history, server should provide redirectback key
+  // if redirect back in browser was not possible, will refresh page or if redirect key was provided as well, redirect to it instead
+  // othwerwise refreshes page if redirect key is provided and is empty string or redirects to provided URL
+  attemptRedirect(data) {
+    let f = null;
+    if (data.redirectback !== undefined) {
+      if (document.referrer !== '') {
+        f = () => {location.href = document.referrer}
+      } else if (data.redirect === undefined || data.redirect === '') {
+        f = () => location.reload();
+      } else {
+        f = () => {location.href = data.redirect}
+      }
+    } else if (data.redirect !== undefined) {
+      if (data.redirect === '') {
+        f = () => location.reload();
+      } else {
+        f = () => {location.href = data.redirect}
+      }
+    }
+    if (f!== null) {
+      setTimeout(f, this.Config.redirectDelay);
+    }
   },
 
 };
