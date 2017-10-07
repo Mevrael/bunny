@@ -754,14 +754,19 @@ export const Validation = {
                 // if has error message, remove it
                 this.ui.removeErrorNode(inputGroup);
 
-                if (input.form !== undefined && input.form.hasAttribute('showvalid')) {
-                  // mark input as valid
-                  this.ui.setInputValid(inputGroup);
+                if (input.form && input.form.hasAttribute('showvalid')) {
+                    // mark input as valid
+                    this.ui.setInputValid(inputGroup);
                 }
 
                 valid();
             }
         }).catch(data => {
+            // Check if Data is system Exception
+            if (data.message !== undefined) {
+                throw data;
+            }
+
             // get input group and label
             const inputGroup = this.ui.getInputGroup(input);
             const label = this.ui.getLabel(inputGroup);
