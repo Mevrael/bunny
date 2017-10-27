@@ -55,8 +55,14 @@ export const Api = {
     return url.indexOf('://') > -1 ? url : this.Config.prefix + this.prefix + url;
   },
 
-  get(url, additionalHeaders = {}) {
-    return this.request(url, 'GET', null, additionalHeaders);
+  get(url, params = null, additionalHeaders = {}) {
+    let queryStr = '';
+    if (params !== null) {
+      queryStr = '?' + Object.keys(params)
+        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+        .join('&');
+    }
+    return this.request(url + queryStr, 'GET', null, additionalHeaders);
   },
 
   createFormData(data) {
