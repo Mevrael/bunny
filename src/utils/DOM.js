@@ -31,6 +31,7 @@ export function parseTemplate(id, data) {
     const parts = path.split('.');
     let cur = obj;
     for (let k = 0; k < parts.length; k++) {
+      let part = parts[k];
       if (cur[part] === undefined) {
         return null;
       } else if (cur[part] === null || cur[part].length === 0) {
