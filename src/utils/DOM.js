@@ -28,16 +28,25 @@ export function parseTemplate(id, data) {
   let tpl = template.content.firstElementChild.outerHTML;
 
   const getDataByPath = (obj, path) => {
-    return path.split('.').reduce((prev, curr) => {
-      return prev ? prev[curr] : undefined
-    }, obj);
+    const parts = path.split('.');
+    let cur = obj;
+    for (let k = 0; k < parts.length; k++) {
+      if (cur[part] === undefined) {
+        return null;
+      } else if (cur[part] === null || cur[part].length === 0) {
+        return '';
+      } else {
+        cur = cur[part];
+      }
+    }
+    return cur;
   };
 
   const parseRow = (originalTpl, rowData) => {
     let newTpl = originalTpl;
-    newTpl = newTpl.replace(/{{ ([a-zA-Z._]*) }}/g, (match, capture) => {
+    newTpl = newTpl.replace(/{{ ([a-zA-Z0-9\-._]*) }}/g, (match, capture) => {
       const res = getDataByPath(rowData, capture);
-      return res === undefined ? match : res;
+      return res === null ? match : res;
     });
 
     let node = htmlToNode(newTpl);
