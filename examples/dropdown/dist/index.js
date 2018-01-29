@@ -397,6 +397,10 @@
       headers.forEach(function (value, name) {
         this.append(name, value);
       }, this);
+    } else if (Array.isArray(headers)) {
+      headers.forEach(function (header) {
+        this.append(header[0], header[1]);
+      }, this);
     } else if (headers) {
       Object.getOwnPropertyNames(headers).forEach(function (name) {
         this.append(name, headers[name]);
@@ -1041,6 +1045,7 @@ function addEventKeyNavigation(element, items, itemSelectCallback) {
     if (c === KEY_ENTER || c === KEY_SPACE) {
       e.preventDefault();
       if (currentItemIndex !== null) {
+        items[currentItemIndex].click();
         itemSelectCallback(items[currentItemIndex]);
       } else {
         itemSelectCallback(null);
@@ -1079,7 +1084,9 @@ function addEventKeyNavigation(element, items, itemSelectCallback) {
     }
   };
 
-  element.addEventListener('keydown', handler);
+  if (items.length > 0) {
+    element.addEventListener('keydown', handler);
+  }
 
   return handler;
 }
@@ -1114,16 +1121,26 @@ function parseTemplate(id, data) {
   var tpl = template.content.firstElementChild.outerHTML;
 
   var getDataByPath = function getDataByPath(obj, path) {
-    return path.split('.').reduce(function (prev, curr) {
-      return prev ? prev[curr] : undefined;
-    }, obj);
+    var parts = path.split('.');
+    var cur = obj;
+    for (var k = 0; k < parts.length; k++) {
+      var part = parts[k];
+      if (cur[part] === undefined) {
+        return null;
+      } else if (cur[part] === null || cur[part].length === 0) {
+        return '';
+      } else {
+        cur = cur[part];
+      }
+    }
+    return cur;
   };
 
   var parseRow = function parseRow(originalTpl, rowData) {
     var newTpl = originalTpl;
-    newTpl = newTpl.replace(/{{ ([a-zA-Z._]*) }}/g, function (match, capture) {
+    newTpl = newTpl.replace(/{{ ([a-zA-Z0-9\-._]*) }}/g, function (match, capture) {
       var res = getDataByPath(rowData, capture);
-      return res === undefined ? match : res;
+      return res === null ? match : res;
     });
 
     var node = htmlToNode(newTpl);
@@ -1362,15 +1379,19 @@ var DropdownUI = {
   isMenuItem: function isMenuItem(dropdown, item) {
     var items = this.getMenuItems(dropdown);
     for (var k = 0; k < items.length; k++) {
-      if (items[k] === item) {
+      if (items[k] === item || isElementInside(items[k], item)) {
         return true;
       }
     }
+
     return false;
   },
   removeMenuItems: function removeMenuItems(dropdown) {
     var menu = this.getMenu(dropdown);
-    if (menu) {
+    if (!menu) {
+      menu = this.createMenu();
+      dropdown.appendChild(menu);
+    } else {
       menu.innerHTML = '';
     }
   },
@@ -1401,6 +1422,7 @@ var DropdownUI = {
     var f = document.createDocumentFragment();
     for (var id in items) {
       var i = this._createElement('Item');
+      i.dataset.value = id;
       if (callback !== null) {
         f.appendChild(callback(i, id, items[id]));
       } else {
@@ -1551,11 +1573,13 @@ var Dropdown = {
       dropdown.__bunny_dropdown_key = addEventKeyNavigation(dropdown, items, function (selectedItem) {
         // item selected callback
         if (selectedItem === false) {
+          _this2.close(dropdown);
           _this2._callCancelCallbacks(dropdown);
-        } else {
-          _this2._callItemSelectCallbacks(dropdown, selectedItem);
-        }
-        _this2.close(dropdown);
+        } /*else {
+          not needed anymore since click() called on item pick
+          this._callItemSelectCallbacks(dropdown, selectedItem);
+          }*/
+        //this.close(dropdown);
       }, function (switchedItem) {
         // item switched callback
         _this2._callSwitchCallbacks(dropdown, switchedItem);
@@ -1628,7 +1652,9 @@ var Dropdown = {
       addEvent(btn, 'click', this._onToggleClick.bind(this, dropdown));
       addEvent(btn, 'keydown', function (e) {
         if (e.keyCode === KEY_ENTER || e.keyCode === KEY_SPACE) {
-          btn.click();
+          if (e.target === btn) {
+            btn.click();
+          }
         }
       });
 
@@ -1744,6 +1770,24 @@ var AutocompleteUI = Object.assign({}, DropdownUI, {
   },
   getTriggerElement: function getTriggerElement(autocomplete) {
     return this.getInput(autocomplete);
+  },
+  applyTemplateToMenuItem: function applyTemplateToMenuItem(item, data, templateId) {
+    item.appendChild(parseTemplate(templateId, data));
+    return item;
+  },
+  getItemLabel: function getItemLabel(item) {
+    var label = item.querySelector('[autocompletelabel') || false;
+    if (label) {
+      return label.textContent;
+    }
+    return item.textContent;
+  },
+  getTemplateSelectLabel: function getTemplateSelectLabel(autocomplete) {
+    var label = autocomplete.getAttribute('selectedlabel');
+    if (label) {
+      return document.getElementById(label);
+    }
+    return false;
   }
 });
 
@@ -1798,6 +1842,9 @@ var Autocomplete = Object.assign({}, Dropdown, {
   isCustomValueAllowed: function isCustomValueAllowed(autocomplete) {
     return autocomplete.hasAttribute('custom') || this.Config.allowCustomInput;
   },
+  getCustomItemContentsTemplate: function getCustomItemContentsTemplate(autocomplete) {
+    return autocomplete.getAttribute('template');
+  },
   isMarkDisplayed: function isMarkDisplayed(autocomplete) {
     return autocomplete.hasAttribute('mark') || this.Config.showMark;
   },
@@ -1830,23 +1877,32 @@ var Autocomplete = Object.assign({}, Dropdown, {
     var _this3 = this;
 
     input.addEventListener('focus', function () {
-      autocomplete.__bunny_autocomplete_initial_value = input.value;
-      _this3._addEventFocusOut(autocomplete, input);
-      _this3._addEventInput(autocomplete, input);
+      if (autocomplete.__bunny_autocomplete_focus === undefined) {
+        autocomplete.__bunny_autocomplete_focus = true;
+        autocomplete.__bunny_autocomplete_initial_value = input.value;
+        _this3._addEventFocusOut(autocomplete, input);
+        _this3._addEventInput(autocomplete, input);
 
-      // make sure if dropdown menu not opened and initiated with .open()
-      // that on Enter hit form is not submitted
-      autocomplete.__bunny_autocomplete_keydown_closed = addEvent(input, 'keydown', function (e) {
-        if (!_this3.UI.isOpened(autocomplete)) {
-          if (e.keyCode === KEY_ENTER && _this3.isStateChanged(autocomplete)) {
-            e.preventDefault();
-            _this3._selectItem(autocomplete, false);
-            if (_this3.isCustomValueAllowed(autocomplete)) {
-              _this3._callItemSelectCallbacks(autocomplete, null);
-            }
+        // make sure if dropdown menu not opened and initiated with .open()
+        // that on Enter hit form is not submitted
+        autocomplete.__bunny_autocomplete_keydown_closed = addEvent(input, 'keydown', function (e) {
+          if (e.keyCode === KEY_SPACE) {
+            e.stopPropagation();
           }
-        }
-      });
+          //if (!this.UI.isOpened(autocomplete)) {
+          if (e.keyCode === KEY_ENTER /* && this.isStateChanged(autocomplete)*/) {
+              e.preventDefault();
+              if (input.value.length === 0) {
+                _this3.clear(autocomplete);
+              } else if (e.target === input && _this3.isCustomValueAllowed(autocomplete)) {
+                //console.log('autocomplete custom picked');
+                _this3._selectItem(autocomplete, false);
+                _this3._callItemSelectCallbacks(autocomplete, null);
+              }
+            }
+          //}
+        });
+      }
     });
   },
   _addEventFocusOut: function _addEventFocusOut(autocomplete, input) {
@@ -1859,6 +1915,7 @@ var Autocomplete = Object.assign({}, Dropdown, {
     var k = addEvent(input, 'blur', function () {
       setTimeout(function () {
         if (!_this4.UI.isMenuItem(autocomplete, document.activeElement)) {
+          delete autocomplete.__bunny_autocomplete_focus;
           removeEvent(input, 'blur', k);
           removeEvent(input, 'input', autocomplete.__bunny_autocomplete_input);
           delete autocomplete.__bunny_autocomplete_input;
@@ -1879,20 +1936,18 @@ var Autocomplete = Object.assign({}, Dropdown, {
   // item events
 
   _addItemEvents: function _addItemEvents(autocomplete, items) {
-    var _this5 = this;
-
-    [].forEach.call(items.childNodes, function (item) {
-      item.addEventListener('click', function () {
-        _this5._callItemSelectCallbacks(autocomplete, item);
-      });
-    });
+    // [].forEach.call(items.childNodes, item => {
+    //   item.addEventListener('click', () => {
+    //     this._callItemSelectCallbacks(autocomplete, item);
+    //   })
+    // });
   },
 
 
   // public methods
 
   update: function update(autocomplete, search) {
-    var _this6 = this;
+    var _this5 = this;
 
     callElementCallbacks(autocomplete, 'autocomplete_before_update', function (cb) {
       cb();
@@ -1907,34 +1962,44 @@ var Autocomplete = Object.assign({}, Dropdown, {
         }
       });
       if (Object.keys(data).length > 0) {
-        _this6.close(autocomplete);
+        _this5.close(autocomplete);
         var items = void 0;
-        if (_this6.isMarkDisplayed(autocomplete)) {
-          items = _this6.UI.createMenuItems(data, function (item, value, content) {
+        var templateId = _this5.getCustomItemContentsTemplate(autocomplete);
+        if (_this5.isMarkDisplayed(autocomplete)) {
+          items = _this5.UI.createMenuItems(data, function (item, value, content) {
+            if (templateId) {
+              item = _this5.UI.applyTemplateToMenuItem(item, data[value], templateId);
+            }
             var reg = new RegExp('(' + search + ')', 'ig');
-            var html = content.replace(reg, '<mark>$1</mark>');
+            var html = item.innerHTML.replace(reg, '<mark>$1</mark>');
             item.innerHTML = html;
-            item.dataset.value = value;
             return item;
           });
         } else {
-          items = _this6.UI.createMenuItems(data);
+          if (templateId) {
+            items = _this5.UI.createMenuItems(data, function (item, value, content) {
+              return _this5.UI.applyTemplateToMenuItem(item, data[value], templateId);
+            });
+          } else {
+            items = _this5.UI.createMenuItems(data);
+          }
         }
-        _this6._addItemEvents(autocomplete, items);
-        _this6.UI.setMenuItems(autocomplete, items);
-        _this6._setARIA(autocomplete);
-        _this6.open(autocomplete);
+        _this5._addItemEvents(autocomplete, items);
+        _this5.UI.setMenuItems(autocomplete, items);
+        _this5._setARIA(autocomplete);
+        _this5.open(autocomplete);
       } else {
-        _this6.close(autocomplete);
-        if (_this6.isNotFoundDisplayed(autocomplete)) {
-          _this6.UI.getMenu(autocomplete).appendChild(_this6.createNotFoundElement());
-          _this6.open(autocomplete);
+        _this5.close(autocomplete);
+        if (_this5.isNotFoundDisplayed(autocomplete)) {
+          _this5.UI.removeMenuItems(autocomplete);
+          _this5.UI.getMenu(autocomplete).appendChild(_this5.createNotFoundElement());
+          _this5.open(autocomplete);
         }
       }
       //}, 1000);
     }).catch(function (e) {
-      _this6.UI.getMenu(autocomplete).innerHTML = e.message;
-      _this6.open(autocomplete);
+      _this5.UI.getMenu(autocomplete).innerHTML = e.message;
+      _this5.open(autocomplete);
       callElementCallbacks(autocomplete, 'autocomplete_update', function (cb) {
         cb(false, e);
       });
@@ -1960,6 +2025,11 @@ var Autocomplete = Object.assign({}, Dropdown, {
       hiddenInput.value = state.value;
     }
 
+    var tplLabel = this.UI.getTemplateSelectLabel(autocomplete);
+    if (tplLabel) {
+      tplLabel.innerHTML = '';
+    }
+
     this.close(autocomplete);
   },
   clear: function clear(autocomplete) {
@@ -1971,6 +2041,12 @@ var Autocomplete = Object.assign({}, Dropdown, {
     }
     autocomplete.__bunny_autocomplete_state = this.getCurState(autocomplete);
     //this._updateInputValues(autocomplete, false);
+
+    var tplLabel = this.UI.getTemplateSelectLabel(autocomplete);
+    if (tplLabel) {
+      tplLabel.innerHTML = '';
+    }
+
     this._callItemSelectCallbacks(autocomplete, false);
     this.close(autocomplete);
   },
@@ -2008,8 +2084,9 @@ var Autocomplete = Object.assign({}, Dropdown, {
     var input = this.UI.getInput(autocomplete);
 
     if (item !== false) {
-      input.value = item.textContent;
-      autocomplete.__bunny_autocomplete_initial_value = item.textContent;
+      var val = this.UI.getItemLabel(item);
+      input.value = val;
+      autocomplete.__bunny_autocomplete_initial_value = val;
     } else {
       if (this.isCustomValueAllowed(autocomplete)) {
         autocomplete.__bunny_autocomplete_initial_value = input.value;
@@ -2030,6 +2107,11 @@ var Autocomplete = Object.assign({}, Dropdown, {
           hiddenInput.value = '';
         }
       }
+    }
+
+    var tplLabel = this.UI.getTemplateSelectLabel(autocomplete);
+    if (tplLabel) {
+      tplLabel.innerHTML = item === false ? '' : item.innerHTML;
     }
 
     autocomplete.__bunny_autocomplete_state = this.getCurState(autocomplete);

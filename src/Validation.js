@@ -93,7 +93,7 @@ export const ValidationValidators = {
                 // input is required, check value
                 if (
                     input.getAttribute('type') !== 'file' && input.value === ''
-                    || ((input.type === 'radio' || input.type === 'checkbox') && !input.checked)
+                    || ((input.type === 'radio' || input.type === 'checkbox') && input.validity.valueMissing)
                     || input.getAttribute('type') === 'file' && _bn_getFile(input) === false) {
                     // input is empty or file is not uploaded
                     invalid();
