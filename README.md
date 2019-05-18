@@ -3,16 +3,13 @@
     <img src="https://bunnyjs.com/img/bunnyjs-logo.png" alt="BunnyJS Logo">
 </p>
 
-# BunnyJS v 0.14.41 (Beta)
+# BunnyJS v 0.14.42 (Beta)
 
 [Website](https://bunnyjs.com) * [![NPM downloads/month](https://img.shields.io/npm/dm/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) [![NPM version](https://img.shields.io/npm/v/bunnyjs.svg?style=flat-square)](https://www.npmjs.org/package/bunnyjs) * [Gitter chat](https://gitter.im/bunny-js/Lobby) * [Contribute to Docs](https://github.com/bunnyjs/docs) * [Assets Builder](https://github.com/Mevrael/assets-builder)
 
 ## ES6 browser framework
 
 ### "Powerful like React, simple like jQuery"
-
-
-
 
 **BunnyJS** is a modern **Vanilla JS** and ES6 library and next-generation front-end framework, package of small stand-alone components without dependencies.
 
@@ -58,11 +55,11 @@ export const Component = Object.assign({}, BunnyComponent, {
     init(arg) {
         // do whatever you want
         console.log(arg);
-        
+
         // call default (parent)
         return BunnyComponent.init(arg);
     }
-    
+
 });
 
 ```
@@ -104,8 +101,8 @@ export const Component = Object.assign({}, BunnyComponent, {
 
 ## Local development, examples and dists generation
 
-* Make sure to install npm dev dependencies first with `npm install`
-* Examples in `examples` folder. `index.html` can be opened in browser to view examples. Examples are generated with `npm build`
+* Make sure to install `npm install assets-builder` first.
+* Examples are located in the `examples` folder. File `index.html` can be opened in the browser to view examples. Examples are generated with `npm build`
 * To generate dists - `npm build dist -p`
 
 ## Experimental components based on DOMObserver (Mutation Observer)
@@ -161,7 +158,7 @@ You may also set default counter value with `<btn counter="6">`
 
 For more examples look in `examples/component` folder.
 
---- 
+---
 
 &copy; [Mev-Rael](https://twitter.com/Mevrael)
 
